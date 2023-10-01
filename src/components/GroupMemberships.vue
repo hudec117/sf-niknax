@@ -7,6 +7,10 @@ import Group from '@/models/Group';
 import GroupMember from '@/models/GroupMember';
 import DuelingPicklistItem from '@/models/DuelingPicklistItem';
 
+const props = defineProps<{
+    type: String
+}>();
+
 let restService: SalesforceRESTService;
 
 let userId: string;
@@ -14,25 +18,35 @@ let userGroupMembers: Array<GroupMember>;
 
 let userTabId: number;
 
-const availablePublicGroups = ref<Array<Group>>([]);
-let originalAvailablePublicGroups: Array<Group>;
+const availableGroups = ref<Array<Group>>([]);
+let originalAvailableGroups: Array<Group>;
 
-const assignedPublicGroups = ref<Array<Group>>([]);
-let originalAssignedPublicGroups: Array<Group>;
+const assignedGroups = ref<Array<Group>>([]);
+let originalAssignedGroups: Array<Group>;
 
 const showAPINames = ref(false);
 const loading = ref(true);
 const saving = ref(false);
 
+const groupTypeLabel = computed(() => {
+    if (props.type === 'Regular') {
+        return 'Public Group';
+    } else if (props.type === 'Queue') {
+        return 'Queue';
+    }
+
+    return 'INVALID GROUP TYPE';
+});
+
 const leftListItems = computed(() => {
-    return availablePublicGroups.value.map((group) => {
+    return availableGroups.value.map((group) => {
         const displayName = showAPINames.value ? group.developerName : group.name;
         return new DuelingPicklistItem(group.id, displayName);
     });
 });
 
 const rightListItems = computed(() => {
-    return assignedPublicGroups.value.map((group) => {
+    return assignedGroups.value.map((group) => {
         const displayName = showAPINames.value ? group.developerName : group.name;
         return new DuelingPicklistItem(group.id, displayName);
     });
@@ -76,20 +90,20 @@ onMounted(() => {
 });
 
 async function loadData() {
-    // Get all public groups
-    const allPublicGroupsQueryResult = await restService.query('SELECT Id, Name, DeveloperName FROM Group WHERE Type = \'Regular\'');
-    const allPublicGroups = (allPublicGroupsQueryResult.records as Array<any>).map((record) => {
+    // Get all groups
+    const allGroupsQueryResult = await restService.query(`SELECT Id, Name, DeveloperName FROM Group WHERE Type = '${props.type}'`);
+    const allGroups = (allGroupsQueryResult.records as Array<any>).map((record) => {
         return new Group(record.Id, record.Name, record.DeveloperName);
     });
 
-    // Group membership
+    // Group memberships
     const groupMembersQueryResult = await restService.query(`SELECT Id, GroupId, UserOrGroupId FROM GroupMember WHERE UserOrGroupId = '${userId}'`);
     userGroupMembers = (groupMembersQueryResult.records as Array<any>).map((record) => {
         return new GroupMember(record.GroupId, record.UserOrGroupId, record.Id);
     });
 
-    // Assigned public groups
-    originalAssignedPublicGroups = allPublicGroups.filter(group => {
+    // Assigned groups
+    originalAssignedGroups = allGroups.filter(group => {
         for (const groupMember of userGroupMembers) {
             if (groupMember.groupId === group.id) {
                 return true;
@@ -98,11 +112,11 @@ async function loadData() {
 
         return false;
     });
-    assignedPublicGroups.value = originalAssignedPublicGroups.map(group => ({...group}));
+    assignedGroups.value = originalAssignedGroups.map(group => ({...group}));
 
-    // Available public groups
-    originalAvailablePublicGroups = allPublicGroups.filter(group => {
-        for (const assignedGroup of assignedPublicGroups.value) {
+    // Available groups
+    originalAvailableGroups = allGroups.filter(group => {
+        for (const assignedGroup of assignedGroups.value) {
             if (assignedGroup.id === group.id) {
                 return false;
             }
@@ -110,34 +124,34 @@ async function loadData() {
 
         return true;
     });
-    availablePublicGroups.value = originalAvailablePublicGroups.map(group => ({...group}));
+    availableGroups.value = originalAvailableGroups.map(group => ({...group}));
 
     loading.value = false;
 }
 
 function onAssignGroups(items: Array<DuelingPicklistItem>) {
     for (const item of items) {
-        const group = availablePublicGroups.value.filter(group => group.id === item.value)[0];
+        const group = availableGroups.value.filter(group => group.id === item.value)[0];
 
         // Remove from available groups
-        const groupIndex = availablePublicGroups.value.indexOf(group);
-        availablePublicGroups.value.splice(groupIndex, 1);
+        const groupIndex = availableGroups.value.indexOf(group);
+        availableGroups.value.splice(groupIndex, 1);
 
         // Add to assigned groups
-        assignedPublicGroups.value.push(group);
+        assignedGroups.value.push(group);
     }
 }
 
 function onUnassignGroups(items: Array<DuelingPicklistItem>) {
     for (const item of items) {
-        const group = assignedPublicGroups.value.filter(group => group.id === item.value)[0];
+        const group = assignedGroups.value.filter(group => group.id === item.value)[0];
 
         // Remove from assigned groups
-        const groupIndex = assignedPublicGroups.value.indexOf(group);
-        assignedPublicGroups.value.splice(groupIndex, 1);
+        const groupIndex = assignedGroups.value.indexOf(group);
+        assignedGroups.value.splice(groupIndex, 1);
 
         // Add to available groups
-        availablePublicGroups.value.push(group);
+        availableGroups.value.push(group);
     }
 }
 
@@ -145,8 +159,8 @@ async function onSaveAndCloseClick() {
     saving.value = true;
 
     // Create a list of groups that have been newly assigned
-    const newlyAssignedGroups = assignedPublicGroups.value.filter(group => {
-        for (const originalAssignedGroup of originalAssignedPublicGroups) {
+    const newlyAssignedGroups = assignedGroups.value.filter(group => {
+        for (const originalAssignedGroup of originalAssignedGroups) {
             if (originalAssignedGroup.id === group.id) {
                 return false;
             }
@@ -160,8 +174,8 @@ async function onSaveAndCloseClick() {
     }
 
     // Create a list of groups that have been newly unassigned
-    const newlyUnassignedGroups = availablePublicGroups.value.filter(group => {
-        for (const originalAvailableGroup of originalAvailablePublicGroups) {
+    const newlyUnassignedGroups = availableGroups.value.filter(group => {
+        for (const originalAvailableGroup of originalAvailableGroups) {
             if (originalAvailableGroup.id === group.id) {
                 return false;
             }
@@ -216,7 +230,7 @@ async function unassignGroups(groups: Array<Group>) {
                 </div>
                 <div class="slds-media__body">
                     <h2 class="slds-card__header-title">
-                        <span>Public Group Memberships</span>
+                        <span>{{ groupTypeLabel }} Memberships</span>
                     </h2>
                 </div>
                 <div class="slds-no-flex">
@@ -237,8 +251,8 @@ async function unassignGroups(groups: Array<Group>) {
             </header>
         </div>
         <div class="slds-card__body slds-card__body_inner">
-            <DuelingPicklist left-list-label="Available Public Groups"
-                             right-list-label="Assigned Public Groups"
+            <DuelingPicklist :left-list-label="`Available ${groupTypeLabel}s`"
+                             :right-list-label="`Assigned ${groupTypeLabel}s`"
                             :left-list="leftListItems"
                             :right-list="rightListItems"
                             :disabled="loading || saving"

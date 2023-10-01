@@ -17,7 +17,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         chrome.tabs.query(queryOptions, ([userTab]) => {
             // Construct page URL with server host
             let niknaxUrl = chrome.runtime.getURL(SF_NIKNAX_PAGE);
-            niknaxUrl += `?host=${serverHost}&user=${userId}&tab=${userTab.id}`;
+            niknaxUrl += `?host=${serverHost}&user=${userId}&tab=${userTab.id}&page=${request.page}`;
 
             chrome.windows.create({
                 url: niknaxUrl,
