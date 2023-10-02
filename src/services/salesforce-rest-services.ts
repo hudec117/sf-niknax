@@ -28,6 +28,29 @@ export default class SalesforceRESTService {
         return fetch(actualRequestUrl, requestInfo);
     }
 
+    async get(object: string, id: string) {
+        // https://cunning-bear-val4af-dev-ed.trailblaze.my.salesforce.com/services/data/v58.0/sobjects/User/0058d00000854Tv
+
+        const requestUrl = new URL(`${this.OBJECT_ENDPOINT}/${object}/${id}`, this.serverBaseUrl);
+
+        const response = await this.authFetch(requestUrl, {
+            method: 'GET'
+        });
+        const responseBody = await response.json();
+
+        if (response.ok) {
+            return {
+                success: true,
+                data: responseBody
+            };
+        } else {
+            return {
+                success: false,
+                error: responseBody.map((error: Error) => error.message).join('\n')
+            };
+        }
+    }
+
     async query(soql: string) {
         const requestUrl = new URL(this.QUERY_ENDPOINT, this.serverBaseUrl);
         requestUrl.searchParams.set('q', soql);
@@ -63,7 +86,7 @@ export default class SalesforceRESTService {
         const responseBody = await response.json();
 
         if (response.ok) {
-            return { success: true };
+            return { success: true, data: responseBody };
         } else {
             return {
                 success: false,
@@ -79,6 +102,6 @@ export default class SalesforceRESTService {
             method: 'DELETE'
         });
 
-        return { success: response.ok }
+        return { success: response.ok };
     }
 }

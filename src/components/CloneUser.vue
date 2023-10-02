@@ -3,36 +3,83 @@ import { onMounted, ref } from 'vue';
 
 import SalesforceRESTService from '@/services/salesforce-rest-services';
 import Context from '@/models/context';
+import UserCloneForm from '@/models/UserCloneForm';
+import SalesforceToolingService from '@/services/salesforce-tooling-services';
+import type User from '@/models/User';
 
 const props = defineProps<{
     context: Context
 }>();
 
 let restService: SalesforceRESTService;
+let toolingService: SalesforceToolingService;
+
+const originalUser = ref<User>();
+
+const title = ref('Clone User');
+
+const form = ref(new UserCloneForm());
 
 const loading = ref(true);
-const saving = ref(false);
+const cloning = ref(false);
 
 onMounted(() => {
-    // Initialise Salesforce service
+    resizeTo(618, 595);
+
+    // Initialise Salesforce services
     restService = new SalesforceRESTService(props.context.serverHost, props.context.sessionId);
+    toolingService = new SalesforceToolingService(props.context.serverHost, props.context.sessionId);
 
     loadData();
 });
 
 async function loadData() {
-    
+    const getUserResult = await restService.get('User', props.context.userId);
+    if (!getUserResult.success) {
+        // TODO: handle
+        return;
+    }
+
+    originalUser.value = getUserResult.data as User;
+
+    title.value = `Clone User: ${originalUser.value.Username}`;
+    document.title = title.value;
 
     loading.value = false;
 }
 
-async function onSaveAndCloseClick() {
-    saving.value = true;
+async function onCloneAndCloseClick() {
+    cloning.value = true;
 
-    saving.value = false;
+    // const userCreateResult = await restService.create('User', {
+    //     LastName: form.value.lastName,
+    //     Email: form.value.email,
+    //     Alias: form.value.alias,
+    //     Username: form.value.username,
+    //     CommunityNickname: form.value.nickname,
+    //     LocaleSidKey: originalUser.LocaleSidKey,
+    //     TimeZoneSidKey: originalUser.TimeZoneSidKey,
+    //     ProfileID: originalUser.ProfileID,
+    //     LanguageLocaleKey: originalUser.LanguageLocaleKey,
+    //     EmailEncodingKey: originalUser.EmailEncodingKey
+    // });
+    // if (!userCreateResult.success) {
+    //     // TODO: handle
+    //     return;
+    // }
 
-    const currentPopup = await chrome.windows.getCurrent();
-    await chrome.windows.remove(currentPopup.id!);
+    if (form.value.resetPassword) {
+        const resetPasswordResult = await toolingService.executeAnonymous(`System.resetPassword('0058d0000085kN6', true);`);
+        if (!resetPasswordResult.success) {
+            // TODO: handle
+            return;
+        }
+    }
+
+    cloning.value = false;
+
+    // const currentPopup = await chrome.windows.getCurrent();
+    // await chrome.windows.remove(currentPopup.id!);
 }
 </script>
 
@@ -49,20 +96,133 @@ async function onSaveAndCloseClick() {
                 </div>
                 <div class="slds-media__body">
                     <h2 class="slds-card__header-title">
-                        <span>Clone User</span>
+                        <span>{{ title }}</span>
                     </h2>
                 </div>
                 <div class="slds-no-flex">
-                    <button class="slds-button slds-button_brand"
-                           @click="onSaveAndCloseClick"
-                           :disabled="loading || saving">
-                        {{ saving ? 'Saving...' : 'Save & Close' }}
+                    <button class="slds-button slds-button_brand" @click="onCloneAndCloseClick"
+                        :disabled="loading || cloning">
+                        {{ cloning ? 'Cloning...' : 'Clone & Close' }}
                     </button>
                 </div>
             </header>
         </div>
         <div class="slds-card__body slds-card__body_inner">
-            
+            <form class="slds-form" role="list">
+                <div class="slds-form__row slds-p-horizontal_xx-small">
+                    <div class="slds-form__item" role="listitem">
+                        <div class="slds-form-element slds-form-element_horizontal slds-is-editing">
+                            <label class="slds-form-element__label" for="first-name-input">
+                                <abbr class="slds-required" title="required">* </abbr>
+                                First Name
+                            </label>
+                            <div class="slds-form-element__control">
+                                <input type="text" id="first-name-input" class="slds-input" v-model="form.firstName" required autofocus />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slds-form__item" role="listitem">
+                        <div class="slds-form-element slds-form-element_horizontal slds-is-editing">
+                            <label class="slds-form-element__label" for="last-name-input">
+                                <abbr class="slds-required" title="required">* </abbr>
+                                Last Name
+                            </label>
+                            <div class="slds-form-element__control">
+                                <input type="text" id="last-name-input" class="slds-input" v-model="form.lastName" required />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slds-form-element slds-form-element_stacked">
+                    <label class="slds-form-element__label" for="email-input">
+                        <abbr class="slds-required" title="required">* </abbr>
+                        Email
+                    </label>
+                    <div class="slds-form-element__control">
+                        <input type="text" id="email-input" class="slds-input" v-model="form.email" required />
+                    </div>
+                </div>
+
+                <div class="slds-form-element slds-form-element_stacked">
+                    <label class="slds-form-element__label" for="username-input">
+                        <abbr class="slds-required" title="required">* </abbr>
+                        Username
+                    </label>
+                    <div class="slds-form-element__control">
+                        <input type="text" id="username-input" class="slds-input"  v-model="form.username" required />
+                    </div>
+                </div>
+
+                <div class="slds-form-element slds-form-element_stacked">
+                    <label class="slds-form-element__label" for="alias-input">
+                        <abbr class="slds-required" title="required">* </abbr>
+                        Alias
+                    </label>
+                    <div class="slds-form-element__control">
+                        <input type="text" id="alias-input" class="slds-input" v-model="form.alias" required />
+                    </div>
+                </div>
+
+                <div class="slds-form-element slds-form-element_stacked">
+                    <label class="slds-form-element__label" for="nickname-input">
+                        <abbr class="slds-required" title="required">* </abbr>
+                        Nickname
+                    </label>
+                    <div class="slds-form-element__control">
+                        <input type="text" id="nickname-input" class="slds-input" v-model="form.nickname" required />
+                    </div>
+                </div>
+
+                <fieldset class="slds-form-element slds-form-element_stacked">
+                    <legend class="slds-form-element__legend slds-form-element__label">Advanced</legend>
+                    <div class="slds-form-element__control">
+                        <div class="slds-checkbox">
+                            <input type="checkbox" name="advanced-group" id="permission-set-assignments-checkbox" v-model="form.clonePermissionSetAssignments" />
+                            <label class="slds-checkbox__label" for="permission-set-assignments-checkbox">
+                                <span class="slds-checkbox_faux"></span>
+                                <span class="slds-form-element__label">Permission Set Assignments</span>
+                            </label>
+                        </div>
+
+                        <div class="slds-checkbox">
+                            <input type="checkbox" name="advanced-group" id="public-group-memberships-checkbox" v-model="form.clonePublicGroupMemberships" />
+                            <label class="slds-checkbox__label" for="public-group-memberships-checkbox">
+                                <span class="slds-checkbox_faux"></span>
+                                <span class="slds-form-element__label">Public Group Memberships</span>
+                            </label>
+                        </div>
+
+                        <div class="slds-checkbox">
+                            <input type="checkbox" name="advanced-group" id="queue-memberships-checkbox" v-model="form.cloneQueueMemberships" />
+                            <label class="slds-checkbox__label" for="queue-memberships-checkbox">
+                                <span class="slds-checkbox_faux"></span>
+                                <span class="slds-form-element__label">Queue Memberships</span>
+                            </label>
+                        </div>
+
+                        <div class="slds-checkbox">
+                            <input type="checkbox" name="advanced-group" id="permission-set-license-assignments-checkbox" v-model="form.clonePermissionSetLicenseAssignments" />
+                            <label class="slds-checkbox__label" for="permission-set-license-assignments-checkbox">
+                                <span class="slds-checkbox_faux"></span>
+                                <span class="slds-form-element__label">Permission Set License Assignments</span>
+                            </label>
+                        </div>
+                    </div>
+                </fieldset>
+
+                <fieldset class="slds-form-element slds-form-element_stacked">
+                    <div class="slds-form-element__control">
+                        <div class="slds-checkbox">
+                            <input type="checkbox" name="advanced-group" id="generate-password-checkbox" v-model="form.resetPassword" />
+                            <label class="slds-checkbox__label" for="generate-password-checkbox">
+                                <span class="slds-checkbox_faux"></span>
+                                <span class="slds-form-element__label">Reset password and notify user immediately</span>
+                            </label>
+                        </div>
+                    </div>
+                </fieldset>
+            </form>
         </div>
     </article>
 </template>

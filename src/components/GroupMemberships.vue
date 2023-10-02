@@ -52,6 +52,8 @@ const rightListItems = computed(() => {
 });
 
 onMounted(() => {
+    resizeTo(595, 505);
+
     // Initialise Salesforce service
     restService = new SalesforceRESTService(props.context.serverHost, props.context.sessionId);
 
