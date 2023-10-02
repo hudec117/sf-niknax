@@ -2,9 +2,9 @@
 import { onMounted, ref } from 'vue';
 
 import SalesforceRESTService from '@/services/salesforce-rest-services';
+import SalesforceToolingService from '@/services/salesforce-tooling-services';
 import Context from '@/models/context';
 import UserCloneForm from '@/models/UserCloneForm';
-import SalesforceToolingService from '@/services/salesforce-tooling-services';
 import type User from '@/models/User';
 
 const props = defineProps<{
@@ -16,7 +16,7 @@ let toolingService: SalesforceToolingService;
 
 const originalUser = ref<User>();
 
-const title = ref('Clone User');
+const title = ref('Clone');
 
 const form = ref(new UserCloneForm());
 
@@ -34,6 +34,11 @@ onMounted(() => {
 });
 
 async function loadData() {
+    if (!props.context.userId) {
+        // TODO: handle
+        return;
+    }
+
     const getUserResult = await restService.get('User', props.context.userId);
     if (!getUserResult.success) {
         // TODO: handle
@@ -42,7 +47,7 @@ async function loadData() {
 
     originalUser.value = getUserResult.data as User;
 
-    title.value = `Clone User: ${originalUser.value.Username}`;
+    title.value = `Clone ${originalUser.value.Username}`;
     document.title = title.value;
 
     loading.value = false;

@@ -79,7 +79,7 @@ window.onload = function () {
         freezeUsersButton.type = 'button';
         freezeUsersButton.style = 'margin-left: 5px; border: 1px solid #2574a9;';
         freezeUsersButton.addEventListener('click', () => {
-            chrome.runtime.sendMessage({ operation: 'open-sf-niknax', page: 'bulk-freeze-unfreeze' });
+            chrome.runtime.sendMessage({ operation: 'open-sf-niknax', page: 'bulk-freeze-users' });
         });
 
         const topButtonRow = document.querySelector('td.pbBottomButtons');

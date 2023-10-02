@@ -1,13 +1,13 @@
 export default class Context {
     serverHost: string;
-    userId: string;
     originalTabId: number;
     sessionId: string;
+    userId?: string;
 
-    constructor(domain: string, userId: string, originalTabId: number, sessionId: string) {
+    constructor(domain: string, originalTabId: number, sessionId: string, userId?: string) {
         this.serverHost = domain;
-        this.userId = userId;
         this.originalTabId = originalTabId;
         this.sessionId = sessionId;
+        this.userId = userId;
     }
 }

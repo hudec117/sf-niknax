@@ -1,3 +1,5 @@
+// Note: async/await with the Chrome API seems to break the code.
+
 const SF_NIKNAX_PAGE = 'sf-niknax.html';
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
@@ -8,16 +10,17 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
         // Get user record ID from URL
         const path = serverUrl.pathname.substring(1);
-        const userId = /[a-zA-Z0-9]{18}|[a-zA-Z0-9]{15}/.exec(path);
-        if (userId === null) {
-            // TODO: handle
-        }
+        const userId = /[a-zA-Z0-9]{18}|[a-zA-Z0-9]{15}/.exec(path) ?? undefined;
 
         let queryOptions = { active: true, lastFocusedWindow: true };
         chrome.tabs.query(queryOptions, ([userTab]) => {
             // Construct page URL with server host
             let niknaxUrl = chrome.runtime.getURL(SF_NIKNAX_PAGE);
-            niknaxUrl += `?host=${serverHost}&user=${userId}&tab=${userTab.id}&page=${request.page}`;
+            niknaxUrl += `?host=${serverHost}&tab=${userTab.id}&page=${request.page}`;
+
+            if (userId) {
+                niknaxUrl += `&user=${userId}`;
+            }
 
             chrome.windows.create({
                 url: niknaxUrl,

@@ -3,10 +3,13 @@ import { onMounted, ref } from 'vue';
 
 import GroupMemberships from './GroupMemberships.vue';
 import CloneUser from './CloneUser.vue';
+import BulkFreezeUsers from './BulkFreezeUsers.vue';
+
 import Context from '@/models/context';
 
 const displayEditGroupMemberships = ref(false);
 const displayCloneUser = ref(false);
+const displayBulkFreezeUsers = ref(false);
 
 const groupType = ref('');
 
@@ -20,14 +23,10 @@ onMounted(() => {
         return;
     }
 
-    const loadedUserId = params.get('user');
-    if (!loadedUserId) {
-        // TODO: handle
-        return;
-    }
+    const loadedUserId = params.get('user') ?? undefined;
 
-    const loadedUserTabId = params.get('tab');
-    if (!loadedUserTabId) {
+    const loadedOriginalTabId = params.get('tab');
+    if (!loadedOriginalTabId) {
         // TODO: handle
         return;
     }
@@ -44,7 +43,7 @@ onMounted(() => {
             return;
         }
 
-        context.value = new Context(loadedServerHost, loadedUserId, parseInt(loadedUserTabId), session.id);
+        context.value = new Context(loadedServerHost, parseInt(loadedOriginalTabId), session.id, loadedUserId);
 
         if (loadedPage === 'edit-public-group-memberships') {
             groupType.value = 'Regular';
@@ -54,6 +53,8 @@ onMounted(() => {
             displayEditGroupMemberships.value = true;
         } else if (loadedPage === 'clone-user') {
             displayCloneUser.value = true;
+        } else if (loadedPage === 'bulk-freeze-users') {
+            displayBulkFreezeUsers.value = true;
         }
     });
 });
@@ -63,5 +64,6 @@ onMounted(() => {
     <div class="slds-grid slds-var-p-around_small">
         <GroupMemberships v-if="displayEditGroupMemberships" :type="groupType" :context="context!" />
         <CloneUser v-else-if="displayCloneUser" :context="context!" />
+        <BulkFreezeUsers v-else-if="displayBulkFreezeUsers" :context="context!" />
     </div>
 </template>

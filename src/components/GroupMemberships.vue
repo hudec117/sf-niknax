@@ -23,6 +23,7 @@ let originalAvailableGroups: Array<Group>;
 const assignedGroups = ref<Array<Group>>([]);
 let originalAssignedGroups: Array<Group>;
 
+const title = ref('Memberships');
 const showAPINames = ref(false);
 const loading = ref(true);
 const saving = ref(false);
@@ -61,14 +62,25 @@ onMounted(() => {
 });
 
 async function loadData() {
+    title.value = `${groupTypeLabel.value} Memberships`;
+    document.title = title.value;
+
     // Get all groups
     const allGroupsQueryResult = await restService.query(`SELECT Id, Name, DeveloperName FROM Group WHERE Type = '${props.type}'`);
+    if (!allGroupsQueryResult.success) {
+        // TODO: handle
+        return;
+    }
     const allGroups = (allGroupsQueryResult.records as Array<any>).map((record) => {
         return new Group(record.Id, record.Name, record.DeveloperName);
     });
 
     // Group memberships
     const groupMembersQueryResult = await restService.query(`SELECT Id, GroupId, UserOrGroupId FROM GroupMember WHERE UserOrGroupId = '${props.context.userId}'`);
+    if (!groupMembersQueryResult.success) {
+        // TODO: handle
+        return;
+    }
     userGroupMembers = (groupMembersQueryResult.records as Array<any>).map((record) => {
         return new GroupMember(record.GroupId, record.UserOrGroupId, record.Id);
     });
@@ -171,10 +183,20 @@ async function onSaveAndCloseClick() {
 }
 
 async function assignGroups(groups: Array<Group>) {
-    const groupMembersToCreate = groups.map(group => new GroupMember(group.id, props.context.userId));
+    const assignToUserId = props.context.userId;
+    if (!assignToUserId) {
+        // TODO: handle
+        return;
+    }
+
+    const groupMembersToCreate = groups.map(group => new GroupMember(group.id, assignToUserId));
 
     for (const groupMember of groupMembersToCreate) {
-        await restService.create('GroupMember', groupMember);
+        const result = await restService.create('GroupMember', groupMember);
+        if (!result.success) {
+            // TODO: handle
+            return;
+        }
     }
 }
 
@@ -182,7 +204,11 @@ async function unassignGroups(groups: Array<Group>) {
     const groupMembersToDelete = groups.map(group => userGroupMembers.filter(groupMember => group.id == groupMember.groupId)[0]);
 
     for (const groupMember of groupMembersToDelete) {
-        await restService.delete('GroupMember', groupMember.id!);
+        const result = await restService.delete('GroupMember', groupMember.id!);
+        if (!result.success) {
+            // TODO: handle
+            return;
+        }
     }
 }
 </script>
@@ -200,7 +226,7 @@ async function unassignGroups(groups: Array<Group>) {
                 </div>
                 <div class="slds-media__body">
                     <h2 class="slds-card__header-title">
-                        <span>{{ groupTypeLabel }} Memberships</span>
+                        <span>{{ title }}</span>
                     </h2>
                 </div>
                 <div class="slds-no-flex">
