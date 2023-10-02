@@ -2,30 +2,66 @@
 import { onMounted, ref } from 'vue';
 
 import GroupMemberships from './GroupMemberships.vue';
+import CloneUser from './CloneUser.vue';
+import Context from '@/models/context';
 
-const page = ref('');
+const displayEditGroupMemberships = ref(false);
+const displayCloneUser = ref(false);
+
 const groupType = ref('');
+
+const context = ref<Context>();
 
 onMounted(() => {
     const params = new URLSearchParams(window.location.search);
+    const loadedServerHost = params.get('host');
+    if (!loadedServerHost) {
+        // TODO: handle
+        return;
+    }
+
+    const loadedUserId = params.get('user');
+    if (!loadedUserId) {
+        // TODO: handle
+        return;
+    }
+
+    const loadedUserTabId = params.get('tab');
+    if (!loadedUserTabId) {
+        // TODO: handle
+        return;
+    }
+
     const loadedPage = params.get('page');
     if (!loadedPage) {
         // TODO: handle
         return;
     }
 
-    page.value = loadedPage;
+    chrome.runtime.sendMessage({ operation: 'get-session-id', host: loadedServerHost }, async function (session: any) {
+        if (!session.id) {
+            // TODO: handle
+            return;
+        }
 
-    if (page.value === 'edit-public-group-memberships') {
-        groupType.value = 'Regular';
-    } else if (page.value === 'edit-queue-memberships') {
-        groupType.value = 'Queue';
-    }
+        context.value = new Context(loadedServerHost, loadedUserId, parseInt(loadedUserTabId), session.id);
+
+        if (loadedPage === 'edit-public-group-memberships') {
+            groupType.value = 'Regular';
+            displayEditGroupMemberships.value = true;
+        } else if (loadedPage === 'edit-queue-memberships') {
+            groupType.value = 'Queue';
+            displayEditGroupMemberships.value = true;
+        } else if (loadedPage === 'clone-user') {
+            displayCloneUser.value = true;
+        }
+    });
 });
 </script>
 
 <template>
     <div class="slds-grid slds-var-p-around_small">
-        <GroupMemberships v-if="['edit-public-group-memberships', 'edit-queue-memberships'].includes(page)" :type="groupType" />
+        <GroupMemberships v-if="displayEditGroupMemberships" :type="groupType" :context="context!" />
+        <CloneUser v-else-if="displayCloneUser" :context="context!" />
     </div>
 </template>

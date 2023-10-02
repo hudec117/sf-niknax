@@ -6,17 +6,16 @@ import DuelingPicklist from './DuelingPicklist.vue';
 import Group from '@/models/Group';
 import GroupMember from '@/models/GroupMember';
 import DuelingPicklistItem from '@/models/DuelingPicklistItem';
+import Context from '@/models/context';
 
 const props = defineProps<{
+    context: Context,
     type: String
 }>();
 
 let restService: SalesforceRESTService;
 
-let userId: string;
 let userGroupMembers: Array<GroupMember>;
-
-let userTabId: number;
 
 const availableGroups = ref<Array<Group>>([]);
 let originalAvailableGroups: Array<Group>;
@@ -53,40 +52,10 @@ const rightListItems = computed(() => {
 });
 
 onMounted(() => {
-    // Initialise server host and user ID from URL
-    const params = new URLSearchParams(window.location.search);
-    const serverHost = params.get('host');
-    if (!serverHost) {
-        // TODO: handle
-        return;
-    }
+    // Initialise Salesforce service
+    restService = new SalesforceRESTService(props.context.serverHost, props.context.sessionId);
 
-    const loadedUserId = params.get('user');
-    if (!loadedUserId) {
-        // TODO: handle
-        return;
-    }
-    userId = loadedUserId;
-
-    const loadedUserTabId = params.get('tab');
-    if (!loadedUserTabId) {
-        // TODO: handle
-        return;
-    }
-    userTabId = parseInt(loadedUserTabId);
-
-    // Get session ID
-    chrome.runtime.sendMessage({ operation: 'get-session-id', host: serverHost }, async function (session: any) {
-        if (!session.id) {
-            // TODO: handle
-            return;
-        }
-
-        // Initialise Salesforce service
-        restService = new SalesforceRESTService(serverHost, session.id);
-
-        loadData();
-    });
+    loadData();
 });
 
 async function loadData() {
@@ -97,7 +66,7 @@ async function loadData() {
     });
 
     // Group memberships
-    const groupMembersQueryResult = await restService.query(`SELECT Id, GroupId, UserOrGroupId FROM GroupMember WHERE UserOrGroupId = '${userId}'`);
+    const groupMembersQueryResult = await restService.query(`SELECT Id, GroupId, UserOrGroupId FROM GroupMember WHERE UserOrGroupId = '${props.context.userId}'`);
     userGroupMembers = (groupMembersQueryResult.records as Array<any>).map((record) => {
         return new GroupMember(record.GroupId, record.UserOrGroupId, record.Id);
     });
@@ -190,7 +159,7 @@ async function onSaveAndCloseClick() {
 
     // If there's been a change, refresh the page.
     if (newlyAssignedGroups.length > 0 || newlyUnassignedGroups.length > 0) {
-        await chrome.tabs.reload(userTabId);
+        await chrome.tabs.reload(props.context.originalTabId);
     }
 
     saving.value = false;
@@ -200,7 +169,7 @@ async function onSaveAndCloseClick() {
 }
 
 async function assignGroups(groups: Array<Group>) {
-    const groupMembersToCreate = groups.map(group => new GroupMember(group.id, userId));
+    const groupMembersToCreate = groups.map(group => new GroupMember(group.id, props.context.userId));
 
     for (const groupMember of groupMembersToCreate) {
         await restService.create('GroupMember', groupMember);
@@ -214,7 +183,6 @@ async function unassignGroups(groups: Array<Group>) {
         await restService.delete('GroupMember', groupMember.id!);
     }
 }
-
 </script>
 
 <template>
