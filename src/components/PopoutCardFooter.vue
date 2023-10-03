@@ -5,10 +5,10 @@
                 <span class="slds-float_left">Made with &#10084;&#65039; on <a href="https://github.com/hudec117/sf-niknax" class="external-link" target="_blank">GitHub</a></span>
             </div>
             <div class="slds-col slds-col_bump-right slds-size_1-of-8">
-                <span>Licenses</span>
+                <span>v0.2.0</span>
             </div>
             <div class="slds-col slds-size_1-of-8">
-                <a href="https://github.com/hudec117/sf-niknax/issues" class="external-link" target="_blank">Support</a>
+                Licenses
             </div>
         </div>
     </footer>

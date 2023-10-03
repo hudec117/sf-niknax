@@ -1,10 +1,11 @@
 export default class UserCloneForm {
     firstName = '';
     lastName = '';
+    alias = '';
     email = '';
     username = '';
-    alias = '';
     nickname = '';
+    federationIdentifier = '';
 
     clonePermissionSetAssignments = true;
     clonePublicGroupMemberships = true;

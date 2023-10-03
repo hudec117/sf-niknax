@@ -52,6 +52,46 @@ async function loadData() {
     loading.value = false;
 }
 
+function onLastNameUnfocused() {
+    const alias = form.value.alias.trim();
+    const firstName = form.value.firstName.trim();
+    const lastName = form.value.lastName.trim();
+
+    if (alias.length === 0 && lastName.length > 0) {
+        let defaultAlias = '';
+        if (firstName.length > 0) {
+            defaultAlias += firstName[0].toLowerCase();
+        }
+
+        defaultAlias += lastName.substring(0, 4).toLowerCase();
+
+        form.value.alias = defaultAlias;
+    }
+}
+
+function onEmailUnfocused() {
+    const email = form.value.email.trim();
+
+    if (email.length > 0) {
+        form.value.username = email;
+    }
+}
+
+function onUsernameFocusChange() {
+    const username = form.value.username.trim();
+    const nickname = form.value.nickname.trim();
+
+    if (username.length > 0 && nickname.length === 0) {
+        let generatedNickname = 'User';
+
+        for (let i = 0; i < 20; i++) {
+            generatedNickname += Math.floor(Math.random() * 10).toString();
+        }
+
+        form.value.nickname = generatedNickname;
+    }
+}
+
 async function onCloneAndCloseClick() {
     cloning.value = true;
 
@@ -116,12 +156,9 @@ async function onCloneAndCloseClick() {
                 <div class="slds-form__row slds-p-horizontal_xx-small">
                     <div class="slds-form__item" role="listitem">
                         <div class="slds-form-element slds-form-element_horizontal slds-is-editing">
-                            <label class="slds-form-element__label" for="first-name-input">
-                                <abbr class="slds-required" title="required">* </abbr>
-                                First Name
-                            </label>
+                            <label class="slds-form-element__label" for="first-name-input">First Name</label>
                             <div class="slds-form-element__control">
-                                <input type="text" id="first-name-input" class="slds-input" v-model="form.firstName" required autofocus />
+                                <input type="text" id="first-name-input" class="slds-input" v-model="form.firstName" autofocus />
                             </div>
                         </div>
                     </div>
@@ -132,29 +169,9 @@ async function onCloneAndCloseClick() {
                                 Last Name
                             </label>
                             <div class="slds-form-element__control">
-                                <input type="text" id="last-name-input" class="slds-input" v-model="form.lastName" required />
+                                <input type="text" id="last-name-input" class="slds-input" v-model="form.lastName" @focusout="onLastNameUnfocused" required />
                             </div>
                         </div>
-                    </div>
-                </div>
-
-                <div class="slds-form-element slds-form-element_stacked">
-                    <label class="slds-form-element__label" for="email-input">
-                        <abbr class="slds-required" title="required">* </abbr>
-                        Email
-                    </label>
-                    <div class="slds-form-element__control">
-                        <input type="text" id="email-input" class="slds-input" v-model="form.email" required />
-                    </div>
-                </div>
-
-                <div class="slds-form-element slds-form-element_stacked">
-                    <label class="slds-form-element__label" for="username-input">
-                        <abbr class="slds-required" title="required">* </abbr>
-                        Username
-                    </label>
-                    <div class="slds-form-element__control">
-                        <input type="text" id="username-input" class="slds-input"  v-model="form.username" required />
                     </div>
                 </div>
 
@@ -169,12 +186,47 @@ async function onCloneAndCloseClick() {
                 </div>
 
                 <div class="slds-form-element slds-form-element_stacked">
+                    <label class="slds-form-element__label" for="email-input">
+                        <abbr class="slds-required" title="required">* </abbr>
+                        Email
+                    </label>
+                    <div class="slds-form-element__control">
+                        <input type="text" id="email-input" class="slds-input" v-model="form.email" @focusout="onEmailUnfocused" required />
+                    </div>
+                </div>
+
+                <div class="slds-form-element slds-form-element_stacked">
+                    <label class="slds-form-element__label" for="username-input">
+                        <abbr class="slds-required" title="required">* </abbr>
+                        Username
+                    </label>
+                    <div class="slds-form-element__control">
+                        <input type="text"
+                               id="username-input"
+                               class="slds-input"
+                               v-model="form.username"
+                              @focusin="onUsernameFocusChange"
+                              @focusout="onUsernameFocusChange"
+                               required />
+                    </div>
+                </div>
+
+                <div class="slds-form-element slds-form-element_stacked">
                     <label class="slds-form-element__label" for="nickname-input">
                         <abbr class="slds-required" title="required">* </abbr>
                         Nickname
                     </label>
                     <div class="slds-form-element__control">
                         <input type="text" id="nickname-input" class="slds-input" v-model="form.nickname" required />
+                    </div>
+                </div>
+
+                <div class="slds-form-element slds-form-element_stacked">
+                    <label class="slds-form-element__label" for="federation-identifier-input">
+                        Federation Identifier
+                    </label>
+                    <div class="slds-form-element__control">
+                        <input type="text" id="federation-identifier-input" class="slds-input" v-model="form.federationIdentifier" />
                     </div>
                 </div>
 
