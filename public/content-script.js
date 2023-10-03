@@ -16,7 +16,7 @@ window.onload = function () {
         injectEditQueueMembershipsButton();
         injectCloneUserButton();
     } else if (isOnUserListPage) {
-        injectFreezeUsersButton();
+        // injectFreezeUsersButton();
     }
 
     function injectEditPublicGroupMembershipsButton() {
@@ -95,20 +95,20 @@ window.onload = function () {
         topButtonRow.appendChild(cloneUserButton);
     }
 
-    function injectFreezeUsersButton() {
-        const freezeUsersButton = document.createElement('input');
-        freezeUsersButton.value = 'Bulk Freeze/Unfreeze';
-        freezeUsersButton.title = `Salesforce Niknax: ${freezeUsersButton.value}`;
-        freezeUsersButton.className = 'btn';
-        freezeUsersButton.type = 'button';
-        freezeUsersButton.style = 'margin-left: 5px; border: 1px solid #2574a9;';
-        freezeUsersButton.addEventListener('click', () => {
-            chrome.runtime.sendMessage({ operation: 'open-sf-niknax', page: 'bulk-freeze-users' });
-        });
+    // function injectFreezeUsersButton() {
+    //     const freezeUsersButton = document.createElement('input');
+    //     freezeUsersButton.value = 'Bulk Freeze/Unfreeze';
+    //     freezeUsersButton.title = `Salesforce Niknax: ${freezeUsersButton.value}`;
+    //     freezeUsersButton.className = 'btn';
+    //     freezeUsersButton.type = 'button';
+    //     freezeUsersButton.style = 'margin-left: 5px; border: 1px solid #2574a9;';
+    //     freezeUsersButton.addEventListener('click', () => {
+    //         chrome.runtime.sendMessage({ operation: 'open-sf-niknax', page: 'bulk-freeze-users' });
+    //     });
 
-        const topButtonRow = document.querySelector('td.pbBottomButtons');
-        topButtonRow.appendChild(freezeUsersButton);
-    }
+    //     const topButtonRow = document.querySelector('td.pbBottomButtons');
+    //     topButtonRow.appendChild(freezeUsersButton);
+    // }
 
     function getElementByStaticID(staticString) {
         const divElements = document.querySelectorAll('div');
