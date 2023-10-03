@@ -1,4 +1,9 @@
 window.onload = function () {
+    const isInPopupIFrame = document.location.pathname.includes('emptyHtmlDoc.html');
+    if (isInPopupIFrame) {
+        return;
+    }
+
     const pageTypeElements = document.getElementsByClassName('pageType');
     if (pageTypeElements.length === 0) {
         return;
@@ -16,15 +21,25 @@ window.onload = function () {
 
     function injectEditPublicGroupMembershipsButton() {
         const editMembershipButton = document.createElement('input');
+        editMembershipButton.id = 'sf-niknax-edit-public-group-memberships-button';
         editMembershipButton.value = 'Edit Memberships';
         editMembershipButton.title = `Salesforce Niknax: ${editMembershipButton.value}`;
         editMembershipButton.className = 'btn';
         editMembershipButton.type = 'button';
         editMembershipButton.style = 'margin-left: 5px; border: 1px solid #2574a9;';
-        editMembershipButton.addEventListener('click', () => {
-            chrome.runtime.sendMessage({ operation: 'open-sf-niknax', page: 'edit-public-group-memberships' });
-        });
 
+        // Setup event listeners, we also need to handle the pop-up panel for the links at the top of the page.
+        const rlPanelFrame = document.getElementById('RLPanelFrame');
+        rlPanelFrame.contentDocument.addEventListener('click', onClick);
+        document.addEventListener('click', onClick);
+
+        function onClick(event) {
+            if (event.target.id === editMembershipButton.id) {
+                chrome.runtime.sendMessage({ operation: 'open-sf-niknax', page: 'edit-public-group-memberships' });
+            }
+        }
+
+        // Find and inject
         const publicGroupMembershipSection = getElementByStaticID('_RelatedPublicGroupMemberList');
         if (!publicGroupMembershipSection) {
             console.error('sf-niknax: failed to find *_RelatedPublicGroupMemberList element.');
@@ -37,15 +52,24 @@ window.onload = function () {
 
     function injectEditQueueMembershipsButton() {
         const editMembershipButton = document.createElement('input');
+        editMembershipButton.id = 'sf-niknax-edit-queue-memberships-button';
         editMembershipButton.value = 'Edit Memberships';
         editMembershipButton.title = `Salesforce Niknax: ${editMembershipButton.value}`;
         editMembershipButton.className = 'btn';
         editMembershipButton.type = 'button';
         editMembershipButton.style = 'margin-left: 5px; border: 1px solid #2574a9;';
-        editMembershipButton.addEventListener('click', () => {
-            chrome.runtime.sendMessage({ operation: 'open-sf-niknax', page: 'edit-queue-memberships' });
-        });
 
+        const rlPanelFrame = document.getElementById('RLPanelFrame');
+        rlPanelFrame.contentDocument.addEventListener('click', onClick);
+        document.addEventListener('click', onClick);
+
+        function onClick(event) {
+            if (event.target.id === editMembershipButton.id) {
+                chrome.runtime.sendMessage({ operation: 'open-sf-niknax', page: 'edit-queue-memberships' });
+            }
+        }
+
+        // Find and inject
         const queueMembershipSection = getElementByStaticID('_RelatedQueueMemberList');
         if (!queueMembershipSection) {
             console.error('sf-niknax: failed to find *_RelatedQueueMemberList element.');

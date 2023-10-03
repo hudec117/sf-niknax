@@ -24,7 +24,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
             chrome.windows.create({
                 url: niknaxUrl,
-                type: 'popup'
+                type: 'popup',
+                width: 500,
+                height: 500
             });
         });
     } else if (request.operation == 'get-session-id') {
