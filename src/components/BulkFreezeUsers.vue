@@ -3,6 +3,7 @@ import { onMounted, ref } from 'vue';
 
 import SalesforceRESTService from '@/services/salesforce-rest-services';
 import SalesforceToolingService from '@/services/salesforce-tooling-services';
+import PopoutCardFooter from './PopoutCardFooter.vue';
 import Context from '@/models/context';
 
 const props = defineProps<{
@@ -12,14 +13,12 @@ const props = defineProps<{
 let restService: SalesforceRESTService;
 let toolingService: SalesforceToolingService;
 
-const title = ref('Clone User');
+const title = ref('Bulk Freeze/Unfreeze Users');
 
 const loading = ref(true);
 const processing = ref(false);
 
 onMounted(() => {
-    resizeTo(618, 595);
-
     // Initialise Salesforce services
     restService = new SalesforceRESTService(props.context.serverHost, props.context.sessionId);
     toolingService = new SalesforceToolingService(props.context.serverHost, props.context.sessionId);
@@ -28,8 +27,7 @@ onMounted(() => {
 });
 
 async function loadData() {
-    title.value = `Bulk Freeze/Unfreeze Users`;
-    document.title = title.value;
+    document.title = `Salesforce Niknax: ${title.value}`;
 
     loading.value = false;
 }
@@ -71,5 +69,7 @@ async function onFreezeUnfreezeClick() {
         <div class="slds-card__body slds-card__body_inner">
             
         </div>
+
+        <PopoutCardFooter />
     </article>
 </template>

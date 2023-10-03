@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue';
 
 import SalesforceRESTService from '@/services/salesforce-rest-services';
 import DuelingPicklist from './DuelingPicklist.vue';
+import PopoutCardFooter from './PopoutCardFooter.vue';
 import Group from '@/models/Group';
 import GroupMember from '@/models/GroupMember';
 import DuelingPicklistItem from '@/models/DuelingPicklistItem';
@@ -23,7 +24,7 @@ let originalAvailableGroups: Array<Group>;
 const assignedGroups = ref<Array<Group>>([]);
 let originalAssignedGroups: Array<Group>;
 
-const title = ref('Memberships');
+const title = ref('');
 const showAPINames = ref(false);
 const loading = ref(true);
 const saving = ref(false);
@@ -53,8 +54,6 @@ const rightListItems = computed(() => {
 });
 
 onMounted(() => {
-    resizeTo(595, 505);
-
     // Initialise Salesforce service
     restService = new SalesforceRESTService(props.context.serverHost, props.context.sessionId);
 
@@ -63,7 +62,7 @@ onMounted(() => {
 
 async function loadData() {
     title.value = `${groupTypeLabel.value} Memberships`;
-    document.title = title.value;
+    document.title = `Salesforce Niknax: ${title.value}`;
 
     // Get all groups
     const allGroupsQueryResult = await restService.query(`SELECT Id, Name, DeveloperName FROM Group WHERE Type = '${props.type}'`);
@@ -255,9 +254,7 @@ async function unassignGroups(groups: Array<Group>) {
                             @move-left="onUnassignGroups"
                             @move-right="onAssignGroups" />
         </div>
-        <footer class="slds-card__footer">
-            <p>Only direct memberships are shown.</p>
-        </footer>
+        <PopoutCardFooter />
     </article>
 </template>
 

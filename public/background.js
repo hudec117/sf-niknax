@@ -2,6 +2,13 @@
 
 const SF_NIKNAX_PAGE = 'sf-niknax.html';
 
+const PAGE_DIMENSIONS = {
+    'edit-public-group-memberships': { width: 595, height: 505 },
+    'edit-queue-memberships': { width: 595, height: 505 },
+    'clone-user': { width: 620, height: 630 },
+    'bulk-freeze-users': { width: 620, height: 630 }
+};
+
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.operation === 'open-sf-niknax') {
         // Get server host
@@ -22,11 +29,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 niknaxUrl += `&user=${userId}`;
             }
 
+            // Note: width/height here must always be larger than the resizeTo dimensions
+            // in each popup. Otherwise the scrollbars introduced by a small width/height
+            // will affect the resizeTo.
             chrome.windows.create({
                 url: niknaxUrl,
                 type: 'popup',
-                width: 500,
-                height: 500
+                width: PAGE_DIMENSIONS[request.page].width,
+                height: PAGE_DIMENSIONS[request.page].height
             });
         });
     } else if (request.operation == 'get-session-id') {

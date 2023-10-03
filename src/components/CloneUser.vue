@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 
+import PopoutCardFooter from './PopoutCardFooter.vue';
 import SalesforceRESTService from '@/services/salesforce-rest-services';
 import SalesforceToolingService from '@/services/salesforce-tooling-services';
 import Context from '@/models/context';
@@ -16,7 +17,7 @@ let toolingService: SalesforceToolingService;
 
 const originalUser = ref<User>();
 
-const title = ref('Clone');
+const title = ref('');
 
 const form = ref(new UserCloneForm());
 
@@ -24,8 +25,6 @@ const loading = ref(true);
 const cloning = ref(false);
 
 onMounted(() => {
-    resizeTo(618, 595);
-
     // Initialise Salesforce services
     restService = new SalesforceRESTService(props.context.serverHost, props.context.sessionId);
     toolingService = new SalesforceToolingService(props.context.serverHost, props.context.sessionId);
@@ -48,7 +47,7 @@ async function loadData() {
     originalUser.value = getUserResult.data as User;
 
     title.value = `Clone ${originalUser.value.Username}`;
-    document.title = title.value;
+    document.title = `Salesforce Niknax: ${title.value}`;
 
     loading.value = false;
 }
@@ -229,5 +228,6 @@ async function onCloneAndCloseClick() {
                 </fieldset>
             </form>
         </div>
+        <PopoutCardFooter />
     </article>
 </template>
