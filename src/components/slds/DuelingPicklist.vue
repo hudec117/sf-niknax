@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, type Ref } from 'vue';
 
-import DuelingPicklistItem from '@/models/DuelingPicklistItem';
+import DuelingPicklistItem from './DuelingPicklistItem';
 
 const props = defineProps<{
     leftList: Array<DuelingPicklistItem>
@@ -222,7 +222,7 @@ function includesInsensitive(value1: string, value2: string) {
     </div>
 </template>
 
-<style>
+<style scoped>
 .slds-listbox__option {
     user-select: none;
 }
@@ -230,6 +230,8 @@ function includesInsensitive(value1: string, value2: string) {
 .slds-dueling-list__options {
     padding: 0;
     border-radius: 0;
+    width: 17.5rem;
+    height: 17.5rem;
 }
 
 .slds-custom-select-all-button {

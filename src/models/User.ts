@@ -1,6 +1,6 @@
 export default interface User {
     Id: string;
-    FirstName: string;
+    FirstName?: string;
     LastName: string;
     Email: string;
     Alias: string;

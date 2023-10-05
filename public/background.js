@@ -3,10 +3,10 @@
 const SF_NIKNAX_PAGE = 'sf-niknax.html';
 
 const PAGE_DIMENSIONS = {
-    'edit-public-group-memberships': { width: 595, height: 505 },
-    'edit-queue-memberships': { width: 595, height: 505 },
-    'clone-user': { width: 620, height: 694 },
-    'bulk-freeze-users': { width: 620, height: 630 }
+    'edit-public-group-memberships':    { width: 673, height: 537 },
+    'edit-queue-memberships':           { width: 673, height: 537 },
+    'clone-user':                       { width: 620, height: 694 },
+    'bulk-freeze-users':                { width: 620, height: 630 }
 };
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
@@ -42,7 +42,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     } else if (request.operation == 'get-session-id') {
         const serverUrl = `https://${request.host}`;
 
-        chrome.cookies.get({ name: 'sid', url: serverUrl }, function (cookie) {
+        chrome.cookies.get({ name: 'sid', url: serverUrl }, (cookie) => {
             const sessionId = cookie ? cookie.value : '';
 
             sendResponse({ id: sessionId });

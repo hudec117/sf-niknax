@@ -2,17 +2,20 @@
 import { computed, onMounted, ref } from 'vue';
 
 import SalesforceRESTService from '@/services/salesforce-rest-services';
-import DuelingPicklist from './DuelingPicklist.vue';
+import DuelingPicklist from './slds/DuelingPicklist.vue';
+import UserSelect from './modals/user-select/UserSelect.vue';
 import PopoutCardFooter from './PopoutCardFooter.vue';
 import Group from '@/models/Group';
 import GroupMember from '@/models/GroupMember';
-import DuelingPicklistItem from '@/models/DuelingPicklistItem';
 import Context from '@/models/context';
+import DuelingPicklistItem from './slds/DuelingPicklistItem';
 
 const props = defineProps<{
     context: Context,
     type: String
 }>();
+
+const userSelectPrompt = ref<InstanceType<typeof UserSelect> | null>(null);
 
 let restService: SalesforceRESTService;
 
@@ -137,6 +140,10 @@ function onUnassignGroups(items: Array<DuelingPicklistItem>) {
     }
 }
 
+function onMatchUserClick() {
+    userSelectPrompt.value?.show(props.context);
+}
+
 async function onSaveAndCloseClick() {
     saving.value = true;
 
@@ -237,6 +244,12 @@ async function unassignGroups(groups: Array<Group>) {
                             <use xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#preview"></use>
                         </svg>
                     </button>
+                    <button class="slds-button slds-button_neutral"
+                            title="Match another user's group memberships"
+                           @click="onMatchUserClick"
+                           :disabled="loading || saving">
+                        Match a User
+                    </button>
                     <button class="slds-button slds-button_brand"
                            @click="onSaveAndCloseClick"
                            :disabled="loading || saving">
@@ -256,9 +269,11 @@ async function unassignGroups(groups: Array<Group>) {
         </div>
         <PopoutCardFooter />
     </article>
+
+    <UserSelect ref="userSelectPrompt" />
 </template>
 
-<style>
+<style scoped>
 .slds-custom-align-button {
     margin-top: -4px;
 }
