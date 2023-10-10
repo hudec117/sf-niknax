@@ -1,8 +1,8 @@
 // Note: async/await with the Chrome API seems to break the code.
 
-const SF_NIKNAX_PAGE = 'sf-niknax.html';
+const SF_USER_PAGE = 'sf-user.html';
 
-const PAGE_DIMENSIONS = {
+const USER_POPUP_DIMENSIONS = {
     'edit-public-group-memberships':    { width: 673, height: 537 },
     'edit-queue-memberships':           { width: 673, height: 537 },
     'clone-user':                       { width: 620, height: 694 },
@@ -10,7 +10,7 @@ const PAGE_DIMENSIONS = {
 };
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    if (request.operation === 'open-sf-niknax') {
+    if (request.operation === 'open-user-popup') {
         // Get server host
         const serverUrl = new URL(sender.url);
         const serverHost = serverUrl.hostname;
@@ -22,7 +22,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         let queryOptions = { active: true, lastFocusedWindow: true };
         chrome.tabs.query(queryOptions, ([userTab]) => {
             // Construct page URL with server host
-            let niknaxUrl = chrome.runtime.getURL(SF_NIKNAX_PAGE);
+            let niknaxUrl = chrome.runtime.getURL(SF_USER_PAGE);
             niknaxUrl += `?host=${serverHost}&tab=${userTab.id}&page=${request.page}`;
 
             if (userId) {
@@ -35,8 +35,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             chrome.windows.create({
                 url: niknaxUrl,
                 type: 'popup',
-                width: PAGE_DIMENSIONS[request.page].width,
-                height: PAGE_DIMENSIONS[request.page].height
+                width: USER_POPUP_DIMENSIONS[request.page].width,
+                height: USER_POPUP_DIMENSIONS[request.page].height
             });
         });
     } else if (request.operation == 'get-session-id') {

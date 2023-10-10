@@ -21,7 +21,19 @@
         {
             "matches": [ "https://*.my.salesforce.com/*" ],
             "all_frames": true,
-            "js": [ "content-script.js" ]
+            "js": [ "sf-user-content-script.js" ]
+        },
+        {
+            "matches": [ "https://*.lightning.force.com/*" ],
+            "all_frames": false,
+            "js": [ "sf-alerts-content-script.js" ],
+            "css": [ "sf-alerts-style.css" ]
+        }
+    ],
+    "web_accessible_resources": [
+        {
+          "resources": [ "sf-alerts.html" ],
+          "matches": [ "https://*.lightning.force.com/*" ]
         }
     ]
 }

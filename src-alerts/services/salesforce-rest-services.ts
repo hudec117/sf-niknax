@@ -29,8 +29,6 @@ export default class SalesforceRESTService {
     }
 
     async get(object: string, id: string) {
-        // https://cunning-bear-val4af-dev-ed.trailblaze.my.salesforce.com/services/data/v58.0/sobjects/User/0058d00000854Tv
-
         const requestUrl = new URL(`${this.OBJECT_ENDPOINT}/${object}/${id}`, this.serverBaseUrl);
 
         const response = await this.authFetch(requestUrl, {

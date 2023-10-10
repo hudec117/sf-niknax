@@ -35,7 +35,7 @@ window.onload = function () {
 
         function onClick(event) {
             if (event.target.id === editMembershipButton.id) {
-                chrome.runtime.sendMessage({ operation: 'open-sf-niknax', page: 'edit-public-group-memberships' });
+                chrome.runtime.sendMessage({ operation: 'open-user-popup', page: 'edit-public-group-memberships' });
             }
         }
 
@@ -65,7 +65,7 @@ window.onload = function () {
 
         function onClick(event) {
             if (event.target.id === editMembershipButton.id) {
-                chrome.runtime.sendMessage({ operation: 'open-sf-niknax', page: 'edit-queue-memberships' });
+                chrome.runtime.sendMessage({ operation: 'open-user-popup', page: 'edit-queue-memberships' });
             }
         }
 
@@ -88,7 +88,7 @@ window.onload = function () {
         cloneUserButton.type = 'button';
         cloneUserButton.style = 'margin-left: 5px; border: 1px solid #2574a9;';
         cloneUserButton.addEventListener('click', () => {
-            chrome.runtime.sendMessage({ operation: 'open-sf-niknax', page: 'clone-user' });
+            chrome.runtime.sendMessage({ operation: 'open-user-popup', page: 'clone-user' });
         });
 
         const topButtonRow = document.getElementById('topButtonRow');
@@ -103,7 +103,7 @@ window.onload = function () {
     //     freezeUsersButton.type = 'button';
     //     freezeUsersButton.style = 'margin-left: 5px; border: 1px solid #2574a9;';
     //     freezeUsersButton.addEventListener('click', () => {
-    //         chrome.runtime.sendMessage({ operation: 'open-sf-niknax', page: 'bulk-freeze-users' });
+    //         chrome.runtime.sendMessage({ operation: 'open-user-popup', page: 'bulk-freeze-users' });
     //     });
 
     //     const topButtonRow = document.querySelector('td.pbBottomButtons');
