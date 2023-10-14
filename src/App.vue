@@ -1,24 +1,24 @@
 <script setup lang="ts">
 import { ref, type App, inject } from 'vue';
 import AppContent from './components/AppContent.vue';
-import ErrorPrompt from './components/modals/error/ErrorPrompt.vue';
+import ErrorModal from './components/modals/error/ErrorModal.vue';
 
 const app = inject('app') as App<Element>;
 
-const errorPrompt = ref<InstanceType<typeof ErrorPrompt> | null>(null);
+const errorModal = ref<InstanceType<typeof ErrorModal> | null>(null);
 
 app.config.errorHandler = err => {
-  errorPrompt.value?.show(err as Error);
+  errorModal.value?.show(err as Error);
 };
 
 window.addEventListener('unhandledrejection', (e: PromiseRejectionEvent) => {
-  errorPrompt.value?.show(e.reason as Error);
+  errorModal.value?.show(e.reason as Error);
 });
 </script>
 
 <template>
   <AppContent />
-  <ErrorPrompt ref="errorPrompt" />
+  <ErrorModal ref="errorModal" />
 </template>
 
 <style>

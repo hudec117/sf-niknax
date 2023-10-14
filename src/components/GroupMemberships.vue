@@ -3,7 +3,7 @@ import { computed, onMounted, ref } from 'vue';
 
 import SalesforceRESTService from '@/services/salesforce-rest-services';
 import DuelingPicklist from './slds/DuelingPicklist.vue';
-import UserSelect from './modals/user-select/UserSelect.vue';
+import UserSelectModal from './modals/user-select/UserSelectModal.vue';
 import PopoutCardFooter from './PopoutCardFooter.vue';
 import Group from '@/models/Group';
 import GroupMember from '@/models/GroupMember';
@@ -15,7 +15,7 @@ const props = defineProps<{
     type: String
 }>();
 
-const userSelectPrompt = ref<InstanceType<typeof UserSelect> | null>(null);
+const userSelectModal = ref<InstanceType<typeof UserSelectModal> | null>(null);
 
 let restService: SalesforceRESTService;
 
@@ -140,8 +140,17 @@ function onUnassignGroups(items: Array<DuelingPicklistItem>) {
     }
 }
 
-function onMatchUserClick() {
-    userSelectPrompt.value?.show(props.context);
+async function onMatchUserClick() {
+    const userId = await userSelectModal.value?.show(props.context);
+    if (userId) {
+        const cloneUserGroupMembershipsQueryResult = await restService.query(`SELECT GroupId, UserOrGroupId FROM GroupMember WHERE UserOrGroupId = '${userId}' AND Group.Type = '${props.type}'`);
+        if (!cloneUserGroupMembershipsQueryResult.success) {
+            // TODO: handle
+            return;
+        }
+
+        console.log(cloneUserGroupMembershipsQueryResult);
+    }
 }
 
 async function onSaveAndCloseClick() {
@@ -270,7 +279,7 @@ async function unassignGroups(groups: Array<Group>) {
         <PopoutCardFooter />
     </article>
 
-    <UserSelect ref="userSelectPrompt" />
+    <UserSelectModal ref="userSelectModal" />
 </template>
 
 <style scoped>

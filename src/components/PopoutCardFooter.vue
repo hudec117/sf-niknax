@@ -1,3 +1,15 @@
+<script setup lang="ts">
+import { ref } from 'vue';
+
+import LicensesModal from './modals/licenses/LicensesModal.vue';
+
+const licensesModal = ref<InstanceType<typeof LicensesModal> | null>(null);
+
+function onLicensesClick() {
+    licensesModal.value?.show();
+}
+</script>
+
 <template>
     <footer class="slds-card__footer slds-p-vertical_x-small">
         <div class="slds-grid">
@@ -8,8 +20,10 @@
                 <span>v0.2.0</span>
             </div>
             <div class="slds-col slds-size_1-of-8">
-                Licenses
+                <a href="#" @click="onLicensesClick">Licenses</a>
             </div>
         </div>
     </footer>
+
+    <LicensesModal ref="licensesModal" />
 </template>

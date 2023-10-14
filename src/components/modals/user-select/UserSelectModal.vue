@@ -9,6 +9,9 @@ import SalesforceRESTService from '@/services/salesforce-rest-services';
 
 let restService: SalesforceRESTService;
 
+// Setup promise to defer until the user has either selected a user or closed the dialog.
+let resultResolve: (value: string | PromiseLike<string | null> | null) => void;
+
 const visible = ref(false);
 const selectedUserId = ref<string | undefined>();
 
@@ -41,13 +44,23 @@ function onSearchUnselected() {
     selectedUserId.value = undefined;
 }
 
-async function show(context: Context): Promise<string> {
+async function show(context: Context): Promise<string | null> {
     visible.value = true;
     document.addEventListener('keydown', onKeydown);
 
     restService = new SalesforceRESTService(context.serverHost, context.sessionId);
 
-    return 'test';
+    return new Promise<string | null>((resolve) => {
+        resultResolve = resolve;
+    });
+}
+
+function onSelectClick() {
+    if (selectedUserId.value) {
+        resultResolve(selectedUserId.value);
+
+        close();
+    }
 }
 
 function close() {
@@ -55,14 +68,20 @@ function close() {
     document.removeEventListener('keydown', onKeydown);
 }
 
+function onCloseClick() {
+    resultResolve(null);
+    close();
+}
+
 function onKeydown(e: KeyboardEvent) {
     if (e.key === 'Escape') {
+        resultResolve(null);
         close();
     }
 }
 
 defineExpose<{
-    show(context: Context): Promise<string>
+    show(context: Context): Promise<string | null>
 }>({
     show
 });
@@ -72,7 +91,7 @@ defineExpose<{
     <template v-if="visible">
         <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open slds-modal_small">
             <div class="slds-modal__container">
-                <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" @click="close">
+                <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" @click="onCloseClick">
                     <svg class="slds-button__icon slds-button__icon_large">
                         <use xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#close"></use>
                     </svg>
@@ -89,7 +108,7 @@ defineExpose<{
                                  @unselected="onSearchUnselected" />
                 </div>
                 <div class="slds-modal__footer slds-theme_default">
-                    <button class="slds-button slds-button_brand" :disabled="selectedUserId == undefined">Select</button>
+                    <button class="slds-button slds-button_brand" :disabled="selectedUserId == undefined" @click="onSelectClick">Select</button>
                 </div>
             </div>
         </section>
