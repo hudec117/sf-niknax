@@ -143,13 +143,47 @@ function onUnassignGroups(items: Array<DuelingPicklistItem>) {
 async function onMatchUserClick() {
     const userId = await userSelectModal.value?.show(props.context);
     if (userId) {
-        const cloneUserGroupMembershipsQueryResult = await restService.query(`SELECT GroupId, UserOrGroupId FROM GroupMember WHERE UserOrGroupId = '${userId}' AND Group.Type = '${props.type}'`);
+        const cloneUserGroupMembershipsQueryResult = await restService.query(`SELECT Id, GroupId, UserOrGroupId FROM GroupMember WHERE UserOrGroupId = '${userId}' AND Group.Type = '${props.type}'`);
         if (!cloneUserGroupMembershipsQueryResult.success) {
             // TODO: handle
             return;
         }
 
-        console.log(cloneUserGroupMembershipsQueryResult);
+        const matchUserGroupMembers = (cloneUserGroupMembershipsQueryResult.records as Array<any>).map((record) => {
+            return new GroupMember(record.GroupId, record.UserOrGroupId, record.Id);
+        });
+
+        if (matchUserGroupMembers.length === 0) {
+            // TODO: handle if match user has no groups
+            return;
+        }
+
+        // Move all the ones in the assigned list to available
+        for (const group of assignedGroups.value) {
+            availableGroups.value.push(group);
+        }
+        assignedGroups.value = [];
+
+        // Assign the ones from the query
+        for (const groupMember of matchUserGroupMembers) {
+            const groupFinds = availableGroups.value.filter(group => group.id === groupMember.groupId);
+            if (groupFinds.length < 1) {
+                // TODO: handle
+                return;
+            } else if (groupFinds.length > 1) {
+                // TODO: handle
+                return;
+            }
+
+            const groupToAssign = groupFinds[0];
+
+            // Assign the group
+            assignedGroups.value.push(groupToAssign);
+
+            // Remove from available
+            const indexOfGroupToAssign = availableGroups.value.indexOf(groupToAssign);
+            availableGroups.value.splice(indexOfGroupToAssign, 1);
+        }
     }
 }
 
