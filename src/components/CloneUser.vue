@@ -2,8 +2,8 @@
 import { onMounted, ref } from 'vue';
 
 import PopoutCardFooter from './PopoutCardFooter.vue';
-import SalesforceRESTService from '@/services/salesforce-rest-services';
-import SalesforceToolingService from '@/services/salesforce-tooling-services';
+import SalesforceRESTService from '@/services/salesforce-rest-service';
+import SalesforceToolingService from '@/services/salesforce-tooling-service';
 import Context from '@/models/context';
 import UserCloneForm from '@/models/UserCloneForm';
 import type User from '@/models/User';

@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, inject } from 'vue';
 
-import SalesforceRESTService from '@/services/salesforce-rest-services';
+import SalesforceRESTService from '@/services/salesforce-rest-service';
 import DuelingPicklist from './slds/DuelingPicklist.vue';
+import ErrorModal from './modals/error/ErrorModal.vue';
 import UserSelectModal from './modals/user-select/UserSelectModal.vue';
 import PopoutCardFooter from './PopoutCardFooter.vue';
 import Group from '@/models/Group';
@@ -15,6 +16,7 @@ const props = defineProps<{
     type: String
 }>();
 
+const errorModal = inject('errorModal') as InstanceType<typeof ErrorModal>;
 const userSelectModal = ref<InstanceType<typeof UserSelectModal> | null>(null);
 
 let restService: SalesforceRESTService;
@@ -70,20 +72,20 @@ async function loadData() {
     // Get all groups
     const allGroupsQueryResult = await restService.query(`SELECT Id, Name, DeveloperName FROM Group WHERE Type = '${props.type}'`);
     if (!allGroupsQueryResult.success) {
-        // TODO: handle
+        showError('Initial query for all Group records failed.', allGroupsQueryResult.error);
         return;
     }
-    const allGroups = (allGroupsQueryResult.records as Array<any>).map((record) => {
+    const allGroups = (allGroupsQueryResult.data as Array<any>).map((record) => {
         return new Group(record.Id, record.Name, record.DeveloperName);
     });
 
     // Group memberships
     const groupMembersQueryResult = await restService.query(`SELECT Id, GroupId, UserOrGroupId FROM GroupMember WHERE UserOrGroupId = '${props.context.userId}'`);
     if (!groupMembersQueryResult.success) {
-        // TODO: handle
+        showError('Initial query for GroupMember records failed.', groupMembersQueryResult.error);
         return;
     }
-    userGroupMembers = (groupMembersQueryResult.records as Array<any>).map((record) => {
+    userGroupMembers = (groupMembersQueryResult.data as Array<any>).map((record) => {
         return new GroupMember(record.GroupId, record.UserOrGroupId, record.Id);
     });
 
@@ -145,11 +147,11 @@ async function onMatchUserClick() {
     if (userId) {
         const cloneUserGroupMembershipsQueryResult = await restService.query(`SELECT Id, GroupId, UserOrGroupId FROM GroupMember WHERE UserOrGroupId = '${userId}' AND Group.Type = '${props.type}'`);
         if (!cloneUserGroupMembershipsQueryResult.success) {
-            // TODO: handle
+            showError('Query to retrieve match user\'s GroupMember records failed.', cloneUserGroupMembershipsQueryResult.error);
             return;
         }
 
-        const matchUserGroupMembers = (cloneUserGroupMembershipsQueryResult.records as Array<any>).map((record) => {
+        const matchUserGroupMembers = (cloneUserGroupMembershipsQueryResult.data as Array<any>).map((record) => {
             return new GroupMember(record.GroupId, record.UserOrGroupId, record.Id);
         });
 
@@ -168,10 +170,10 @@ async function onMatchUserClick() {
         for (const groupMember of matchUserGroupMembers) {
             const groupFinds = availableGroups.value.filter(group => group.id === groupMember.groupId);
             if (groupFinds.length < 1) {
-                // TODO: handle
+                showError(`Available groups does not contain the match user's group "${groupMember.groupId}".`);
                 return;
             } else if (groupFinds.length > 1) {
-                // TODO: handle
+                showError(`Available groups contains too many groups matching "${groupMember.groupId}".`);
                 return;
             }
 
@@ -190,6 +192,8 @@ async function onMatchUserClick() {
 async function onSaveAndCloseClick() {
     saving.value = true;
 
+    let success = true;
+
     // Create a list of groups that have been newly assigned
     const newlyAssignedGroups = assignedGroups.value.filter(group => {
         for (const originalAssignedGroup of originalAssignedGroups) {
@@ -200,9 +204,8 @@ async function onSaveAndCloseClick() {
 
         return true;
     });
-
     if (newlyAssignedGroups.length > 0) {
-        await assignGroups(newlyAssignedGroups);
+        success = await assignGroups(newlyAssignedGroups);
     }
 
     // Create a list of groups that have been newly unassigned
@@ -215,27 +218,28 @@ async function onSaveAndCloseClick() {
 
         return true;
     });
-
     if (newlyUnassignedGroups.length > 0) {
-        await unassignGroups(newlyUnassignedGroups);
+        success = await unassignGroups(newlyUnassignedGroups);
     }
 
-    // If there's been a change, refresh the page.
-    if (newlyAssignedGroups.length > 0 || newlyUnassignedGroups.length > 0) {
-        await chrome.tabs.reload(props.context.originalTabId);
+    if (success) {
+        // If there's been a change, refresh the page.
+        if (newlyAssignedGroups.length > 0 || newlyUnassignedGroups.length > 0) {
+            await chrome.tabs.reload(props.context.originalTabId);
+        }
+
+        const currentPopup = await chrome.windows.getCurrent();
+        await chrome.windows.remove(currentPopup.id!);
     }
 
     saving.value = false;
-
-    const currentPopup = await chrome.windows.getCurrent();
-    await chrome.windows.remove(currentPopup.id!);
 }
 
-async function assignGroups(groups: Array<Group>) {
+async function assignGroups(groups: Array<Group>): Promise<boolean> {
     const assignToUserId = props.context.userId;
     if (!assignToUserId) {
-        // TODO: handle
-        return;
+        showError('Missing User ID in the context.');
+        return false;
     }
 
     const groupMembersToCreate = groups.map(group => new GroupMember(group.id, assignToUserId));
@@ -243,22 +247,33 @@ async function assignGroups(groups: Array<Group>) {
     for (const groupMember of groupMembersToCreate) {
         const result = await restService.create('GroupMember', groupMember);
         if (!result.success) {
-            // TODO: handle
-            return;
+            showError(`Failed to assign (create) user to group "${groupMember.groupId}".`, result.error);
+            return false;
         }
     }
+
+    return true;
 }
 
-async function unassignGroups(groups: Array<Group>) {
+async function unassignGroups(groups: Array<Group>): Promise<boolean> {
     const groupMembersToDelete = groups.map(group => userGroupMembers.filter(groupMember => group.id == groupMember.groupId)[0]);
 
     for (const groupMember of groupMembersToDelete) {
         const result = await restService.delete('GroupMember', groupMember.id!);
         if (!result.success) {
-            // TODO: handle
-            return;
+            showError(`Failed to unassign (delete) user from group "${groupMember.groupId}".`, result.error);
+            return false;
         }
     }
+
+    return true;
+}
+
+function showError(message: string, stack?: string) {
+    errorModal.show({
+        message: message,
+        stack: stack
+    } as Error);
 }
 </script>
 

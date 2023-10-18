@@ -14,7 +14,7 @@ window.onload = function () {
     if (isOnUserDetailPage) {
         injectEditPublicGroupMembershipsButton();
         injectEditQueueMembershipsButton();
-        injectCloneUserButton();
+        // injectCloneUserButton();
     } else if (isOnUserListPage) {
         // injectFreezeUsersButton();
     }
@@ -80,20 +80,20 @@ window.onload = function () {
         buttonRow.appendChild(editMembershipButton);
     }
 
-    function injectCloneUserButton() {
-        const cloneUserButton = document.createElement('input');
-        cloneUserButton.value = 'Clone';
-        cloneUserButton.title = `Salesforce Niknax: ${cloneUserButton.value}`;
-        cloneUserButton.className = 'btn';
-        cloneUserButton.type = 'button';
-        cloneUserButton.style = 'margin-left: 5px; border: 1px solid #2574a9;';
-        cloneUserButton.addEventListener('click', () => {
-            chrome.runtime.sendMessage({ operation: 'open-sf-niknax', page: 'clone-user' });
-        });
+    // function injectCloneUserButton() {
+    //     const cloneUserButton = document.createElement('input');
+    //     cloneUserButton.value = 'Clone';
+    //     cloneUserButton.title = `Salesforce Niknax: ${cloneUserButton.value}`;
+    //     cloneUserButton.className = 'btn';
+    //     cloneUserButton.type = 'button';
+    //     cloneUserButton.style = 'margin-left: 5px; border: 1px solid #2574a9;';
+    //     cloneUserButton.addEventListener('click', () => {
+    //         chrome.runtime.sendMessage({ operation: 'open-sf-niknax', page: 'clone-user' });
+    //     });
 
-        const topButtonRow = document.getElementById('topButtonRow');
-        topButtonRow.appendChild(cloneUserButton);
-    }
+    //     const topButtonRow = document.getElementById('topButtonRow');
+    //     topButtonRow.appendChild(cloneUserButton);
+    // }
 
     // function injectFreezeUsersButton() {
     //     const freezeUsersButton = document.createElement('input');

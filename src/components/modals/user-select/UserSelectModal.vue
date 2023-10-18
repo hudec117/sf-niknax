@@ -5,7 +5,7 @@ import type User from '@/models/User';
 import SearchLookup from '../../slds/SearchLookup.vue';
 import SearchLookupItem from '@/components/slds/SearchLookupItem';
 import type Context from '@/models/context';
-import SalesforceRESTService from '@/services/salesforce-rest-services';
+import SalesforceRESTService from '@/services/salesforce-rest-service';
 
 let restService: SalesforceRESTService;
 
@@ -22,7 +22,7 @@ async function doSearch(value: string): Promise<Array<SearchLookupItem>> {
         return [];
     }
 
-    return (result.records as Array<any>).map(record => {
+    return (result.data as Array<any>).map(record => {
         const user = record as User;
 
         let fullName = user.LastName;

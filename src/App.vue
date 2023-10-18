@@ -10,6 +10,7 @@ const errorModal = ref<InstanceType<typeof ErrorModal> | null>(null);
 app.config.errorHandler = err => {
   errorModal.value?.show(err as Error);
 };
+app.provide('errorModal', errorModal);
 
 window.addEventListener('unhandledrejection', (e: PromiseRejectionEvent) => {
   errorModal.value?.show(e.reason as Error);
