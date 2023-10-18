@@ -1,16 +1,8 @@
-export default class UserCloneForm {
-    firstName = '';
-    lastName = '';
-    alias = '';
-    email = '';
-    username = '';
-    nickname = '';
-    federationIdentifier = '';
+import UserCreateForm from './UserCreateForm';
 
+export default class UserCloneForm extends UserCreateForm {
     clonePermissionSetAssignments = true;
     clonePublicGroupMemberships = true;
     cloneQueueMemberships = true;
     clonePermissionSetLicenseAssignments = true;
-
-    resetPassword = false;
 }

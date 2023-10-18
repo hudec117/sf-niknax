@@ -21,7 +21,12 @@
         {
             "matches": [ "https://*.my.salesforce.com/*" ],
             "all_frames": true,
-            "js": [ "content-script.js" ]
+            "js": [ "classic-content-script.js" ]
+        },
+        {
+            "matches": [ "https://*.lightning.force.com/*" ],
+            "all_frames": true,
+            "js": [ "lightning-content-script.js" ]
         }
     ]
 }

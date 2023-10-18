@@ -4,12 +4,14 @@ import { onMounted, ref } from 'vue';
 import GroupMemberships from './GroupMemberships.vue';
 import CloneUser from './CloneUser.vue';
 import BulkFreezeUsers from './BulkFreezeUsers.vue';
+import QuickCreateUser from './QuickCreateUser.vue';
 
 import Context from '@/models/context';
 
 const displayEditGroupMemberships = ref(false);
 const displayCloneUser = ref(false);
 const displayBulkFreezeUsers = ref(false);
+const displayQuickCreateUser = ref(false);
 
 const groupType = ref('');
 
@@ -55,6 +57,8 @@ onMounted(() => {
             displayCloneUser.value = true;
         } else if (loadedPage === 'bulk-freeze-users') {
             displayBulkFreezeUsers.value = true;
+        } else if (loadedPage === 'quick-create-user') {
+            displayQuickCreateUser.value = true;
         }
     });
 });
@@ -65,5 +69,6 @@ onMounted(() => {
         <GroupMemberships v-if="displayEditGroupMemberships" :type="groupType" :context="context!" />
         <CloneUser v-else-if="displayCloneUser" :context="context!" />
         <BulkFreezeUsers v-else-if="displayBulkFreezeUsers" :context="context!" />
+        <QuickCreateUser v-else-if="displayQuickCreateUser" :context="context!" />
     </div>
 </template>
