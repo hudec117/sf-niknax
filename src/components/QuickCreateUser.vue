@@ -19,7 +19,7 @@ const title = ref('');
 const form = ref(new UserCreateForm());
 
 const loading = ref(true);
-const creating = ref(true);
+const creating = ref(false);
 
 onMounted(() => {
     // Initialise Salesforce services
@@ -30,11 +30,6 @@ onMounted(() => {
 });
 
 async function loadData() {
-    if (!props.context.userId) {
-        // TODO: handle
-        return;
-    }
-
     title.value = `Quick Create User`;
     document.title = `Salesforce Niknax: ${title.value}`;
 
@@ -102,6 +97,16 @@ async function onCreateAndCloseClick() {
         </div>
         <div class="slds-card__body slds-card__body_inner">
             <form class="slds-form" role="list">
+                <div class="slds-form-element slds-form-element_stacked">
+                    <label class="slds-form-element__label" for="email-input">
+                        <abbr class="slds-required" title="required">* </abbr>
+                        Email
+                    </label>
+                    <div class="slds-form-element__control">
+                        <input type="text" id="email-input" class="slds-input" v-model="form.email" required />
+                    </div>
+                </div>
+
                 <div class="slds-form__row slds-p-horizontal_xx-small">
                     <div class="slds-form__item" role="listitem">
                         <div class="slds-form-element slds-form-element_horizontal slds-is-editing">
@@ -131,16 +136,6 @@ async function onCreateAndCloseClick() {
                     </label>
                     <div class="slds-form-element__control">
                         <input type="text" id="alias-input" class="slds-input" v-model="form.alias" required />
-                    </div>
-                </div>
-
-                <div class="slds-form-element slds-form-element_stacked">
-                    <label class="slds-form-element__label" for="email-input">
-                        <abbr class="slds-required" title="required">* </abbr>
-                        Email
-                    </label>
-                    <div class="slds-form-element__control">
-                        <input type="text" id="email-input" class="slds-input" v-model="form.email" required />
                     </div>
                 </div>
 

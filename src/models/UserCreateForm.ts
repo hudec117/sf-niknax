@@ -7,5 +7,5 @@ export default class UserCreateForm {
     nickname = '';
     federationIdentifier = '';
 
-    resetPassword = false;
+    resetPassword = true;
 }

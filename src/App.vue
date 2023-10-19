@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, type App, inject } from 'vue';
-import AppContent from './components/AppContent.vue';
+import ToolLauncher from './components/ToolLauncher.vue';
 import ErrorModal from './components/modals/error/ErrorModal.vue';
 
 const app = inject('app') as App<Element>;
@@ -18,7 +18,7 @@ window.addEventListener('unhandledrejection', (e: PromiseRejectionEvent) => {
 </script>
 
 <template>
-  <AppContent />
+  <ToolLauncher />
   <ErrorModal ref="errorModal" />
 </template>
 
