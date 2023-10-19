@@ -1,4 +1,4 @@
-import type ServiceResult from './result';
+import ServiceResult from './result';
 
 export default class SalesforceToolingService {
     EXECUTE_ANONYMOUS_ENDPOINT = '/services/data/v58.0/tooling/executeAnonymous';
@@ -11,12 +11,11 @@ export default class SalesforceToolingService {
         this.sessionId = sessionId;
     }
 
-    protected authFetch(requestUrl: URL, requestInfo: any = { method: 'GET' }) {
-        const actualRequestUrl = requestUrl.toString().replace('+', '%20');
+    protected authFetch(requestUrl: URL, requestInfo: any = { method: 'GET' }): Promise<Response> {
+        const actualRequestUrl = requestUrl.toString().replace(/\+/g, '%20');
 
-        if (!requestInfo.headers) {
+        if (!requestInfo.headers)
             requestInfo.headers = {};
-        }
         requestInfo.headers['Authorization'] = 'Bearer ' + this.sessionId
 
         return fetch(actualRequestUrl, requestInfo);

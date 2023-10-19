@@ -4,6 +4,7 @@ import { onMounted, ref } from 'vue';
 import PopoutCardFooter from './PopoutCardFooter.vue';
 import SalesforceToolingService from '@/services/salesforce-tooling-service';
 import Context from '@/models/context';
+import QuickCreateUserSettingsModal from '@/components/modals/quick-create-user-settings/QuickCreateUserSettingsModal.vue';
 import UserCreateForm from '@/models/UserCreateForm';
 import SalesforceUserService from '@/services/salesforce-user-service';
 import Profile from '@/models/Profile';
@@ -12,6 +13,8 @@ import Role from '@/models/Role';
 const props = defineProps<{
     context: Context
 }>();
+
+const settingsModal = ref<InstanceType<typeof QuickCreateUserSettingsModal> | null>(null);
 
 let userService: SalesforceUserService;
 let toolingService: SalesforceToolingService;
@@ -38,13 +41,14 @@ async function loadData() {
     title.value = `Quick Create User`;
     document.title = `Salesforce Niknax: ${title.value}`;
 
-    await loadProfiles();
-    await loadRoles();
+    await Promise.all([loadProfiles(), loadRoles()]);
 
     loading.value = false;
 }
 
 async function loadProfiles() {
+    form.value.profileId = 'loading';
+
     const result = await userService.query('SELECT Id, Name, UserlicenseId, UserLicense.Name FROM Profile');
     if (!result.success) {
         // TODO: handle
@@ -56,6 +60,8 @@ async function loadProfiles() {
 }
 
 async function loadRoles() {
+    form.value.roleId = 'loading';
+
     const result = await userService.query('SELECT Id, Name FROM UserRole');
     if (!result.success) {
         // TODO: handle
@@ -63,20 +69,37 @@ async function loadRoles() {
     }
 
     roles.value = (result.data as Array<any>).map(record => new Role(record.Id, record.Name));
+    form.value.roleId = '';
 }
 
 async function onEmailEntered() {
-    if (!userService.isValidEmail(form.value.email)) {
-        // TODO: handle
+    if (! (form.value.emailValid = userService.isValidEmail(form.value.email))) {
         return;
     }
 
     const emailUsername = form.value.email.substring(0, form.value.email.indexOf('@'));
 
-    form.value.lastName = emailUsername;
+    const nameComponents = emailUsername.split('.');
+    if (nameComponents.length > 1) {
+        let firstName = nameComponents[0];
+        let lastName = nameComponents[nameComponents.length - 1];
+
+        firstName = firstName[0].toUpperCase() + firstName.slice(1);
+        lastName = lastName[0].toUpperCase() + lastName.slice(1);
+
+        form.value.firstName = firstName;
+        form.value.lastName = lastName;
+    } else {
+        form.value.lastName = emailUsername;
+    }
+
     form.value.alias = userService.generateAlias();
     form.value.username = userService.generateUsername(emailUsername);
     form.value.nickname = userService.generateNickname();
+}
+
+async function onSettingsClick() {
+    settingsModal.value?.show();
 }
 
 async function onCreateAndCloseClick() {
@@ -136,7 +159,7 @@ async function onCreateAndCloseClick() {
                 <div class="slds-no-flex">
                     <button class="slds-button slds-button_icon slds-button_icon-border-filled slds-custom-align-button"
                             title="Settings"
-                           :disabled="loading || creating">
+                           @click="onSettingsClick">
                         <svg class="slds-button__icon">
                             <use xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#settings"></use>
                         </svg>
@@ -149,8 +172,10 @@ async function onCreateAndCloseClick() {
             </header>
         </div>
         <div class="slds-card__body slds-card__body_inner">
-            <form class="slds-form" role="list">
-                <div class="slds-form-element slds-form-element_stacked">
+            <div class="slds-form" role="list">
+                <p class="slds-m-bottom_xx-small slds-m-left_xx-small">Enter an email address and the rest of the form will auto-populate.</p>
+
+                <div :class="`slds-form-element slds-form-element_stacked ${form.emailValid ? '' : 'slds-has-error'}`">
                     <label class="slds-form-element__label" for="email-input">
                         <abbr class="slds-required" title="required">* </abbr>
                         Email
@@ -159,7 +184,7 @@ async function onCreateAndCloseClick() {
                         <input type="text"
                                id="email-input"
                                class="slds-input"
-                               v-model="form.email" 
+                               v-model="form.email"
                                v-debounce:200ms="onEmailEntered"
                                autofocus
                                required />
@@ -197,7 +222,8 @@ async function onCreateAndCloseClick() {
                             </label>
                             <div class="slds-form-element__control">
                                 <div class="slds-select_container">
-                                <select class="slds-select" id="profile-input" v-model="form.profileId">
+                                <select id="profile-input" class="slds-select" :disabled="profiles.length === 0" v-model="form.profileId">
+                                    <option v-if="profiles.length === 0" value="loading">Loading...</option>
                                     <option v-for="profile of profiles"
                                            :key="profile.id"
                                            :value="profile.id">
@@ -213,8 +239,9 @@ async function onCreateAndCloseClick() {
                             <label class="slds-form-element__label" for="role-input">Role</label>
                             <div class="slds-form-element__control">
                                 <div class="slds-select_container">
-                                <select class="slds-select" id="role-input">
+                                <select class="slds-select" id="role-input" :disabled="profiles.length === 0" v-model="form.roleId">
                                     <option value="">None</option>
+                                    <option v-if="roles.length === 0" value="loading">Loading...</option>
                                     <option v-for="role of roles"
                                            :key="role.id"
                                            :value="role.id">
@@ -280,9 +307,11 @@ async function onCreateAndCloseClick() {
                         </div>
                     </div>
                 </fieldset> -->
-            </form>
+            </div>
         </div>
 
         <PopoutCardFooter />
     </article>
+
+    <QuickCreateUserSettingsModal ref="settingsModal" />
 </template>

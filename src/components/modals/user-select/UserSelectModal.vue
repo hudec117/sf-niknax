@@ -117,6 +117,8 @@ defineExpose<{
 </template>
 
 <style scoped>
+
+/* Important to be able to show full dropdown */
 .slds-modal__content {
     overflow: visible;
 }

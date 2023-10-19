@@ -22,9 +22,7 @@ export default class SalesforceUserService extends SalesforceRESTService {
             domain = `${domainPrefix}-${domain}`;
         }
 
-        const tld = this.generateRandomString(3, false, true, false);
-
-        return `${username}@${domain}.${tld}`;
+        return `${username}@${domain}.com`;
     }
 
     generateNickname(): string {
