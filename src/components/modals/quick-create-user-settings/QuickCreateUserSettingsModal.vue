@@ -1,33 +1,34 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, toRaw } from 'vue';
 
-import UserQuickCreateSettingsForm from '@/models/UserQuickCreateSettingsForm';
+import UserQuickCreateSettings from '@/models/UserQuickCreateSettings';
 
 // Setup promise to defer until the user has either selected a user or closed the dialog.
-let resultResolve: (value: string | PromiseLike<string | null> | null) => void;
+let resultResolve: (value: UserQuickCreateSettings | PromiseLike<UserQuickCreateSettings | null> | null) => void;
 
 const visible = ref(false);
-const showUsernameAtSuffixTooltip = ref(false);
+const showUsernameDomainTooltip = ref(false);
 
-const form = ref(new UserQuickCreateSettingsForm());
+const form = ref(new UserQuickCreateSettings());
 
-async function show(): Promise<string | null> {
+async function show(currentSettings: UserQuickCreateSettings): Promise<UserQuickCreateSettings | null> {
     visible.value = true;
     document.addEventListener('keydown', onKeydown);
 
-    return new Promise<string | null>((resolve) => {
+    form.value = currentSettings;
+
+    return new Promise<UserQuickCreateSettings | null>((resolve) => {
         resultResolve = resolve;
     });
 }
 
 function onCancelClick() {
+    resultResolve(null);
     close();
 }
 
 function onSaveClick() {
-    // TODO
-
-    //resultResolve();
+    resultResolve(toRaw(form.value));
     close();
 }
 
@@ -49,7 +50,7 @@ function onKeydown(e: KeyboardEvent) {
 }
 
 defineExpose<{
-    show(): Promise<string | null>
+    show(currentSettings: UserQuickCreateSettings): Promise<UserQuickCreateSettings | null>
 }>({
     show
 });
@@ -71,19 +72,19 @@ defineExpose<{
                 <div class="slds-modal__content slds-p-around_medium">
                     <div class="slds-form" role="list">
                         <div class="slds-form-element slds-form-element_stacked">
-                            <label class="slds-form-element__label" for="username-at-suffix-input">Username @ Suffix</label>
+                            <label class="slds-form-element__label" for="username-domain-input">Username Domain</label>
                             <div class="slds-form-element__icon">
-                                <button class="slds-button slds-button_icon" @mouseenter="showUsernameAtSuffixTooltip = true" @mouseleave="showUsernameAtSuffixTooltip = false">
+                                <button class="slds-button slds-button_icon" @mouseenter="showUsernameDomainTooltip = true" @mouseleave="showUsernameDomainTooltip = false">
                                     <svg class="slds-button__icon">
                                         <use xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#info"></use>
                                     </svg>
                                 </button>
-                                <div id="usernameAtSuffixTooltip" class="slds-popover slds-popover_tooltip slds-nubbin_bottom-left" role="tooltip" v-show="showUsernameAtSuffixTooltip">
+                                <div class="slds-popover slds-popover_tooltip slds-nubbin_bottom-left" role="tooltip" v-show="showUsernameDomainTooltip">
                                     <div class="slds-popover__body">The default text to place after the @ symbol in the username.</div>
                                 </div>
                             </div>
                             <div class="slds-form-element__control">
-                                <input type="text" id="username-at-suffix-input" class="slds-input" v-model="form.usernameAtSuffix" />
+                                <input type="text" id="username-domain-input" class="slds-input" v-model="form.usernameDomain" />
                             </div>
                         </div>
 
@@ -114,12 +115,5 @@ defineExpose<{
 /* Important to be able to show tooltips */
 .slds-modal__content {
     overflow: visible;
-}
-
-#usernameAtSuffixTooltip {
-    position: absolute;
-    top: -45px;
-    left: -15px;
-    width: 45vw;
 }
 </style>

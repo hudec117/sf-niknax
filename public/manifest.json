@@ -1,14 +1,15 @@
 {
     "name": "Salesforce Niknax",
     "description": "Various QoL and productivity improvements for Salesforce.",
-    "version": "0.2.0",
+    "version": "0.3.0",
     "author": "Aurel Hudec",
     "homepage_url": "https://github.com/hudec117/sf-niknax",
     "incognito": "split",
     "minimum_chrome_version": "88",
     "manifest_version": 3,
     "permissions": [
-        "cookies"
+        "cookies",
+        "storage"
     ],
     "host_permissions": [
         "https://*.lightning.force.com/",

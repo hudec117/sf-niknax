@@ -14,15 +14,15 @@ export default class SalesforceUserService extends SalesforceRESTService {
     generateUsername(usernamePrefix?: string, domainPrefix?: string): string {
         let username = this.generateRandomString(5, false, true, true);
         if (usernamePrefix) {
-            username = `${usernamePrefix}-${username}`;
+            username = `${usernamePrefix}.${username}`;
         }
 
         let domain = this.generateRandomString(5, false, true, false);
         if (domainPrefix) {
-            domain = `${domainPrefix}-${domain}`;
+            domain = `${domainPrefix}.${domain}`;
         }
 
-        return `${username}@${domain}.com`;
+        return `${username}@${domain}`;
     }
 
     generateNickname(): string {

@@ -77,4 +77,11 @@ onMounted(() => {
 .slds-custom-align-button {
     margin-top: -4px;
 }
+
+.slds-popover {
+    position: absolute;
+    top: -45px;
+    left: -15px;
+    width: 45vw;
+}
 </style>

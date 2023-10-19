@@ -9,6 +9,9 @@ import UserCreateForm from '@/models/UserCreateForm';
 import SalesforceUserService from '@/services/salesforce-user-service';
 import Profile from '@/models/Profile';
 import Role from '@/models/Role';
+import UserQuickCreateSettings from '@/models/UserQuickCreateSettings';
+
+const SETTINGS_KEY = 'quick-create-user-settings';
 
 const props = defineProps<{
     context: Context
@@ -26,6 +29,10 @@ const form = ref(new UserCreateForm());
 const loading = ref(true);
 const creating = ref(false);
 
+const showUsernameTooltip = ref(false);
+
+const settings = ref(new UserQuickCreateSettings());
+
 const profiles = ref<Array<Profile>>([]);
 const roles = ref<Array<Role>>([]);
 
@@ -41,6 +48,13 @@ async function loadData() {
     title.value = `Quick Create User`;
     document.title = `Salesforce Niknax: ${title.value}`;
 
+    // Load settings
+    const settingsResult = await chrome.storage.local.get([SETTINGS_KEY]);
+    if (SETTINGS_KEY in settingsResult) {
+        settings.value = settingsResult[SETTINGS_KEY] as UserQuickCreateSettings;
+    }
+
+    // Load profiles/roles
     await Promise.all([loadProfiles(), loadRoles()]);
 
     loading.value = false;
@@ -80,7 +94,7 @@ async function onEmailEntered() {
     const emailUsername = form.value.email.substring(0, form.value.email.indexOf('@'));
 
     const nameComponents = emailUsername.split('.');
-    if (nameComponents.length > 1) {
+    if (settings.value.getFirstLastNameFromEmail && nameComponents.length > 1) {
         let firstName = nameComponents[0];
         let lastName = nameComponents[nameComponents.length - 1];
 
@@ -90,16 +104,24 @@ async function onEmailEntered() {
         form.value.firstName = firstName;
         form.value.lastName = lastName;
     } else {
+        form.value.firstName = '';
         form.value.lastName = emailUsername;
     }
 
     form.value.alias = userService.generateAlias();
-    form.value.username = userService.generateUsername(emailUsername);
+    form.value.username = userService.generateUsername(emailUsername, settings.value.usernameDomain);
     form.value.nickname = userService.generateNickname();
 }
 
 async function onSettingsClick() {
-    settingsModal.value?.show();
+    const newSettings = await settingsModal.value?.show(settings.value);
+    if (newSettings) {
+        settings.value = newSettings;
+
+        await chrome.storage.local.set({
+            'quick-create-user-settings': newSettings
+        });
+    }
 }
 
 async function onCreateAndCloseClick() {
@@ -135,8 +157,8 @@ async function onCreateAndCloseClick() {
 
     creating.value = false;
 
-    // const currentPopup = await chrome.windows.getCurrent();
-    // await chrome.windows.remove(currentPopup.id!);
+    const currentPopup = await chrome.windows.getCurrent();
+    await chrome.windows.remove(currentPopup.id!);
 }
 </script>
 
@@ -172,9 +194,9 @@ async function onCreateAndCloseClick() {
             </header>
         </div>
         <div class="slds-card__body slds-card__body_inner">
-            <div class="slds-form" role="list">
-                <p class="slds-m-bottom_xx-small slds-m-left_xx-small">Enter an email address and the rest of the form will auto-populate.</p>
+            <p class="slds-m-bottom_xx-small ">Enter an email address and the rest of the form will auto-populate.</p>
 
+            <div class="slds-form" role="list">
                 <div :class="`slds-form-element slds-form-element_stacked ${form.emailValid ? '' : 'slds-has-error'}`">
                     <label class="slds-form-element__label" for="email-input">
                         <abbr class="slds-required" title="required">* </abbr>
@@ -185,7 +207,7 @@ async function onCreateAndCloseClick() {
                                id="email-input"
                                class="slds-input"
                                v-model="form.email"
-                               v-debounce:200ms="onEmailEntered"
+                               @keyup="onEmailEntered"
                                autofocus
                                required />
                     </div>
@@ -269,6 +291,16 @@ async function onCreateAndCloseClick() {
                         <abbr class="slds-required" title="required">* </abbr>
                         Username
                     </label>
+                    <div class="slds-form-element__icon">
+                        <button class="slds-button slds-button_icon" @mouseenter="showUsernameTooltip = true" @mouseleave="showUsernameTooltip = false">
+                            <svg class="slds-button__icon">
+                                <use xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#info"></use>
+                            </svg>
+                        </button>
+                        <div class="slds-popover slds-popover_tooltip slds-nubbin_bottom-left" role="tooltip" v-show="showUsernameTooltip">
+                            <div class="slds-popover__body">Parts of the username are randomly generated to ensure uniqueness.</div>
+                        </div>
+                    </div>
                     <div class="slds-form-element__control">
                         <input type="text" id="username-input" class="slds-input" v-model="form.username" required />
                     </div>
@@ -295,18 +327,6 @@ async function onCreateAndCloseClick() {
                         </div>
                     </div>
                 </fieldset>
-
-                <!-- <fieldset class="slds-form-element slds-form-element_stacked slds-m-top_large">
-                    <legend class="slds-form-element__legend slds-form-element__label">Preferences</legend>
-                    <div class="slds-form-element__control">
-                        <div class="slds-form-element">
-                            <label class="slds-form-element__label" for="input-01">Username @ Suffix</label>
-                            <div class="slds-form-element__control">
-                                <input type="text" id="input-01" class="slds-input" />
-                            </div>
-                        </div>
-                    </div>
-                </fieldset> -->
             </div>
         </div>
 
