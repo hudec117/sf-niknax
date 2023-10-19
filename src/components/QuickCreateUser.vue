@@ -2,16 +2,18 @@
 import { onMounted, ref } from 'vue';
 
 import PopoutCardFooter from './PopoutCardFooter.vue';
-import SalesforceRESTService from '@/services/salesforce-rest-service';
 import SalesforceToolingService from '@/services/salesforce-tooling-service';
 import Context from '@/models/context';
 import UserCreateForm from '@/models/UserCreateForm';
+import SalesforceUserService from '@/services/salesforce-user-service';
+import Profile from '@/models/Profile';
+import Role from '@/models/Role';
 
 const props = defineProps<{
     context: Context
 }>();
 
-let restService: SalesforceRESTService;
+let userService: SalesforceUserService;
 let toolingService: SalesforceToolingService;
 
 const title = ref('');
@@ -21,9 +23,12 @@ const form = ref(new UserCreateForm());
 const loading = ref(true);
 const creating = ref(false);
 
+const profiles = ref<Array<Profile>>([]);
+const roles = ref<Array<Role>>([]);
+
 onMounted(() => {
     // Initialise Salesforce services
-    restService = new SalesforceRESTService(props.context.serverHost, props.context.sessionId);
+    userService = new SalesforceUserService(props.context.serverHost, props.context.sessionId);
     toolingService = new SalesforceToolingService(props.context.serverHost, props.context.sessionId);
 
     loadData();
@@ -33,31 +38,72 @@ async function loadData() {
     title.value = `Quick Create User`;
     document.title = `Salesforce Niknax: ${title.value}`;
 
+    await loadProfiles();
+    await loadRoles();
+
     loading.value = false;
+}
+
+async function loadProfiles() {
+    const result = await userService.query('SELECT Id, Name, UserlicenseId, UserLicense.Name FROM Profile');
+    if (!result.success) {
+        // TODO: handle
+        return;
+    }
+
+    profiles.value = (result.data as Array<any>).map(record => new Profile(record.Id, record.Name, record.UserLicenseId, record.UserLicense.Name));
+    form.value.profileId = profiles.value.filter(profile => profile.name === 'System Administrator')[0].id;
+}
+
+async function loadRoles() {
+    const result = await userService.query('SELECT Id, Name FROM UserRole');
+    if (!result.success) {
+        // TODO: handle
+        return;
+    }
+
+    roles.value = (result.data as Array<any>).map(record => new Role(record.Id, record.Name));
+}
+
+async function onEmailEntered() {
+    if (!userService.isValidEmail(form.value.email)) {
+        // TODO: handle
+        return;
+    }
+
+    const emailUsername = form.value.email.substring(0, form.value.email.indexOf('@'));
+
+    form.value.lastName = emailUsername;
+    form.value.alias = userService.generateAlias();
+    form.value.username = userService.generateUsername(emailUsername);
+    form.value.nickname = userService.generateNickname();
 }
 
 async function onCreateAndCloseClick() {
     creating.value = true;
 
-    // const userCreateResult = await restService.create('User', {
-    //     LastName: form.value.lastName,
-    //     Email: form.value.email,
-    //     Alias: form.value.alias,
-    //     Username: form.value.username,
-    //     CommunityNickname: form.value.nickname,
-    //     LocaleSidKey: originalUser.LocaleSidKey,
-    //     TimeZoneSidKey: originalUser.TimeZoneSidKey,
-    //     ProfileID: originalUser.ProfileID,
-    //     LanguageLocaleKey: originalUser.LanguageLocaleKey,
-    //     EmailEncodingKey: originalUser.EmailEncodingKey
-    // });
-    // if (!userCreateResult.success) {
-    //     // TODO: handle
-    //     return;
-    // }
+    const org = await userService.getOrganisation();
+
+    const userCreateResult = await userService.create('User', {
+        LastName: form.value.lastName,
+        Email: form.value.email,
+        Alias: form.value.alias,
+        Username: form.value.username,
+        CommunityNickname: form.value.nickname,
+        LocaleSidKey: org.defaultLocaleSidKey,
+        TimeZoneSidKey: org.timeZoneSidKey,
+        ProfileId: form.value.profileId,
+        UserRoleId: form.value.roleId,
+        LanguageLocaleKey: org.languageLocaleKey,
+        EmailEncodingKey: 'UTF-8'
+    });
+    if (!userCreateResult.success) {
+        // TODO: handle
+        return;
+    }
 
     if (form.value.resetPassword) {
-        const resetPasswordResult = await toolingService.executeAnonymous(`System.resetPassword('0058d0000085kN6', true);`);
+        const resetPasswordResult = await toolingService.executeAnonymous(`System.resetPassword('${userCreateResult.data.id}', true);`);
         if (!resetPasswordResult.success) {
             // TODO: handle
             return;
@@ -88,6 +134,13 @@ async function onCreateAndCloseClick() {
                     </h2>
                 </div>
                 <div class="slds-no-flex">
+                    <button class="slds-button slds-button_icon slds-button_icon-border-filled slds-custom-align-button"
+                            title="Settings"
+                           :disabled="loading || creating">
+                        <svg class="slds-button__icon">
+                            <use xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#settings"></use>
+                        </svg>
+                    </button>
                     <button class="slds-button slds-button_brand" @click="onCreateAndCloseClick"
                         :disabled="loading || creating">
                         {{ creating ? 'Creating...' : 'Create & Close' }}
@@ -103,7 +156,13 @@ async function onCreateAndCloseClick() {
                         Email
                     </label>
                     <div class="slds-form-element__control">
-                        <input type="text" id="email-input" class="slds-input" v-model="form.email" required />
+                        <input type="text"
+                               id="email-input"
+                               class="slds-input"
+                               v-model="form.email" 
+                               v-debounce:200ms="onEmailEntered"
+                               autofocus
+                               required />
                     </div>
                 </div>
 
@@ -112,7 +171,7 @@ async function onCreateAndCloseClick() {
                         <div class="slds-form-element slds-form-element_horizontal slds-is-editing">
                             <label class="slds-form-element__label" for="first-name-input">First Name</label>
                             <div class="slds-form-element__control">
-                                <input type="text" id="first-name-input" class="slds-input" v-model="form.firstName" autofocus />
+                                <input type="text" id="first-name-input" class="slds-input" v-model="form.firstName" />
                             </div>
                         </div>
                     </div>
@@ -124,6 +183,45 @@ async function onCreateAndCloseClick() {
                             </label>
                             <div class="slds-form-element__control">
                                 <input type="text" id="last-name-input" class="slds-input" v-model="form.lastName" required />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slds-form__row slds-p-horizontal_xx-small">
+                    <div class="slds-form__item" role="listitem">
+                        <div class="slds-form-element slds-form-element_horizontal slds-is-editing">
+                            <label class="slds-form-element__label" for="profile-input">
+                                <abbr class="slds-required" title="required">* </abbr>
+                                Profile
+                            </label>
+                            <div class="slds-form-element__control">
+                                <div class="slds-select_container">
+                                <select class="slds-select" id="profile-input" v-model="form.profileId">
+                                    <option v-for="profile of profiles"
+                                           :key="profile.id"
+                                           :value="profile.id">
+                                           {{ profile.name }}
+                                    </option>
+                                </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slds-form__item" role="listitem">
+                        <div class="slds-form-element slds-form-element_horizontal slds-is-editing">
+                            <label class="slds-form-element__label" for="role-input">Role</label>
+                            <div class="slds-form-element__control">
+                                <div class="slds-select_container">
+                                <select class="slds-select" id="role-input">
+                                    <option value="">None</option>
+                                    <option v-for="role of roles"
+                                           :key="role.id"
+                                           :value="role.id">
+                                           {{ role.name }}
+                                    </option>
+                                </select>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -145,11 +243,7 @@ async function onCreateAndCloseClick() {
                         Username
                     </label>
                     <div class="slds-form-element__control">
-                        <input type="text"
-                               id="username-input"
-                               class="slds-input"
-                               v-model="form.username"
-                               required />
+                        <input type="text" id="username-input" class="slds-input" v-model="form.username" required />
                     </div>
                 </div>
 
@@ -174,6 +268,18 @@ async function onCreateAndCloseClick() {
                         </div>
                     </div>
                 </fieldset>
+
+                <!-- <fieldset class="slds-form-element slds-form-element_stacked slds-m-top_large">
+                    <legend class="slds-form-element__legend slds-form-element__label">Preferences</legend>
+                    <div class="slds-form-element__control">
+                        <div class="slds-form-element">
+                            <label class="slds-form-element__label" for="input-01">Username @ Suffix</label>
+                            <div class="slds-form-element__control">
+                                <input type="text" id="input-01" class="slds-input" />
+                            </div>
+                        </div>
+                    </div>
+                </fieldset> -->
             </form>
         </div>
 

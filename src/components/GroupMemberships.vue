@@ -330,9 +330,3 @@ function showError(message: string, stack?: string) {
 
     <UserSelectModal ref="userSelectModal" />
 </template>
-
-<style scoped>
-.slds-custom-align-button {
-    margin-top: -4px;
-}
-</style>

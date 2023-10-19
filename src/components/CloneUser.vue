@@ -2,7 +2,7 @@
 import { onMounted, ref } from 'vue';
 
 import PopoutCardFooter from './PopoutCardFooter.vue';
-import SalesforceRESTService from '@/services/salesforce-rest-service';
+import SalesforceUserService from '@/services/salesforce-user-service';
 import SalesforceToolingService from '@/services/salesforce-tooling-service';
 import Context from '@/models/context';
 import UserCloneForm from '@/models/UserCloneForm';
@@ -12,7 +12,7 @@ const props = defineProps<{
     context: Context
 }>();
 
-let restService: SalesforceRESTService;
+let userService: SalesforceUserService;
 let toolingService: SalesforceToolingService;
 
 const originalUser = ref<User>();
@@ -26,7 +26,7 @@ const cloning = ref(false);
 
 onMounted(() => {
     // Initialise Salesforce services
-    restService = new SalesforceRESTService(props.context.serverHost, props.context.sessionId);
+    userService = new SalesforceUserService(props.context.serverHost, props.context.sessionId);
     toolingService = new SalesforceToolingService(props.context.serverHost, props.context.sessionId);
 
     loadData();
@@ -38,7 +38,7 @@ async function loadData() {
         return;
     }
 
-    const getUserResult = await restService.get('User', props.context.userId);
+    const getUserResult = await userService.get('User', props.context.userId);
     if (!getUserResult.success) {
         // TODO: handle
         return;
@@ -82,13 +82,7 @@ function onUsernameFocusChange() {
     const nickname = form.value.nickname.trim();
 
     if (username.length > 0 && nickname.length === 0) {
-        let generatedNickname = 'User';
-
-        for (let i = 0; i < 20; i++) {
-            generatedNickname += Math.floor(Math.random() * 10).toString();
-        }
-
-        form.value.nickname = generatedNickname;
+        form.value.nickname = userService.generateNickname();
     }
 }
 

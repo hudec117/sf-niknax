@@ -6,6 +6,8 @@ export default class UserCreateForm {
     username = '';
     nickname = '';
     federationIdentifier = '';
+    profileId = '';
+    roleId = '';
 
     resetPassword = true;
 }

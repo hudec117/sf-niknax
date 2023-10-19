@@ -1,3 +1,4 @@
+import Organisation from '@/models/Organisation';
 import ServiceResult from './result';
 
 export default class SalesforceRESTService {
@@ -134,5 +135,17 @@ export default class SalesforceRESTService {
                 error: (error as Error).message
             };
         }
+    }
+
+    async getOrganisation(): Promise<Organisation> {
+        const result = await this.query('SELECT DefaultLocaleSidKey, TimeZoneSidKey, LanguageLocaleKey, OrganizationType, IsSandbox FROM Organization');
+        if (!result.success) {
+            // TODO: handle
+            throw 'failed';
+        }
+
+        const record = (result.data as Array<any>)[0];
+
+        return new Organisation(record.DefaultLocaleSidKey, record.TimeZoneSidKey, record.LanguageLocaleKey, record.OrganizationType, record.IsSandbox);
     }
 }

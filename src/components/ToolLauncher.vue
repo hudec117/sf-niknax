@@ -72,3 +72,9 @@ onMounted(() => {
         <QuickCreateUser v-else-if="displayQuickCreateUser" :context="context!" />
     </div>
 </template>
+
+<style>
+.slds-custom-align-button {
+    margin-top: -4px;
+}
+</style>

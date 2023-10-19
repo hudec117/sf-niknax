@@ -12,9 +12,11 @@ const PAGE_DIMENSIONS = {
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.operation === 'open-sf-niknax') {
-        // Get server host
         const serverUrl = new URL(sender.url);
-        const serverHost = serverUrl.hostname;
+
+        // Get server host
+        // Only the session ID against the ".my.salesforce.com" domain is valid for API requests.
+        const serverHost = serverUrl.hostname.replace('.lightning.force.com', '.my.salesforce.com');
 
         // Get user record ID from URL
         const path = serverUrl.pathname.substring(1);
