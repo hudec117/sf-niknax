@@ -7,8 +7,8 @@ const props = defineProps<{
     label?: string,
     placeholder?: string,
     emptyListLabel?: string,
+    errorLabel?: string,
     helpLabel?: string,
-    listItemIcon?: string,
     doSearch: (value: string) => Promise<Array<SearchLookupItem>>
 }>();
 
@@ -102,6 +102,7 @@ function onItemUnselected() {
                     
                     <div class="slds-dropdown slds-dropdown_length-with-icon-5 slds-dropdown_fluid" tabindex="0">
                         <ul class="slds-listbox slds-listbox_vertical" role="presentation">
+                            <!-- Loading list item -->
                             <li role="presentation" class="slds-listbox__item" v-if="loading">
                                 <div class="slds-align_absolute-center slds-p-top_medium">
                                     <div role="status" class="slds-spinner slds-spinner_x-small slds-spinner_inline">
@@ -111,18 +112,30 @@ function onItemUnselected() {
                                 </div>
                             </li>
 
+                            <!-- Error list item -->
+                            <li role="presentation" class="slds-listbox__item" v-else-if="errorLabel">
+                                <div class="slds-media slds-listbox__option slds-listbox__option_plain slds-media_small" role="option">
+                                    <!-- <span class="slds-media__figure slds-listbox__option-icon"></span> -->
+                                    <span class="slds-media__body">
+                                        <span class="slds-truncate">{{ props.errorLabel }}</span>
+                                    </span>
+                                </div>
+                            </li>
+
+                            <!-- Empty list item -->
                             <li role="presentation" class="slds-listbox__item" v-else-if="empty">
-                                <div aria-disabled="true" class="slds-media slds-listbox__option slds-listbox__option_plain slds-media_small" role="option">
-                                    <span class="slds-media__figure slds-listbox__option-icon"></span>
+                                <div class="slds-media slds-listbox__option slds-listbox__option_plain slds-media_small" role="option">
+                                    <!-- <span class="slds-media__figure slds-listbox__option-icon"></span> -->
                                     <span class="slds-media__body">
                                         <span class="slds-truncate">{{ props.emptyListLabel }}</span>
                                     </span>
                                 </div>
                             </li>
 
+                            <!-- Normal list item -->
                             <li role="presentation" class="slds-listbox__item" v-else v-for="item of items" :key="item.value" @click="onItemSelected(item)">
                                 <div class="slds-media slds-listbox__option slds-listbox__option_entity slds-listbox__option_has-meta" role="option">
-                                    <span v-if="listItemIcon" class="slds-media__figure slds-listbox__option-icon">
+                                    <span class="slds-media__figure slds-listbox__option-icon">
                                         <span class="slds-icon_container slds-icon-standard-avatar">
                                             <svg class="slds-icon slds-icon_small" aria-hidden="true">
                                                 <use xlink:href="slds/assets/icons/standard-sprite/svg/symbols.svg#avatar">

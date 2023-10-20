@@ -178,9 +178,9 @@ async function onCreateAndCloseClick() {
         <div class="slds-card__header slds-grid">
                 <header class="slds-media slds-media_center slds-has-flexi-truncate">
                     <div class="slds-media__figure">
-                        <span class="slds-icon_container slds-icon-standard-customers">
+                        <span class="slds-icon_container slds-icon-standard-user">
                             <svg class="slds-icon slds-icon_small">
-                                <use xlink:href="slds/assets/icons/standard-sprite/svg/symbols.svg#customers"></use>
+                                <use xlink:href="slds/assets/icons/standard-sprite/svg/symbols.svg#user"></use>
                             </svg>
                         </span>
                     </div>
@@ -207,7 +207,7 @@ async function onCreateAndCloseClick() {
                         </button>
 
                         <!-- Error popover -->
-                        <section id="save-popover" class="slds-popover slds-popover_error slds-nubbin_top-right" role="dialog" v-if="error">
+                        <section id="save-popover" class="slds-popover slds-popover_error slds-nubbin_top-right slds-is-absolute" role="dialog" v-if="error">
                             <button class="slds-button slds-button_icon slds-button_icon-small slds-float_right slds-popover__close slds-button_icon-inverse slds-m-top_x-small slds-m-right_small" title="Close" @click="error = ''">
                                 <svg class="slds-button__icon">
                                     <use xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#close"></use>
@@ -385,9 +385,8 @@ async function onCreateAndCloseClick() {
     <FullscreenOverlay ref="overlay" />
 </template>
 
-<style>
+<style scoped>
 #save-popover {
-    position: absolute;
     left: 200px;
     top: 54px;
 }
