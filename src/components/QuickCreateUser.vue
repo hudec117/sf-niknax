@@ -2,6 +2,7 @@
 import { onMounted, ref } from 'vue';
 
 import PopoutCardFooter from './PopoutCardFooter.vue';
+import FullscreenOverlay from '@/components/slds/FullscreenOverlay.vue';
 import SalesforceToolingService from '@/services/salesforce-tooling-service';
 import Context from '@/models/context';
 import QuickCreateUserSettingsModal from '@/components/modals/quick-create-user-settings/QuickCreateUserSettingsModal.vue';
@@ -17,6 +18,7 @@ const props = defineProps<{
     context: Context
 }>();
 
+const overlay = ref<InstanceType<typeof FullscreenOverlay> | null>(null);
 const settingsModal = ref<InstanceType<typeof QuickCreateUserSettingsModal> | null>(null);
 
 let userService: SalesforceUserService;
@@ -158,10 +160,13 @@ async function onCreateAndCloseClick() {
             }
         }
 
-        error.value = `User created!`;
+        // Show overlay
+        const message = form.value.resetPassword ? 'User created and password reset sent!' : 'User created!';
+        await overlay.value?.show(message, 2000);
 
-        // const currentPopup = await chrome.windows.getCurrent();
-        // await chrome.windows.remove(currentPopup.id!);
+        // Close window
+        const currentPopup = await chrome.windows.getCurrent();
+        await chrome.windows.remove(currentPopup.id!);
     } finally {
         creating.value = false;
     }
@@ -377,6 +382,7 @@ async function onCreateAndCloseClick() {
     </article>
 
     <QuickCreateUserSettingsModal ref="settingsModal" />
+    <FullscreenOverlay ref="overlay" />
 </template>
 
 <style>

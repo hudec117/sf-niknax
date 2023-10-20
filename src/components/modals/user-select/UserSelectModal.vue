@@ -4,7 +4,7 @@ import { ref } from 'vue';
 import type User from '@/models/User';
 import SearchLookup from '../../slds/SearchLookup.vue';
 import SearchLookupItem from '@/components/slds/SearchLookupItem';
-import type Context from '@/models/context';
+import Context from '@/models/context';
 import SalesforceRESTService from '@/services/salesforce-rest-service';
 
 let restService: SalesforceRESTService;
