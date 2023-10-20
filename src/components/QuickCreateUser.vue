@@ -23,6 +23,7 @@ let userService: SalesforceUserService;
 let toolingService: SalesforceToolingService;
 
 const title = ref('');
+const error = ref('');
 
 const form = ref(new UserCreateForm());
 
@@ -127,77 +128,114 @@ async function onSettingsClick() {
 async function onCreateAndCloseClick() {
     creating.value = true;
 
-    const org = await userService.getOrganisation();
+    try {
+        const org = await userService.getOrganisation();
 
-    const userCreateResult = await userService.create('User', {
-        LastName: form.value.lastName,
-        Email: form.value.email,
-        Alias: form.value.alias,
-        Username: form.value.username,
-        CommunityNickname: form.value.nickname,
-        LocaleSidKey: org.defaultLocaleSidKey,
-        TimeZoneSidKey: org.timeZoneSidKey,
-        ProfileId: form.value.profileId,
-        UserRoleId: form.value.roleId,
-        LanguageLocaleKey: org.languageLocaleKey,
-        EmailEncodingKey: 'UTF-8'
-    });
-    if (!userCreateResult.success) {
-        // TODO: handle
-        return;
-    }
-
-    if (form.value.resetPassword) {
-        const resetPasswordResult = await toolingService.executeAnonymous(`System.resetPassword('${userCreateResult.data.id}', true);`);
-        if (!resetPasswordResult.success) {
-            // TODO: handle
+        const userCreateResult = await userService.create('User', {
+            FirstName: form.value.firstName,
+            LastName: form.value.lastName,
+            Email: form.value.email,
+            Alias: form.value.alias,
+            Username: form.value.username,
+            CommunityNickname: form.value.nickname,
+            LocaleSidKey: org.defaultLocaleSidKey,
+            TimeZoneSidKey: org.timeZoneSidKey,
+            ProfileId: form.value.profileId,
+            UserRoleId: form.value.roleId,
+            LanguageLocaleKey: org.languageLocaleKey,
+            EmailEncodingKey: 'UTF-8'
+        });
+        if (!userCreateResult.success) {
+            error.value = `Failed to create the user. ${userCreateResult.error}`;
             return;
         }
+
+        if (form.value.resetPassword) {
+            const resetPasswordResult = await toolingService.executeAnonymous(`System.resetPassword('${userCreateResult.data.id}', true);`);
+            if (!resetPasswordResult.success) {
+                error.value = `Failed to reset the password. ${resetPasswordResult.error}`;
+                return;
+            }
+        }
+
+        error.value = `User created!`;
+
+        // const currentPopup = await chrome.windows.getCurrent();
+        // await chrome.windows.remove(currentPopup.id!);
+    } finally {
+        creating.value = false;
     }
-
-    creating.value = false;
-
-    const currentPopup = await chrome.windows.getCurrent();
-    await chrome.windows.remove(currentPopup.id!);
 }
 </script>
 
 <template>
     <article class="slds-card">
         <div class="slds-card__header slds-grid">
-            <header class="slds-media slds-media_center slds-has-flexi-truncate">
-                <div class="slds-media__figure">
-                    <span class="slds-icon_container slds-icon-standard-customers">
-                        <svg class="slds-icon slds-icon_small">
-                            <use xlink:href="slds/assets/icons/standard-sprite/svg/symbols.svg#customers"></use>
-                        </svg>
-                    </span>
-                </div>
-                <div class="slds-media__body">
-                    <h2 class="slds-card__header-title">
-                        <span>{{ title }}</span>
-                    </h2>
-                </div>
-                <div class="slds-no-flex">
-                    <button class="slds-button slds-button_icon slds-button_icon-border-filled slds-custom-align-button"
-                            title="Settings"
-                           @click="onSettingsClick">
-                        <svg class="slds-button__icon">
-                            <use xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#settings"></use>
-                        </svg>
-                    </button>
-                    <button class="slds-button slds-button_brand" @click="onCreateAndCloseClick"
-                        :disabled="loading || creating">
-                        {{ creating ? 'Creating...' : 'Create & Close' }}
-                    </button>
-                </div>
-            </header>
-        </div>
-        <div class="slds-card__body slds-card__body_inner">
-            <p class="slds-m-bottom_xx-small ">Enter an email address and the rest of the form will auto-populate.</p>
+                <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                    <div class="slds-media__figure">
+                        <span class="slds-icon_container slds-icon-standard-customers">
+                            <svg class="slds-icon slds-icon_small">
+                                <use xlink:href="slds/assets/icons/standard-sprite/svg/symbols.svg#customers"></use>
+                            </svg>
+                        </span>
+                    </div>
+                    <div class="slds-media__body">
+                        <h2 class="slds-card__header-title">
+                            <span>{{ title }}</span>
+                        </h2>
+                    </div>
+                    <div class="slds-no-flex">
+                        <!-- Setting button -->
+                        <button class="slds-button slds-button_icon slds-button_icon-border-filled align-card-action-button"
+                                title="Settings"
+                               @click="onSettingsClick">
+                            <svg class="slds-button__icon">
+                                <use xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#settings"></use>
+                            </svg>
+                        </button>
 
-            <div class="slds-form" role="list">
-                <div :class="`slds-form-element slds-form-element_stacked ${form.emailValid ? '' : 'slds-has-error'}`">
+                        <!-- Save & Close button -->
+                        <button class="slds-button slds-button_brand"
+                               @click="onCreateAndCloseClick"
+                               :disabled="loading || creating">
+                            {{ creating ? 'Creating...' : 'Create & Close' }}
+                        </button>
+
+                        <!-- Error popover -->
+                        <section id="save-popover" class="slds-popover slds-popover_error slds-nubbin_top-right" role="dialog" v-if="error">
+                            <button class="slds-button slds-button_icon slds-button_icon-small slds-float_right slds-popover__close slds-button_icon-inverse slds-m-top_x-small slds-m-right_small" title="Close" @click="error = ''">
+                                <svg class="slds-button__icon">
+                                    <use xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#close"></use>
+                                </svg>
+                            </button>
+                            <header class="slds-popover__header">
+                                <div class="slds-media slds-media_center slds-has-flexi-truncate ">
+                                    <div class="slds-media__figure">
+                                        <span class="slds-icon_container slds-icon-utility-error">
+                                            <svg class="slds-icon slds-icon_x-small">
+                                                <use xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#error"></use>
+                                            </svg>
+                                        </span>
+                                    </div>
+                                    <div class="slds-media__body">
+                                        <h2 class="slds-truncate slds-text-heading_medium">We hit a snag</h2>
+                                    </div>
+                                </div>
+                            </header>
+                            <div class="slds-popover__body">
+                                <p>{{ error }}</p>
+                            </div>
+                        </section>
+                    </div>
+                </header>
+            </div>
+        <div class="slds-card__body slds-card__body_inner">
+            <p class="slds-m-bottom_x-small">Enter an email address and the rest of the form will auto-populate.</p>
+
+            <div class="slds-form slds-m-top_x-small" role="list">
+
+                <!-- Email field -->
+                <div :class="`slds-form-element slds-m-bottom_x-small ${form.emailValid ? '' : 'slds-has-error'}`">
                     <label class="slds-form-element__label" for="email-input">
                         <abbr class="slds-required" title="required">* </abbr>
                         Email
@@ -213,7 +251,8 @@ async function onCreateAndCloseClick() {
                     </div>
                 </div>
 
-                <div class="slds-form__row slds-p-horizontal_xx-small">
+                <!-- First/Last name fields -->
+                <div class="slds-form__row">
                     <div class="slds-form__item" role="listitem">
                         <div class="slds-form-element slds-form-element_horizontal slds-is-editing">
                             <label class="slds-form-element__label" for="first-name-input">First Name</label>
@@ -235,7 +274,8 @@ async function onCreateAndCloseClick() {
                     </div>
                 </div>
 
-                <div class="slds-form__row slds-p-horizontal_xx-small">
+                <!-- Profile/Role fields -->
+                <div class="slds-form__row">
                     <div class="slds-form__item" role="listitem">
                         <div class="slds-form-element slds-form-element_horizontal slds-is-editing">
                             <label class="slds-form-element__label" for="profile-input">
@@ -276,7 +316,8 @@ async function onCreateAndCloseClick() {
                     </div>
                 </div>
 
-                <div class="slds-form-element slds-form-element_stacked">
+                <!-- Alias field -->
+                <div class="slds-form-element slds-m-bottom_x-small">
                     <label class="slds-form-element__label" for="alias-input">
                         <abbr class="slds-required" title="required">* </abbr>
                         Alias
@@ -286,7 +327,8 @@ async function onCreateAndCloseClick() {
                     </div>
                 </div>
 
-                <div class="slds-form-element slds-form-element_stacked">
+                <!-- Username field -->
+                <div class="slds-form-element slds-m-bottom_x-small">
                     <label class="slds-form-element__label" for="username-input">
                         <abbr class="slds-required" title="required">* </abbr>
                         Username
@@ -297,7 +339,7 @@ async function onCreateAndCloseClick() {
                                 <use xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#info"></use>
                             </svg>
                         </button>
-                        <div class="slds-popover slds-popover_tooltip slds-nubbin_bottom-left" role="tooltip" v-show="showUsernameTooltip">
+                        <div class="slds-popover slds-popover_tooltip slds-nubbin_bottom-left popover-help" role="tooltip" v-show="showUsernameTooltip">
                             <div class="slds-popover__body">Parts of the username are randomly generated to ensure uniqueness.</div>
                         </div>
                     </div>
@@ -306,7 +348,8 @@ async function onCreateAndCloseClick() {
                     </div>
                 </div>
 
-                <div class="slds-form-element slds-form-element_stacked">
+                <!-- Nickname field -->
+                <div class="slds-form-element slds-m-bottom_x-small">
                     <label class="slds-form-element__label" for="nickname-input">
                         <abbr class="slds-required" title="required">* </abbr>
                         Nickname
@@ -316,7 +359,7 @@ async function onCreateAndCloseClick() {
                     </div>
                 </div>
 
-                <fieldset class="slds-form-element slds-form-element_stacked">
+                <fieldset class="slds-form-element">
                     <div class="slds-form-element__control">
                         <div class="slds-checkbox">
                             <input type="checkbox" name="advanced-group" id="generate-password-checkbox" v-model="form.resetPassword" />
@@ -335,3 +378,11 @@ async function onCreateAndCloseClick() {
 
     <QuickCreateUserSettingsModal ref="settingsModal" />
 </template>
+
+<style>
+#save-popover {
+    position: absolute;
+    left: 200px;
+    top: 54px;
+}
+</style>

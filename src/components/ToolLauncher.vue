@@ -74,11 +74,11 @@ onMounted(() => {
 </template>
 
 <style>
-.slds-custom-align-button {
+.align-card-action-button {
     margin-top: -4px;
 }
 
-.slds-popover {
+.popover-help {
     position: absolute;
     top: -45px;
     left: -15px;

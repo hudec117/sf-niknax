@@ -79,7 +79,7 @@ defineExpose<{
                                         <use xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#info"></use>
                                     </svg>
                                 </button>
-                                <div class="slds-popover slds-popover_tooltip slds-nubbin_bottom-left" role="tooltip" v-show="showUsernameDomainTooltip">
+                                <div class="slds-popover slds-popover_tooltip slds-nubbin_bottom-left popover-help" role="tooltip" v-show="showUsernameDomainTooltip">
                                     <div class="slds-popover__body">The default text to place after the @ symbol in the username.</div>
                                 </div>
                             </div>

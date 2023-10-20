@@ -294,7 +294,7 @@ function showError(message: string, stack?: string) {
                     </h2>
                 </div>
                 <div class="slds-no-flex">
-                    <button class="slds-button slds-button_icon slds-button_icon-border-filled slds-custom-align-button"
+                    <button class="slds-button slds-button_icon slds-button_icon-border-filled align-card-action-button"
                             title="Toggle API Names"
                            @click="showAPINames = !showAPINames"
                            :disabled="loading || saving">
