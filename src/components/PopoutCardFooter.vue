@@ -17,7 +17,7 @@ function onLicensesClick() {
                 <span class="slds-float_left">Made with &#10084;&#65039; on <a href="https://github.com/hudec117/sf-niknax" class="external-link" target="_blank">GitHub</a></span>
             </div>
             <div class="slds-col slds-col_bump-right slds-size_1-of-8">
-                <span>v0.2.0</span>
+                <span>v0.3.0</span>
             </div>
             <div class="slds-col slds-size_1-of-8">
                 <a href="#" @click="onLicensesClick">Licenses</a>

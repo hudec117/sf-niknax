@@ -20,6 +20,8 @@ export default class SalesforceUserService extends SalesforceRESTService {
         let domain = this.generateRandomString(5, false, true, false);
         if (domainPrefix) {
             domain = `${domainPrefix}.${domain}`;
+        } else {
+            domain += '.com';
         }
 
         return `${username}@${domain}`;
