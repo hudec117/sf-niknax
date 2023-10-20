@@ -22,7 +22,7 @@ export default class SalesforceRESTService {
     // }
 
     protected authFetch(requestUrl: URL, requestInfo: any = { method: 'GET' }): Promise<Response> {
-        const actualRequestUrl = requestUrl.toString().replace('+', '%20');
+        const actualRequestUrl = requestUrl.toString().replace(/\+/g, '%20');
 
         if (!requestInfo.headers)
             requestInfo.headers = {};

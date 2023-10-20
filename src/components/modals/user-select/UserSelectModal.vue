@@ -4,7 +4,7 @@ import { ref } from 'vue';
 import type User from '@/models/User';
 import SearchLookup from '../../slds/SearchLookup.vue';
 import SearchLookupItem from '@/components/slds/SearchLookupItem';
-import type Context from '@/models/context';
+import Context from '@/models/context';
 import SalesforceRESTService from '@/services/salesforce-rest-service';
 
 let restService: SalesforceRESTService;
@@ -117,6 +117,8 @@ defineExpose<{
 </template>
 
 <style scoped>
+
+/* Important to be able to show full dropdown */
 .slds-modal__content {
     overflow: visible;
 }

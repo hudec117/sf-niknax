@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, type App, inject } from 'vue';
+
 import ToolLauncher from './components/ToolLauncher.vue';
 import ErrorModal from './components/modals/error/ErrorModal.vue';
 
@@ -10,6 +11,7 @@ const errorModal = ref<InstanceType<typeof ErrorModal> | null>(null);
 app.config.errorHandler = err => {
   errorModal.value?.show(err as Error);
 };
+
 app.provide('errorModal', errorModal);
 
 window.addEventListener('unhandledrejection', (e: PromiseRejectionEvent) => {
