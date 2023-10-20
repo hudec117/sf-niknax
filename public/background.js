@@ -7,7 +7,7 @@ const PAGE_DIMENSIONS = {
     'edit-queue-memberships':           { width: 673, height: 537 },
     'clone-user':                       { width: 620, height: 694 },
     'bulk-freeze-users':                { width: 620, height: 630 },
-    'quick-create-user':                { width: 620, height: 630 },
+    'quick-create-user':                { width: 616, height: 605 },
 };
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
