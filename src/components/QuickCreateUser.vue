@@ -22,6 +22,7 @@ const settingsModal = ref<InstanceType<typeof QuickCreateUserSettingsModal> | nu
 
 let userService: SalesforceUserService;
 let toolingService: SalesforceToolingService;
+let createdUserId = '';
 
 const title = ref('');
 const error = ref('');
@@ -34,7 +35,7 @@ const overlay = ref({
     visible: false,
     type: 'success',
     passwordResetSuccessful: true,
-    passwordResetError: '',
+    passwordResetError: ''
 });
 
 const showUsernameTooltip = ref(false);
@@ -134,10 +135,12 @@ async function onSettingsClick() {
 
 async function onCreateAndCloseClick() {
     creating.value = true;
+    error.value = '';
 
     try {
         const org = await userService.getOrganisation();
 
+        // Create the user
         const userCreateResult = await userService.create('User', {
             FirstName: form.value.firstName,
             LastName: form.value.lastName,
@@ -157,24 +160,39 @@ async function onCreateAndCloseClick() {
             return;
         }
 
+        createdUserId = userCreateResult.data.id;
+
+        // Attempt to reset the password
+        let allSuccessful = true;
         if (form.value.resetPassword) {
-            const resetPasswordResult = await toolingService.executeAnonymous(`System.resetPassword('${userCreateResult.data.id}', true);`);
+            const resetPasswordResult = await toolingService.executeAnonymous(`System.resetPssword('${createdUserId}', true);`);
             if (!resetPasswordResult.success) {
                 overlay.value.type = 'warning';
                 overlay.value.passwordResetSuccessful = false;
                 overlay.value.passwordResetError = `Failed to reset the password. ${resetPasswordResult.error}`;
+
+                allSuccessful = false;
             }
         }
 
-        overlay.value.visible = true;
+        // Only auto-cloes the window if the user creation and password reset (if chosen) has succedded.
+        if (allSuccessful) {
+            setTimeout(closeWindow, 3000);
+        }
 
-        setTimeout(closeWindow, 3000);
+        // Show the overlay
+        overlay.value.visible = true;
     } finally {
         creating.value = false;
     }
 }
 
 async function onOpenUser() {
+    const userDetailUrl = `https://${props.context.serverHost}/lightning/setup/ManageUsers/page?address=/${createdUserId}?noredirect=1&isUserEntityOverride=1`;
+    await chrome.tabs.create({
+        url: userDetailUrl
+    });
+
     await closeWindow();
 }
 
@@ -417,7 +435,7 @@ async function closeWindow() {
 
 <style scoped>
 #create-popover {
-    left: 227px;
+    left: 200px;
     top: 55px;
 }
 
