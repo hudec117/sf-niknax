@@ -90,7 +90,7 @@ async function loadRoles() {
 }
 
 async function onEmailEntered() {
-    if (! (form.value.emailValid = userService.isValidEmail(form.value.email))) {
+    if (!(form.value.emailValid = userService.isValidEmail(form.value.email))) {
         return;
     }
 
@@ -111,7 +111,7 @@ async function onEmailEntered() {
         form.value.lastName = emailUsername;
     }
 
-    form.value.alias = userService.generateAlias();
+    form.value.alias = userService.generateAlias(form.value.firstName, form.value.lastName);
     form.value.username = userService.generateUsername(emailUsername, settings.value.usernameDomain);
     form.value.nickname = userService.generateNickname();
 }

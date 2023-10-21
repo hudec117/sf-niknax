@@ -58,14 +58,7 @@ function onLastNameUnfocused() {
     const lastName = form.value.lastName.trim();
 
     if (alias.length === 0 && lastName.length > 0) {
-        let defaultAlias = '';
-        if (firstName.length > 0) {
-            defaultAlias += firstName[0].toLowerCase();
-        }
-
-        defaultAlias += lastName.substring(0, 4).toLowerCase();
-
-        form.value.alias = defaultAlias;
+        form.value.alias = userService.generateAlias(firstName, lastName);
     }
 }
 
