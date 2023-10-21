@@ -25,7 +25,7 @@ let toolingService: SalesforceToolingService;
 let createdUserId = '';
 
 const title = ref('');
-const error = ref('');
+const createAndCloseError = ref('');
 
 const form = ref(new UserCreateForm());
 
@@ -42,8 +42,16 @@ const showUsernameTooltip = ref(false);
 
 const settings = ref(new UserQuickCreateSettings());
 
-const profiles = ref<Array<Profile>>([]);
-const roles = ref<Array<Role>>([]);
+const profiles = ref({
+    loading: true,
+    items: new Array<Profile>(),
+    error: ''
+});
+const roles = ref({
+    loading: true,
+    items: new Array<Role>(),
+    error: ''
+});
 
 onMounted(() => {
     // Initialise Salesforce services
@@ -71,28 +79,38 @@ async function loadData() {
 
 async function loadProfiles() {
     form.value.profileId = 'loading';
+    profiles.value.loading = true;
 
-    const result = await userService.query('SELECT Id, Name, UserlicenseId, UserLicense.Name FROM Profile');
-    if (!result.success) {
-        // TODO: handle
-        return;
+    try {
+        const result = await userService.query('SELECT Id, Name, UserLicenseId, UserLicense.Name FROM Profile');
+        if (!result.success) {
+            profiles.value.error = result.error as string;
+            return;
+        }
+
+        profiles.value.items = (result.data as Array<any>).map(record => new Profile(record.Id, record.Name, record.UserLicenseId, record.UserLicense.Name));
+        form.value.profileId = profiles.value.items.filter(profile => profile.name === 'System Administrator')[0].id;
+    } finally {
+        profiles.value.loading = false;
     }
-
-    profiles.value = (result.data as Array<any>).map(record => new Profile(record.Id, record.Name, record.UserLicenseId, record.UserLicense.Name));
-    form.value.profileId = profiles.value.filter(profile => profile.name === 'System Administrator')[0].id;
 }
 
 async function loadRoles() {
     form.value.roleId = 'loading';
+    roles.value.loading = true;
 
-    const result = await userService.query('SELECT Id, Name FROM UserRole');
-    if (!result.success) {
-        // TODO: handle
-        return;
+    try {
+        const result = await userService.query('SELECT Id, Name FROM UserRole');
+        if (!result.success) {
+            roles.value.error = result.error as string;
+            return;
+        }
+
+        roles.value.items = (result.data as Array<any>).map(record => new Role(record.Id, record.Name));
+        form.value.roleId = '';
+    } finally {
+        roles.value.loading = false;
     }
-
-    roles.value = (result.data as Array<any>).map(record => new Role(record.Id, record.Name));
-    form.value.roleId = '';
 }
 
 async function onEmailEntered() {
@@ -135,7 +153,7 @@ async function onSettingsClick() {
 
 async function onCreateAndCloseClick() {
     creating.value = true;
-    error.value = '';
+    createAndCloseError.value = '';
 
     try {
         const org = await userService.getOrganisation();
@@ -156,7 +174,7 @@ async function onCreateAndCloseClick() {
             EmailEncodingKey: 'UTF-8'
         });
         if (!userCreateResult.success) {
-            error.value = `Failed to create the user. ${userCreateResult.error}`;
+            createAndCloseError.value = `Failed to create the user. ${userCreateResult.error}`;
             return;
         }
 
@@ -236,8 +254,8 @@ async function closeWindow() {
                         </button>
 
                         <!-- Error popover -->
-                        <section id="create-popover" class="slds-popover slds-popover_error slds-nubbin_top-right slds-is-absolute" role="dialog" v-if="error">
-                            <button class="slds-button slds-button_icon slds-button_icon-small slds-float_right slds-popover__close slds-button_icon-inverse slds-m-top_x-small slds-m-right_small" title="Close" @click="error = ''">
+                        <section id="create-popover" class="slds-popover slds-popover_error slds-nubbin_top-right slds-is-absolute" role="dialog" v-if="createAndCloseError">
+                            <button class="slds-button slds-button_icon slds-button_icon-small slds-float_right slds-popover__close slds-button_icon-inverse slds-m-top_x-small slds-m-right_small" title="Close" @click="createAndCloseError = ''">
                                 <svg class="slds-button__icon">
                                     <use xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#close"></use>
                                 </svg>
@@ -257,7 +275,7 @@ async function closeWindow() {
                                 </div>
                             </header>
                             <div class="slds-popover__body">
-                                <p>{{ error }}</p>
+                                <p>{{ createAndCloseError }}</p>
                             </div>
                         </section>
                     </div>
@@ -311,16 +329,17 @@ async function closeWindow() {
                 <!-- Profile/Role fields -->
                 <div class="slds-form__row">
                     <div class="slds-form__item" role="listitem">
-                        <div class="slds-form-element slds-form-element_horizontal slds-is-editing">
+                        <div :class="`slds-form-element slds-form-element_horizontal slds-is-editing ${profiles.error.length > 0 ? 'slds-has-error' : ''}`">
                             <label class="slds-form-element__label" for="profile-input">
                                 <abbr class="slds-required" title="required">* </abbr>
                                 Profile
                             </label>
                             <div class="slds-form-element__control">
                                 <div class="slds-select_container">
-                                <select id="profile-input" class="slds-select" :disabled="profiles.length === 0" v-model="form.profileId">
-                                    <option v-if="profiles.length === 0" value="loading">Loading...</option>
-                                    <option v-for="profile of profiles"
+                                <select id="profile-input" class="slds-select" :disabled="profiles.loading || profiles.error.length > 0" v-model="form.profileId">
+                                    <option v-if="profiles.loading" value="loading">Loading...</option>
+
+                                    <option v-for="profile of profiles.items"
                                            :key="profile.id"
                                            :value="profile.id">
                                            {{ profile.name }}
@@ -328,17 +347,19 @@ async function closeWindow() {
                                 </select>
                                 </div>
                             </div>
+                            <div class="slds-form-element__help" v-if="profiles.error">{{ profiles.error }}</div>
                         </div>
                     </div>
                     <div class="slds-form__item" role="listitem">
-                        <div class="slds-form-element slds-form-element_horizontal slds-is-editing">
+                        <div :class="`slds-form-element slds-form-element_horizontal slds-is-editing ${profiles.error.length > 0 ? 'slds-has-error' : ''}`">
                             <label class="slds-form-element__label" for="role-input">Role</label>
                             <div class="slds-form-element__control">
                                 <div class="slds-select_container">
-                                <select class="slds-select" id="role-input" :disabled="profiles.length === 0" v-model="form.roleId">
-                                    <option value="">None</option>
-                                    <option v-if="roles.length === 0" value="loading">Loading...</option>
-                                    <option v-for="role of roles"
+                                <select class="slds-select" id="role-input" :disabled="roles.loading || roles.error.length > 0" v-model="form.roleId">
+                                    <option v-if="roles.loading" value="loading">Loading...</option>
+
+                                    <option v-else value="">None</option>
+                                    <option v-for="role of roles.items"
                                            :key="role.id"
                                            :value="role.id">
                                            {{ role.name }}
@@ -346,6 +367,7 @@ async function closeWindow() {
                                 </select>
                                 </div>
                             </div>
+                            <div class="slds-form-element__help" v-if="roles.error">{{ roles.error }}</div>
                         </div>
                     </div>
                 </div>
