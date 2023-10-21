@@ -18,7 +18,6 @@ const props = defineProps<{
     context: Context
 }>();
 
-const overlay = ref<InstanceType<typeof FullscreenOverlay> | null>(null);
 const settingsModal = ref<InstanceType<typeof QuickCreateUserSettingsModal> | null>(null);
 
 let userService: SalesforceUserService;
@@ -31,6 +30,12 @@ const form = ref(new UserCreateForm());
 
 const loading = ref(true);
 const creating = ref(false);
+const overlay = ref({
+    visible: false,
+    type: 'success',
+    passwordResetSuccessful: true,
+    passwordResetError: '',
+});
 
 const showUsernameTooltip = ref(false);
 
@@ -155,21 +160,27 @@ async function onCreateAndCloseClick() {
         if (form.value.resetPassword) {
             const resetPasswordResult = await toolingService.executeAnonymous(`System.resetPassword('${userCreateResult.data.id}', true);`);
             if (!resetPasswordResult.success) {
-                error.value = `Failed to reset the password. ${resetPasswordResult.error}`;
-                return;
+                overlay.value.type = 'warning';
+                overlay.value.passwordResetSuccessful = false;
+                overlay.value.passwordResetError = `Failed to reset the password. ${resetPasswordResult.error}`;
             }
         }
 
-        // Show overlay
-        const message = form.value.resetPassword ? 'User created and password reset sent!' : 'User created!';
-        await overlay.value?.show(message, 2000);
+        overlay.value.visible = true;
 
-        // Close window
-        const currentPopup = await chrome.windows.getCurrent();
-        await chrome.windows.remove(currentPopup.id!);
+        setTimeout(closeWindow, 3000);
     } finally {
         creating.value = false;
     }
+}
+
+async function onOpenUser() {
+    await closeWindow();
+}
+
+async function closeWindow() {
+    const currentPopup = await chrome.windows.getCurrent();
+    await chrome.windows.remove(currentPopup.id!);
 }
 </script>
 
@@ -199,7 +210,7 @@ async function onCreateAndCloseClick() {
                             </svg>
                         </button>
 
-                        <!-- Save & Close button -->
+                        <!-- Create & Close button -->
                         <button class="slds-button slds-button_brand"
                                @click="onCreateAndCloseClick"
                                :disabled="loading || creating">
@@ -207,7 +218,7 @@ async function onCreateAndCloseClick() {
                         </button>
 
                         <!-- Error popover -->
-                        <section id="save-popover" class="slds-popover slds-popover_error slds-nubbin_top-right slds-is-absolute" role="dialog" v-if="error">
+                        <section id="create-popover" class="slds-popover slds-popover_error slds-nubbin_top-right slds-is-absolute" role="dialog" v-if="error">
                             <button class="slds-button slds-button_icon slds-button_icon-small slds-float_right slds-popover__close slds-button_icon-inverse slds-m-top_x-small slds-m-right_small" title="Close" @click="error = ''">
                                 <svg class="slds-button__icon">
                                     <use xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#close"></use>
@@ -382,12 +393,40 @@ async function onCreateAndCloseClick() {
     </article>
 
     <QuickCreateUserSettingsModal ref="settingsModal" />
-    <FullscreenOverlay ref="overlay" />
+
+    <FullscreenOverlay :visible="overlay.visible" :type="overlay.type">
+        <span class="slds-icon_container slds-m-bottom_x-small">
+            <svg class="slds-icon overlay-check-icon">
+                <use v-if="overlay.type === 'success'" xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#success"></use>
+                <use v-else-if="overlay.type === 'warning'" xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#warning"></use>
+            </svg>
+        </span>
+
+        <div class="slds-text-heading_medium slds-m-bottom_x-small">
+            <span class="overlay-user-link" @click="onOpenUser" title="Open User detail page in a new tab.">User</span>
+            <template v-if="overlay.passwordResetSuccessful">
+                created!
+            </template>
+            <template v-else>
+                created but...
+            </template>
+        </div>
+        <div class="slds-text-heading_small" v-if="!overlay.passwordResetSuccessful">{{ overlay.passwordResetError }}</div>
+    </FullscreenOverlay>
 </template>
 
 <style scoped>
-#save-popover {
-    left: 200px;
-    top: 54px;
+#create-popover {
+    left: 227px;
+    top: 55px;
+}
+
+.overlay-check-icon {
+    fill: white;
+}
+
+.overlay-user-link {
+    text-decoration: underline;
+    cursor: pointer;
 }
 </style>
