@@ -165,7 +165,7 @@ async function onCreateAndCloseClick() {
         // Attempt to reset the password
         let allSuccessful = true;
         if (form.value.resetPassword) {
-            const resetPasswordResult = await toolingService.executeAnonymous(`System.resetPssword('${createdUserId}', true);`);
+            const resetPasswordResult = await toolingService.executeAnonymous(`System.resetPassword('${createdUserId}', true);`);
             if (!resetPasswordResult.success) {
                 overlay.value.type = 'warning';
                 overlay.value.passwordResetSuccessful = false;
