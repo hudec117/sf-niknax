@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 
 import PopoutCardFooter from './PopoutCardFooter.vue';
 import FullscreenOverlay from '@/components/slds/FullscreenOverlay.vue';
@@ -51,6 +51,15 @@ const roles = ref({
     loading: true,
     items: new Array<Role>(),
     error: ''
+});
+
+const canCreate = computed(() => {
+    return userService.isValidEmail(form.value.email)
+        && userService.isValidFirstName(form.value.firstName)
+        && userService.isValidLastName(form.value.lastName)
+        && userService.isValidAlias(form.value.alias)
+        && userService.isValidEmail(form.value.username)
+        && userService.isValidNickname(form.value.nickname);
 });
 
 onMounted(() => {
@@ -249,7 +258,7 @@ async function closeWindow() {
                         <!-- Create & Close button -->
                         <button class="slds-button slds-button_brand"
                                @click="onCreateAndCloseClick"
-                               :disabled="loading || creating">
+                               :disabled="loading || creating || !canCreate">
                             {{ creating ? 'Creating...' : 'Create & Close' }}
                         </button>
 
@@ -296,8 +305,8 @@ async function closeWindow() {
                         <input type="text"
                                id="email-input"
                                class="slds-input"
-                               v-model="form.email"
-                               @keyup="onEmailEntered"
+                               v-model.trim="form.email"
+                               @input="onEmailEntered"
                                autofocus
                                required />
                     </div>
@@ -309,7 +318,7 @@ async function closeWindow() {
                         <div class="slds-form-element slds-form-element_horizontal slds-is-editing">
                             <label class="slds-form-element__label" for="first-name-input">First Name</label>
                             <div class="slds-form-element__control">
-                                <input type="text" id="first-name-input" class="slds-input" v-model="form.firstName" />
+                                <input type="text" id="first-name-input" class="slds-input" v-model.trim="form.firstName" />
                             </div>
                         </div>
                     </div>
@@ -320,7 +329,7 @@ async function closeWindow() {
                                 Last Name
                             </label>
                             <div class="slds-form-element__control">
-                                <input type="text" id="last-name-input" class="slds-input" v-model="form.lastName" required />
+                                <input type="text" id="last-name-input" class="slds-input" v-model.trim="form.lastName" required />
                             </div>
                         </div>
                     </div>
@@ -379,7 +388,7 @@ async function closeWindow() {
                         Alias
                     </label>
                     <div class="slds-form-element__control">
-                        <input type="text" id="alias-input" class="slds-input" v-model="form.alias" required />
+                        <input type="text" id="alias-input" class="slds-input" v-model.trim="form.alias" required />
                     </div>
                 </div>
 
@@ -400,7 +409,7 @@ async function closeWindow() {
                         </div>
                     </div>
                     <div class="slds-form-element__control">
-                        <input type="text" id="username-input" class="slds-input" v-model="form.username" required />
+                        <input type="text" id="username-input" class="slds-input" v-model.trim="form.username" required />
                     </div>
                 </div>
 
@@ -411,7 +420,7 @@ async function closeWindow() {
                         Nickname
                     </label>
                     <div class="slds-form-element__control">
-                        <input type="text" id="nickname-input" class="slds-input" v-model="form.nickname" required />
+                        <input type="text" id="nickname-input" class="slds-input" v-model.trim="form.nickname" required />
                     </div>
                 </div>
 

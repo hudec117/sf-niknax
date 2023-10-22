@@ -2,9 +2,27 @@ import SalesforceRESTService from './salesforce-rest-service';
 
 export default class SalesforceUserService extends SalesforceRESTService {
     isValidEmail(email: string): boolean {
-        const emailRegex = /^[a-zA-Z0-9][a-zA-Z0-9._%+-]*@[^.@][a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        return /^[a-zA-Z0-9][a-zA-Z0-9._%+-]*@[^.@][a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email);
+    }
 
-        return emailRegex.test(email);
+    isValidFirstName(firstName: string): boolean {
+        if (firstName.trim().length === 0) {
+            return true;
+        }
+
+        return /^[a-zA-Z0-9]+$/.test(firstName);
+    }
+
+    isValidLastName(lastName: string): boolean {
+        return lastName.trim().length > 0;
+    }
+
+    isValidAlias(alias: string): boolean {
+        return alias.trim().length > 0;
+    }
+
+    isValidNickname(nickname: string): boolean {
+        return nickname.trim().length > 0;
     }
 
     generateAlias(firstName: string, lastName: string): string {
