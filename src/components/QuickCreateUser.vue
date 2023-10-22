@@ -37,8 +37,9 @@ const overlay = ref({
     passwordResetSuccessful: true,
     passwordResetError: ''
 });
-
 const showUsernameTooltip = ref(false);
+
+const isValidEmail = ref(false);
 
 const settings = ref(new UserQuickCreateSettings());
 
@@ -53,7 +54,8 @@ const roles = ref({
     error: ''
 });
 
-const canCreate = computed(() => {
+
+const isValidForm = computed(() => {
     return userService.isValidEmail(form.value.email)
         && userService.isValidFirstName(form.value.firstName)
         && userService.isValidLastName(form.value.lastName)
@@ -123,7 +125,7 @@ async function loadRoles() {
 }
 
 async function onEmailEntered() {
-    if (!(form.value.emailValid = userService.isValidEmail(form.value.email))) {
+    if (!(isValidEmail.value = userService.isValidEmail(form.value.email))) {
         return;
     }
 
@@ -137,16 +139,29 @@ async function onEmailEntered() {
         firstName = firstName[0].toUpperCase() + firstName.slice(1);
         lastName = lastName[0].toUpperCase() + lastName.slice(1);
 
-        form.value.firstName = firstName;
-        form.value.lastName = lastName;
+        if (!form.value.firstName) {
+            form.value.firstName = firstName;
+        }
+        if (!form.value.lastName) {
+            form.value.lastName = lastName;
+        }
     } else {
-        form.value.firstName = '';
-        form.value.lastName = emailUsername;
+        if (!form.value.lastName) {
+            form.value.lastName = emailUsername;
+        }
     }
 
-    form.value.alias = userService.generateAlias(form.value.firstName, form.value.lastName);
-    form.value.username = userService.generateUsername(emailUsername, settings.value.usernameDomain);
-    form.value.nickname = userService.generateNickname();
+    if (!form.value.alias) {
+        form.value.alias = userService.generateAlias(form.value.firstName, form.value.lastName);
+    }
+
+    if (!form.value.username) {
+        form.value.username = userService.generateUsername(emailUsername, settings.value.usernameDomain);
+    }
+
+    if (!form.value.nickname) {
+        form.value.nickname = userService.generateNickname();
+    }
 }
 
 async function onSettingsClick() {
@@ -258,7 +273,7 @@ async function closeWindow() {
                         <!-- Create & Close button -->
                         <button class="slds-button slds-button_brand"
                                @click="onCreateAndCloseClick"
-                               :disabled="loading || creating || !canCreate">
+                               :disabled="loading || creating || !isValidForm">
                             {{ creating ? 'Creating...' : 'Create & Close' }}
                         </button>
 
@@ -296,7 +311,7 @@ async function closeWindow() {
             <div class="slds-form slds-m-top_x-small" role="list">
 
                 <!-- Email field -->
-                <div :class="`slds-form-element slds-m-bottom_x-small ${form.emailValid ? '' : 'slds-has-error'}`">
+                <div :class="`slds-form-element slds-m-bottom_x-small ${form.email.length === 0 || isValidEmail ? '' : 'slds-has-error'}`">
                     <label class="slds-form-element__label" for="email-input">
                         <abbr class="slds-required" title="required">* </abbr>
                         Email
