@@ -1,4 +1,32 @@
 window.onload = function () {
+    // const targetNode = document.querySelector('div[data-aura-class="uiContainerManager"]');
+
+    const callback = function (mutationsList) {
+        for (const mutation of mutationsList) {
+            if (mutation.type === 'childList') {
+                const addedNodes = mutation.addedNodes;
+                for (const node of addedNodes) {
+                    if (node.nodeType === Node.ELEMENT_NODE && node.classList.contains('userProfilePanel')) {
+                        const anchor = node.querySelector('.profile-card-name a');
+                        console.log(anchor);
+
+                        const matches = anchor.href.match(/lightning\/r\/User\/(\w+?)\/view/);
+                        const uniqueIdentifier = matches && matches[1];
+
+                        if (uniqueIdentifier) {
+                            anchor.href = anchor.href.substring(0, anchor.href.indexOf('/lightning/r/User'));
+                            anchor.href += `lightning/setup/ManageUsers/page?address=%2F${uniqueIdentifier}%3Fnoredirect%3D1%26isUserEntityOverride%3D1`;
+                            anchor.removeAttribute('data-aura-rendered-by');
+                        }
+                    }
+                }
+            }
+        }
+    };
+
+    const observer = new MutationObserver(callback);
+    observer.observe(document.body, { childList: true, subtree: true });
+
     const QUICK_CREATE_USER_GLOBAL_ACTION_HTML = `
         <div class="oneHelpAndTrainingExperience">
             <button id="sf-niknax-quick-create-user-button" type="button" class="slds-button slds-button slds-button_icon slds-button_icon slds-button_icon-container slds-button_icon-small slds-global-actions__item-action forceHeaderButton" title="Salesforce Niknax: Quick Create User">
@@ -53,7 +81,7 @@ window.onload = function () {
         helpListItemDiv.parentNode.after(quickCreateUserListItem);
 
         const quickCreateUserButton = document.getElementById('sf-niknax-quick-create-user-button');
-        quickCreateUserButton.addEventListener('click', function() {
+        quickCreateUserButton.addEventListener('click', function () {
             chrome.runtime.sendMessage({ operation: 'open-sf-niknax', page: 'quick-create-user' });
         });
     }
