@@ -91,10 +91,20 @@ defineExpose<{
                         <fieldset class="slds-form-element slds-form-element_stacked">
                             <div class="slds-form-element__control">
                                 <div class="slds-checkbox">
-                                    <input type="checkbox" id="split-email-username-checkbox" v-model="form.getFirstLastNameFromEmail" />
-                                    <label class="slds-checkbox__label" for="split-email-username-checkbox">
+                                    <input type="checkbox" id="extract-first-last-name-from-email-checkbox" v-model="form.extractFirstLastNameFromEmail" />
+                                    <label class="slds-checkbox__label" for="extract-first-last-name-from-email-checkbox">
                                         <span class="slds-checkbox_faux"></span>
-                                        <span class="slds-form-element__label">Get First/Last name from Email</span>
+                                        <span class="slds-form-element__label">Extract First/Last name from Email</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="slds-form-element__control">
+                                <div class="slds-checkbox">
+                                    <input type="checkbox" id="reset-password-default-checkbox" v-model="form.resetPasswordDefault" />
+                                    <label class="slds-checkbox__label" for="reset-password-default-checkbox">
+                                        <span class="slds-checkbox_faux"></span>
+                                        <span class="slds-form-element__label">Default for "Reset password and notify user immediately"</span>
                                     </label>
                                 </div>
                             </div>

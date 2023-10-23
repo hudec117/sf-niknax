@@ -1,4 +1,5 @@
 export default class UserQuickCreateSettings {
     usernameDomain = '';
-    getFirstLastNameFromEmail = true;
+    extractFirstLastNameFromEmail = true;
+    resetPasswordDefault = true;
 }

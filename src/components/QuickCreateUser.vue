@@ -82,6 +82,8 @@ async function loadData() {
         settings.value = settingsResult[SETTINGS_KEY] as UserQuickCreateSettings;
     }
 
+    form.value.resetPassword = settings.value.resetPasswordDefault;
+
     // Load profiles/roles
     await Promise.all([loadProfiles(), loadRoles()]);
 
@@ -132,7 +134,7 @@ async function onEmailEntered() {
     const emailUsername = form.value.email.substring(0, form.value.email.indexOf('@'));
 
     const nameComponents = emailUsername.split('.');
-    if (settings.value.getFirstLastNameFromEmail && nameComponents.length > 1) {
+    if (settings.value.extractFirstLastNameFromEmail && nameComponents.length > 1) {
         let firstName = nameComponents[0];
         let lastName = nameComponents[nameComponents.length - 1];
 
