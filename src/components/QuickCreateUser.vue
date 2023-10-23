@@ -102,7 +102,14 @@ async function loadProfiles() {
         }
 
         profiles.value.items = (result.data as Array<any>).map(record => new Profile(record.Id, record.Name, record.UserLicenseId, record.UserLicense.Name));
-        form.value.profileId = profiles.value.items.filter(profile => profile.name === 'System Administrator')[0].id;
+
+        // Attempt to find the default profile as defined in the settings, falling back to System Administrator if not found.
+        const matchedDefaultProfiles = profiles.value.items.filter(profile => profile.name === settings.value.defaultProfile);
+        if (matchedDefaultProfiles.length > 0) {
+            form.value.profileId = matchedDefaultProfiles[0].id;
+        } else {
+            form.value.profileId = profiles.value.items.filter(profile => profile.name === 'System Administrator')[0].id;
+        }
     } finally {
         profiles.value.loading = false;
     }
@@ -113,14 +120,21 @@ async function loadRoles() {
     roles.value.loading = true;
 
     try {
-        const result = await userService.query('SELECT Id, Name FROM UserRole');
+        const result = await userService.query('SELECT Id, Name, DeveloperName FROM UserRole');
         if (!result.success) {
             roles.value.error = result.error as string;
             return;
         }
 
-        roles.value.items = (result.data as Array<any>).map(record => new Role(record.Id, record.Name));
-        form.value.roleId = '';
+        roles.value.items = (result.data as Array<any>).map(record => new Role(record.Id, record.Name, record.DeveloperName));
+
+        // Attempt to find the default role as defined in the settings, falling back to None if not found.
+        const matchedDefaultRoles = roles.value.items.filter(role => role.developerName === settings.value.defaultRole);
+        if (matchedDefaultRoles.length > 0) {
+            form.value.roleId = matchedDefaultRoles[0].id;
+        } else {
+            form.value.roleId = '';
+        }
     } finally {
         roles.value.loading = false;
     }
@@ -388,7 +402,7 @@ async function closeWindow() {
                                     <option v-for="role of roles.items"
                                            :key="role.id"
                                            :value="role.id">
-                                           {{ role.name }}
+                                           {{ role.name }} ({{ role.developerName }})
                                     </option>
                                 </select>
                                 </div>
