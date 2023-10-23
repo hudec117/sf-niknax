@@ -38,6 +38,7 @@ const overlay = ref({
     passwordResetError: ''
 });
 const showUsernameTooltip = ref(false);
+const showRoleTooltip = ref(false);
 
 const isValidEmail = ref(false);
 
@@ -393,6 +394,16 @@ async function closeWindow() {
                     <div class="slds-form__item" role="listitem">
                         <div :class="`slds-form-element slds-form-element_horizontal slds-is-editing ${profiles.error.length > 0 ? 'slds-has-error' : ''}`">
                             <label class="slds-form-element__label" for="role-input">Role</label>
+                            <div class="slds-form-element__icon">
+                                <button class="slds-button slds-button_icon" @mouseenter="showRoleTooltip = true" @mouseleave="showRoleTooltip = false">
+                                    <svg class="slds-button__icon">
+                                        <use xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#info"></use>
+                                    </svg>
+                                </button>
+                                <div class="slds-popover slds-popover_tooltip slds-nubbin_bottom-left popover-help" role="tooltip" v-show="showRoleTooltip">
+                                    <div class="slds-popover__body">The developer name is shown in brackets.</div>
+                                </div>
+                            </div>
                             <div class="slds-form-element__control">
                                 <div class="slds-select_container">
                                 <select class="slds-select" id="role-input" :disabled="roles.loading || roles.error.length > 0" v-model="form.roleId">
