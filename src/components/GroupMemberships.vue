@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, inject } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 
 import SalesforceRESTService from '@/services/salesforce-rest-service';
 import DuelingPicklist from './slds/DuelingPicklist.vue';
-import ErrorModal from './modals/error/ErrorModal.vue';
 import UserSelectModal from './modals/user-select/UserSelectModal.vue';
 import PopoutCardFooter from './PopoutCardFooter.vue';
 import Group from '@/models/Group';
@@ -16,7 +15,6 @@ const props = defineProps<{
     type: String
 }>();
 
-const errorModal = inject('errorModal') as InstanceType<typeof ErrorModal>;
 const userSelectModal = ref<InstanceType<typeof UserSelectModal> | null>(null);
 
 let restService: SalesforceRESTService;
@@ -30,6 +28,7 @@ const assignedGroups = ref<Array<Group>>([]);
 let originalAssignedGroups: Array<Group>;
 
 const title = ref('');
+const error = ref('');
 const showAPINames = ref(false);
 const loading = ref(true);
 const saving = ref(false);
@@ -72,7 +71,7 @@ async function loadData() {
     // Get all groups
     const allGroupsQueryResult = await restService.query(`SELECT Id, Name, DeveloperName FROM Group WHERE Type = '${props.type}'`);
     if (!allGroupsQueryResult.success) {
-        showError('Initial query for all Group records failed.', allGroupsQueryResult.error);
+        error.value = `Initial query for all Group records failed because ${allGroupsQueryResult.error}`;
         return;
     }
     const allGroups = (allGroupsQueryResult.data as Array<any>).map((record) => {
@@ -82,7 +81,7 @@ async function loadData() {
     // Group memberships
     const groupMembersQueryResult = await restService.query(`SELECT Id, GroupId, UserOrGroupId FROM GroupMember WHERE UserOrGroupId = '${props.context.userId}'`);
     if (!groupMembersQueryResult.success) {
-        showError('Initial query for GroupMember records failed.', groupMembersQueryResult.error);
+        error.value = `Initial query for GroupMember records failed because ${groupMembersQueryResult.error}`;
         return;
     }
     userGroupMembers = (groupMembersQueryResult.data as Array<any>).map((record) => {
@@ -147,7 +146,7 @@ async function onMatchUserClick() {
     if (userId) {
         const cloneUserGroupMembershipsQueryResult = await restService.query(`SELECT Id, GroupId, UserOrGroupId FROM GroupMember WHERE UserOrGroupId = '${userId}' AND Group.Type = '${props.type}'`);
         if (!cloneUserGroupMembershipsQueryResult.success) {
-            showError('Query to retrieve match user\'s GroupMember records failed.', cloneUserGroupMembershipsQueryResult.error);
+            error.value = `Query to retrieve match user's GroupMember records failed because ${cloneUserGroupMembershipsQueryResult.error}`
             return;
         }
 
@@ -170,10 +169,10 @@ async function onMatchUserClick() {
         for (const groupMember of matchUserGroupMembers) {
             const groupFinds = availableGroups.value.filter(group => group.id === groupMember.groupId);
             if (groupFinds.length < 1) {
-                showError(`Available groups does not contain the match user's group "${groupMember.groupId}".`);
+                error.value = `Available groups does not contain the match user's group "${groupMember.groupId}".`;
                 return;
             } else if (groupFinds.length > 1) {
-                showError(`Available groups contains too many groups matching "${groupMember.groupId}".`);
+                error.value = `Available groups contains too many groups matching "${groupMember.groupId}".`;
                 return;
             }
 
@@ -191,6 +190,7 @@ async function onMatchUserClick() {
 
 async function onSaveAndCloseClick() {
     saving.value = true;
+    error.value = '';
 
     let success = true;
 
@@ -238,7 +238,7 @@ async function onSaveAndCloseClick() {
 async function assignGroups(groups: Array<Group>): Promise<boolean> {
     const assignToUserId = props.context.userId;
     if (!assignToUserId) {
-        showError('Missing User ID in the context.');
+        error.value = 'Missing User ID in the context.';
         return false;
     }
 
@@ -247,7 +247,7 @@ async function assignGroups(groups: Array<Group>): Promise<boolean> {
     for (const groupMember of groupMembersToCreate) {
         const result = await restService.create('GroupMember', groupMember);
         if (!result.success) {
-            showError(`Failed to assign (create) user to group "${groupMember.groupId}".`, result.error);
+            error.value = `Failed to assign (create) user to group "${groupMember.groupId}" because ${result.error}`;
             return false;
         }
     }
@@ -261,19 +261,12 @@ async function unassignGroups(groups: Array<Group>): Promise<boolean> {
     for (const groupMember of groupMembersToDelete) {
         const result = await restService.delete('GroupMember', groupMember.id!);
         if (!result.success) {
-            showError(`Failed to unassign (delete) user from group "${groupMember.groupId}".`, result.error);
+            error.value = `Failed to unassign (delete) user from group "${groupMember.groupId}" because ${result.error}`;
             return false;
         }
     }
 
     return true;
-}
-
-function showError(message: string, stack?: string) {
-    errorModal.show({
-        message: message,
-        stack: stack
-    } as Error);
 }
 </script>
 
@@ -294,6 +287,7 @@ function showError(message: string, stack?: string) {
                     </h2>
                 </div>
                 <div class="slds-no-flex">
+                    <!-- Toggle API names button -->
                     <button class="slds-button slds-button_icon slds-button_icon-border-filled align-card-action-button"
                             title="Toggle API Names"
                            @click="showAPINames = !showAPINames"
@@ -302,17 +296,47 @@ function showError(message: string, stack?: string) {
                             <use xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#preview"></use>
                         </svg>
                     </button>
+
+                    <!-- Match User button -->
                     <button class="slds-button slds-button_neutral"
                             title="Match another user's group memberships"
                            @click="onMatchUserClick"
                            :disabled="loading || saving">
                         Match a User
                     </button>
+
+                    <!-- Save & Close button -->
                     <button class="slds-button slds-button_brand"
                            @click="onSaveAndCloseClick"
                            :disabled="loading || saving">
                         {{ saving ? 'Saving...' : 'Save & Close' }}
                     </button>
+
+                    <!-- Error popover -->
+                    <section id="save-popover" class="slds-popover slds-popover_error slds-nubbin_top-right slds-is-absolute" role="dialog" v-if="error">
+                        <button class="slds-button slds-button_icon slds-button_icon-small slds-float_right slds-popover__close slds-button_icon-inverse slds-m-top_x-small slds-m-right_small" title="Close" @click="error = ''">
+                            <svg class="slds-button__icon">
+                                <use xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#close"></use>
+                            </svg>
+                        </button>
+                        <header class="slds-popover__header">
+                            <div class="slds-media slds-media_center slds-has-flexi-truncate ">
+                                <div class="slds-media__figure">
+                                    <span class="slds-icon_container slds-icon-utility-error">
+                                        <svg class="slds-icon slds-icon_x-small">
+                                            <use xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#error"></use>
+                                        </svg>
+                                    </span>
+                                </div>
+                                <div class="slds-media__body">
+                                    <h2 class="slds-truncate slds-text-heading_medium">We hit a snag</h2>
+                                </div>
+                            </div>
+                        </header>
+                        <div class="slds-popover__body">
+                            <p>{{ error }}</p>
+                        </div>
+                    </section>
                 </div>
             </header>
         </div>
@@ -330,3 +354,10 @@ function showError(message: string, stack?: string) {
 
     <UserSelectModal ref="userSelectModal" />
 </template>
+
+<style scoped>
+#save-popover {
+    left: 266px;
+    top: 54px;
+}
+</style>

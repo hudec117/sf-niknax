@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 
 import PopoutCardFooter from './PopoutCardFooter.vue';
 import FullscreenOverlay from '@/components/slds/FullscreenOverlay.vue';
@@ -18,26 +18,52 @@ const props = defineProps<{
     context: Context
 }>();
 
-const overlay = ref<InstanceType<typeof FullscreenOverlay> | null>(null);
 const settingsModal = ref<InstanceType<typeof QuickCreateUserSettingsModal> | null>(null);
 
 let userService: SalesforceUserService;
 let toolingService: SalesforceToolingService;
+let createdUserId = '';
 
 const title = ref('');
-const error = ref('');
+const createAndCloseError = ref('');
 
 const form = ref(new UserCreateForm());
 
 const loading = ref(true);
 const creating = ref(false);
-
+const overlay = ref({
+    visible: false,
+    type: 'success',
+    passwordResetSuccessful: true,
+    passwordResetError: ''
+});
 const showUsernameTooltip = ref(false);
+const showRoleTooltip = ref(false);
+
+const isValidEmail = ref(false);
 
 const settings = ref(new UserQuickCreateSettings());
 
-const profiles = ref<Array<Profile>>([]);
-const roles = ref<Array<Role>>([]);
+const profiles = ref({
+    loading: true,
+    items: new Array<Profile>(),
+    error: ''
+});
+const roles = ref({
+    loading: true,
+    items: new Array<Role>(),
+    error: ''
+});
+
+
+const isValidForm = computed(() => {
+    return userService.isValidEmail(form.value.email)
+        && userService.isValidFirstName(form.value.firstName)
+        && userService.isValidLastName(form.value.lastName)
+        && userService.isValidAlias(form.value.alias)
+        && userService.isValidEmail(form.value.username)
+        && userService.isValidNickname(form.value.nickname);
+});
 
 onMounted(() => {
     // Initialise Salesforce services
@@ -57,6 +83,8 @@ async function loadData() {
         settings.value = settingsResult[SETTINGS_KEY] as UserQuickCreateSettings;
     }
 
+    form.value.resetPassword = settings.value.resetPasswordDefault;
+
     // Load profiles/roles
     await Promise.all([loadProfiles(), loadRoles()]);
 
@@ -65,55 +93,92 @@ async function loadData() {
 
 async function loadProfiles() {
     form.value.profileId = 'loading';
+    profiles.value.loading = true;
 
-    const result = await userService.query('SELECT Id, Name, UserlicenseId, UserLicense.Name FROM Profile');
-    if (!result.success) {
-        // TODO: handle
-        return;
+    try {
+        const result = await userService.query('SELECT Id, Name, UserLicenseId, UserLicense.Name FROM Profile');
+        if (!result.success) {
+            profiles.value.error = result.error as string;
+            return;
+        }
+
+        profiles.value.items = (result.data as Array<any>).map(record => new Profile(record.Id, record.Name, record.UserLicenseId, record.UserLicense.Name));
+
+        // Attempt to find the default profile as defined in the settings, falling back to System Administrator if not found.
+        const matchedDefaultProfiles = profiles.value.items.filter(profile => profile.name === settings.value.defaultProfile);
+        if (matchedDefaultProfiles.length > 0) {
+            form.value.profileId = matchedDefaultProfiles[0].id;
+        } else {
+            form.value.profileId = profiles.value.items.filter(profile => profile.name === 'System Administrator')[0].id;
+        }
+    } finally {
+        profiles.value.loading = false;
     }
-
-    profiles.value = (result.data as Array<any>).map(record => new Profile(record.Id, record.Name, record.UserLicenseId, record.UserLicense.Name));
-    form.value.profileId = profiles.value.filter(profile => profile.name === 'System Administrator')[0].id;
 }
 
 async function loadRoles() {
     form.value.roleId = 'loading';
+    roles.value.loading = true;
 
-    const result = await userService.query('SELECT Id, Name FROM UserRole');
-    if (!result.success) {
-        // TODO: handle
-        return;
+    try {
+        const result = await userService.query('SELECT Id, Name, DeveloperName FROM UserRole');
+        if (!result.success) {
+            roles.value.error = result.error as string;
+            return;
+        }
+
+        roles.value.items = (result.data as Array<any>).map(record => new Role(record.Id, record.Name, record.DeveloperName));
+
+        // Attempt to find the default role as defined in the settings, falling back to None if not found.
+        const matchedDefaultRoles = roles.value.items.filter(role => role.developerName === settings.value.defaultRole);
+        if (matchedDefaultRoles.length > 0) {
+            form.value.roleId = matchedDefaultRoles[0].id;
+        } else {
+            form.value.roleId = '';
+        }
+    } finally {
+        roles.value.loading = false;
     }
-
-    roles.value = (result.data as Array<any>).map(record => new Role(record.Id, record.Name));
-    form.value.roleId = '';
 }
 
 async function onEmailEntered() {
-    if (! (form.value.emailValid = userService.isValidEmail(form.value.email))) {
+    if (!(isValidEmail.value = userService.isValidEmail(form.value.email))) {
         return;
     }
 
     const emailUsername = form.value.email.substring(0, form.value.email.indexOf('@'));
 
     const nameComponents = emailUsername.split('.');
-    if (settings.value.getFirstLastNameFromEmail && nameComponents.length > 1) {
+    if (settings.value.extractFirstLastNameFromEmail && nameComponents.length > 1) {
         let firstName = nameComponents[0];
         let lastName = nameComponents[nameComponents.length - 1];
 
         firstName = firstName[0].toUpperCase() + firstName.slice(1);
         lastName = lastName[0].toUpperCase() + lastName.slice(1);
 
-        form.value.firstName = firstName;
-        form.value.lastName = lastName;
+        if (!form.value.firstName) {
+            form.value.firstName = firstName;
+        }
+        if (!form.value.lastName) {
+            form.value.lastName = lastName;
+        }
     } else {
-        form.value.firstName = '';
-        form.value.lastName = emailUsername;
+        if (!form.value.lastName) {
+            form.value.lastName = emailUsername;
+        }
     }
 
-    form.value.alias = userService.generateAlias();
-    form.value.username = userService.generateUsername(emailUsername, settings.value.usernameDomain);
-    form.value.nickname = userService.generateNickname();
+    if (!form.value.alias) {
+        form.value.alias = userService.generateAlias(form.value.firstName, form.value.lastName);
+    }
+
+    if (!form.value.username) {
+        form.value.username = userService.generateUsername(emailUsername, settings.value.usernameDomain);
+    }
+
+    if (!form.value.nickname) {
+        form.value.nickname = userService.generateNickname();
+    }
 }
 
 async function onSettingsClick() {
@@ -129,10 +194,12 @@ async function onSettingsClick() {
 
 async function onCreateAndCloseClick() {
     creating.value = true;
+    createAndCloseError.value = '';
 
     try {
         const org = await userService.getOrganisation();
 
+        // Create the user
         const userCreateResult = await userService.create('User', {
             FirstName: form.value.firstName,
             LastName: form.value.lastName,
@@ -148,28 +215,49 @@ async function onCreateAndCloseClick() {
             EmailEncodingKey: 'UTF-8'
         });
         if (!userCreateResult.success) {
-            error.value = `Failed to create the user. ${userCreateResult.error}`;
+            createAndCloseError.value = `Failed to create the user. ${userCreateResult.error}`;
             return;
         }
 
+        createdUserId = userCreateResult.data.id;
+
+        // Attempt to reset the password
+        let allSuccessful = true;
         if (form.value.resetPassword) {
-            const resetPasswordResult = await toolingService.executeAnonymous(`System.resetPassword('${userCreateResult.data.id}', true);`);
+            const resetPasswordResult = await toolingService.executeAnonymous(`System.resetPassword('${createdUserId}', true);`);
             if (!resetPasswordResult.success) {
-                error.value = `Failed to reset the password. ${resetPasswordResult.error}`;
-                return;
+                overlay.value.type = 'warning';
+                overlay.value.passwordResetSuccessful = false;
+                overlay.value.passwordResetError = `Failed to reset the password. ${resetPasswordResult.error}`;
+
+                allSuccessful = false;
             }
         }
 
-        // Show overlay
-        const message = form.value.resetPassword ? 'User created and password reset sent!' : 'User created!';
-        await overlay.value?.show(message, 2000);
+        // Only auto-cloes the window if the user creation and password reset (if chosen) has succedded.
+        if (allSuccessful) {
+            setTimeout(closeWindow, 3000);
+        }
 
-        // Close window
-        const currentPopup = await chrome.windows.getCurrent();
-        await chrome.windows.remove(currentPopup.id!);
+        // Show the overlay
+        overlay.value.visible = true;
     } finally {
         creating.value = false;
     }
+}
+
+async function onOpenUser() {
+    const userDetailUrl = `https://${props.context.serverHost}/lightning/setup/ManageUsers/page?address=/${createdUserId}?noredirect=1&isUserEntityOverride=1`;
+    await chrome.tabs.create({
+        url: userDetailUrl
+    });
+
+    await closeWindow();
+}
+
+async function closeWindow() {
+    const currentPopup = await chrome.windows.getCurrent();
+    await chrome.windows.remove(currentPopup.id!);
 }
 </script>
 
@@ -178,9 +266,9 @@ async function onCreateAndCloseClick() {
         <div class="slds-card__header slds-grid">
                 <header class="slds-media slds-media_center slds-has-flexi-truncate">
                     <div class="slds-media__figure">
-                        <span class="slds-icon_container slds-icon-standard-customers">
+                        <span class="slds-icon_container slds-icon-standard-user">
                             <svg class="slds-icon slds-icon_small">
-                                <use xlink:href="slds/assets/icons/standard-sprite/svg/symbols.svg#customers"></use>
+                                <use xlink:href="slds/assets/icons/standard-sprite/svg/symbols.svg#user"></use>
                             </svg>
                         </span>
                     </div>
@@ -199,16 +287,16 @@ async function onCreateAndCloseClick() {
                             </svg>
                         </button>
 
-                        <!-- Save & Close button -->
+                        <!-- Create & Close button -->
                         <button class="slds-button slds-button_brand"
                                @click="onCreateAndCloseClick"
-                               :disabled="loading || creating">
+                               :disabled="loading || creating || !isValidForm">
                             {{ creating ? 'Creating...' : 'Create & Close' }}
                         </button>
 
                         <!-- Error popover -->
-                        <section id="save-popover" class="slds-popover slds-popover_error slds-nubbin_top-right" role="dialog" v-if="error">
-                            <button class="slds-button slds-button_icon slds-button_icon-small slds-float_right slds-popover__close slds-button_icon-inverse slds-m-top_x-small slds-m-right_small" title="Close" @click="error = ''">
+                        <section id="create-popover" class="slds-popover slds-popover_error slds-nubbin_top-right slds-is-absolute" role="dialog" v-if="createAndCloseError">
+                            <button class="slds-button slds-button_icon slds-button_icon-small slds-float_right slds-popover__close slds-button_icon-inverse slds-m-top_x-small slds-m-right_small" title="Close" @click="createAndCloseError = ''">
                                 <svg class="slds-button__icon">
                                     <use xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#close"></use>
                                 </svg>
@@ -228,7 +316,7 @@ async function onCreateAndCloseClick() {
                                 </div>
                             </header>
                             <div class="slds-popover__body">
-                                <p>{{ error }}</p>
+                                <p>{{ createAndCloseError }}</p>
                             </div>
                         </section>
                     </div>
@@ -240,7 +328,7 @@ async function onCreateAndCloseClick() {
             <div class="slds-form slds-m-top_x-small" role="list">
 
                 <!-- Email field -->
-                <div :class="`slds-form-element slds-m-bottom_x-small ${form.emailValid ? '' : 'slds-has-error'}`">
+                <div :class="`slds-form-element slds-m-bottom_x-small ${form.email.length === 0 || isValidEmail ? '' : 'slds-has-error'}`">
                     <label class="slds-form-element__label" for="email-input">
                         <abbr class="slds-required" title="required">* </abbr>
                         Email
@@ -249,8 +337,8 @@ async function onCreateAndCloseClick() {
                         <input type="text"
                                id="email-input"
                                class="slds-input"
-                               v-model="form.email"
-                               @keyup="onEmailEntered"
+                               v-model.trim="form.email"
+                               @input="onEmailEntered"
                                autofocus
                                required />
                     </div>
@@ -262,7 +350,7 @@ async function onCreateAndCloseClick() {
                         <div class="slds-form-element slds-form-element_horizontal slds-is-editing">
                             <label class="slds-form-element__label" for="first-name-input">First Name</label>
                             <div class="slds-form-element__control">
-                                <input type="text" id="first-name-input" class="slds-input" v-model="form.firstName" />
+                                <input type="text" id="first-name-input" class="slds-input" v-model.trim="form.firstName" />
                             </div>
                         </div>
                     </div>
@@ -273,7 +361,7 @@ async function onCreateAndCloseClick() {
                                 Last Name
                             </label>
                             <div class="slds-form-element__control">
-                                <input type="text" id="last-name-input" class="slds-input" v-model="form.lastName" required />
+                                <input type="text" id="last-name-input" class="slds-input" v-model.trim="form.lastName" required />
                             </div>
                         </div>
                     </div>
@@ -282,16 +370,17 @@ async function onCreateAndCloseClick() {
                 <!-- Profile/Role fields -->
                 <div class="slds-form__row">
                     <div class="slds-form__item" role="listitem">
-                        <div class="slds-form-element slds-form-element_horizontal slds-is-editing">
+                        <div :class="`slds-form-element slds-form-element_horizontal slds-is-editing ${profiles.error.length > 0 ? 'slds-has-error' : ''}`">
                             <label class="slds-form-element__label" for="profile-input">
                                 <abbr class="slds-required" title="required">* </abbr>
                                 Profile
                             </label>
                             <div class="slds-form-element__control">
                                 <div class="slds-select_container">
-                                <select id="profile-input" class="slds-select" :disabled="profiles.length === 0" v-model="form.profileId">
-                                    <option v-if="profiles.length === 0" value="loading">Loading...</option>
-                                    <option v-for="profile of profiles"
+                                <select id="profile-input" class="slds-select" :disabled="profiles.loading || profiles.error.length > 0" v-model="form.profileId">
+                                    <option v-if="profiles.loading" value="loading">Loading...</option>
+
+                                    <option v-for="profile of profiles.items"
                                            :key="profile.id"
                                            :value="profile.id">
                                            {{ profile.name }}
@@ -299,24 +388,37 @@ async function onCreateAndCloseClick() {
                                 </select>
                                 </div>
                             </div>
+                            <div class="slds-form-element__help" v-if="profiles.error">{{ profiles.error }}</div>
                         </div>
                     </div>
                     <div class="slds-form__item" role="listitem">
-                        <div class="slds-form-element slds-form-element_horizontal slds-is-editing">
+                        <div :class="`slds-form-element slds-form-element_horizontal slds-is-editing ${profiles.error.length > 0 ? 'slds-has-error' : ''}`">
                             <label class="slds-form-element__label" for="role-input">Role</label>
+                            <div class="slds-form-element__icon">
+                                <button class="slds-button slds-button_icon" @mouseenter="showRoleTooltip = true" @mouseleave="showRoleTooltip = false">
+                                    <svg class="slds-button__icon">
+                                        <use xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#info"></use>
+                                    </svg>
+                                </button>
+                                <div class="slds-popover slds-popover_tooltip slds-nubbin_bottom-left popover-help" role="tooltip" v-show="showRoleTooltip">
+                                    <div class="slds-popover__body">The developer name is shown in brackets.</div>
+                                </div>
+                            </div>
                             <div class="slds-form-element__control">
                                 <div class="slds-select_container">
-                                <select class="slds-select" id="role-input" :disabled="profiles.length === 0" v-model="form.roleId">
-                                    <option value="">None</option>
-                                    <option v-if="roles.length === 0" value="loading">Loading...</option>
-                                    <option v-for="role of roles"
+                                <select class="slds-select" id="role-input" :disabled="roles.loading || roles.error.length > 0" v-model="form.roleId">
+                                    <option v-if="roles.loading" value="loading">Loading...</option>
+
+                                    <option v-else value="">None</option>
+                                    <option v-for="role of roles.items"
                                            :key="role.id"
                                            :value="role.id">
-                                           {{ role.name }}
+                                           {{ role.name }} ({{ role.developerName }})
                                     </option>
                                 </select>
                                 </div>
                             </div>
+                            <div class="slds-form-element__help" v-if="roles.error">{{ roles.error }}</div>
                         </div>
                     </div>
                 </div>
@@ -328,7 +430,7 @@ async function onCreateAndCloseClick() {
                         Alias
                     </label>
                     <div class="slds-form-element__control">
-                        <input type="text" id="alias-input" class="slds-input" v-model="form.alias" required />
+                        <input type="text" id="alias-input" class="slds-input" v-model.trim="form.alias" required />
                     </div>
                 </div>
 
@@ -349,7 +451,7 @@ async function onCreateAndCloseClick() {
                         </div>
                     </div>
                     <div class="slds-form-element__control">
-                        <input type="text" id="username-input" class="slds-input" v-model="form.username" required />
+                        <input type="text" id="username-input" class="slds-input" v-model.trim="form.username" required />
                     </div>
                 </div>
 
@@ -360,7 +462,7 @@ async function onCreateAndCloseClick() {
                         Nickname
                     </label>
                     <div class="slds-form-element__control">
-                        <input type="text" id="nickname-input" class="slds-input" v-model="form.nickname" required />
+                        <input type="text" id="nickname-input" class="slds-input" v-model.trim="form.nickname" required />
                     </div>
                 </div>
 
@@ -382,13 +484,40 @@ async function onCreateAndCloseClick() {
     </article>
 
     <QuickCreateUserSettingsModal ref="settingsModal" />
-    <FullscreenOverlay ref="overlay" />
+
+    <FullscreenOverlay :visible="overlay.visible" :type="overlay.type">
+        <span class="slds-icon_container slds-m-bottom_x-small">
+            <svg class="slds-icon overlay-check-icon">
+                <use v-if="overlay.type === 'success'" xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#success"></use>
+                <use v-else-if="overlay.type === 'warning'" xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#warning"></use>
+            </svg>
+        </span>
+
+        <div class="slds-text-heading_medium slds-m-bottom_x-small">
+            <span class="overlay-user-link" @click="onOpenUser" title="Open User detail page in a new tab.">User</span>
+            <template v-if="overlay.passwordResetSuccessful">
+                created!
+            </template>
+            <template v-else>
+                created but...
+            </template>
+        </div>
+        <div class="slds-text-heading_small" v-if="!overlay.passwordResetSuccessful">{{ overlay.passwordResetError }}</div>
+    </FullscreenOverlay>
 </template>
 
-<style>
-#save-popover {
-    position: absolute;
+<style scoped>
+#create-popover {
     left: 200px;
-    top: 54px;
+    top: 55px;
+}
+
+.overlay-check-icon {
+    fill: white;
+}
+
+.overlay-user-link {
+    text-decoration: underline;
+    cursor: pointer;
 }
 </style>

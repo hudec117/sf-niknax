@@ -1,6 +1,6 @@
 {
   "name": "sf-niknax",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
   "license": "AGPL-3.0-only",
   "scripts": {
@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@salesforce-ux/design-system": "^2.22.0",
-    "vue": "^3.3.4",
+    "vue": "^3.3.6",
     "vue-debounce": "^4.0.0"
   },
   "devDependencies": {

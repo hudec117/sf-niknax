@@ -1,39 +1,35 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed } from 'vue';
 
-const visible = ref(false);
-const message = ref('');
+const props = defineProps<{
+    visible: boolean,
+    type: string
+}>();
 
-function show(messageInput: string, duration: number): Promise<void> {
-    message.value = messageInput;
+const overlayClasses = computed(() => {
+    let classes = 'overlay slds-align_absolute-center';
 
-    visible.value = true;
+    switch (props.type) {
+        case 'success':
+            classes += ' overlay-success';
+            break;
+        case 'warning':
+            classes += ' overlay-warning';
+            break;
+        case 'error':
+            classes += ' overlay-error';
+            break;
+    }
 
-    return new Promise<void>((resolve) => {
-        setTimeout(() => {
-            visible.value = false;
-            resolve();
-        }, duration);
-    });
-}
-
-defineExpose<{
-    show(message: string, duration: number): Promise<void>
-}>({
-    show
+    return classes;
 });
 </script>
 
 <template>
     <Transition>
-        <div class="overlay slds-align_absolute-center" v-if="visible">
+        <div :class="overlayClasses" v-if="props.visible">
             <div class="overlay-content">
-                <span class="slds-icon_container slds-icon-utility-success slds-m-bottom_x-small">
-                    <svg class="slds-icon slds-icon-text-default">
-                        <use xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#success"></use>
-                    </svg>
-                </span>
-                <div class="slds-text-heading_medium">{{ message }}</div>
+                <slot></slot>
             </div>
         </div>
     </Transition>
@@ -46,17 +42,24 @@ defineExpose<{
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgb(69, 198, 90);
     z-index: 2;
+}
+
+.overlay-success {
+    background-color: #45c65a;
+}
+
+.overlay-warning {
+    background-color: #fe9339;
+}
+
+.overlay-error {
+    background-color: #ba0517;
 }
 
 .overlay-content {
     text-align: center;
     color: white;
-}
-
-.overlay .slds-icon {
-    fill: white;
 }
 
 .v-enter-active {

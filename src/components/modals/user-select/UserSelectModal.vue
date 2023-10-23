@@ -13,14 +13,17 @@ let restService: SalesforceRESTService;
 let resultResolve: (value: string | PromiseLike<string | null> | null) => void;
 
 const visible = ref(false);
+const error = ref('');
 const selectedUserId = ref<string | undefined>();
 
 async function doSearch(value: string): Promise<Array<SearchLookupItem>> {
     const result = await restService.query(`SELECT Id, FirstName, LastName, Username, Email FROM User WHERE Name LIKE '%${value}%' OR Username LIKE '%${value}%' OR Email LIKE '%${value}%'`);
     if (!result.success) {
-        // TODO: handle
+        error.value = `Failed to query for users because ${result.error}`;
         return [];
     }
+
+    error.value = '';
 
     return (result.data as Array<any>).map(record => {
         const user = record as User;
@@ -102,7 +105,7 @@ defineExpose<{
                 <div class="slds-modal__content slds-p-around_medium">
                     <SearchLookup placeholder="Search by name, username or email..."
                                   empty-list-label="No records found"
-                                  list-item-icon="avatar"
+                                  :error-label="error"
                                  :do-search="doSearch"
                                  @selected="onSearchSelected"
                                  @unselected="onSearchUnselected" />
