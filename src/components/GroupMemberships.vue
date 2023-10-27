@@ -192,47 +192,48 @@ async function onSaveAndCloseClick() {
     saving.value = true;
     error.value = '';
 
-    let success = true;
+    try {
+        let success = true;
 
-    // Create a list of groups that have been newly assigned
-    const newlyAssignedGroups = assignedGroups.value.filter(group => {
-        for (const originalAssignedGroup of originalAssignedGroups) {
-            if (originalAssignedGroup.id === group.id) {
-                return false;
+        // Create a list of groups that have been newly assigned
+        const newlyAssignedGroups = assignedGroups.value.filter(group => {
+            for (const originalAssignedGroup of originalAssignedGroups) {
+                if (originalAssignedGroup.id === group.id) {
+                    return false;
+                }
             }
+
+            return true;
+        });
+        if (newlyAssignedGroups.length > 0) {
+            success = await assignGroups(newlyAssignedGroups);
         }
 
-        return true;
-    });
-    if (newlyAssignedGroups.length > 0) {
-        success = await assignGroups(newlyAssignedGroups);
-    }
-
-    // Create a list of groups that have been newly unassigned
-    const newlyUnassignedGroups = availableGroups.value.filter(group => {
-        for (const originalAvailableGroup of originalAvailableGroups) {
-            if (originalAvailableGroup.id === group.id) {
-                return false;
+        // Create a list of groups that have been newly unassigned
+        const newlyUnassignedGroups = availableGroups.value.filter(group => {
+            for (const originalAvailableGroup of originalAvailableGroups) {
+                if (originalAvailableGroup.id === group.id) {
+                    return false;
+                }
             }
+
+            return true;
+        });
+        if (newlyUnassignedGroups.length > 0) {
+            success = await unassignGroups(newlyUnassignedGroups);
         }
 
-        return true;
-    });
-    if (newlyUnassignedGroups.length > 0) {
-        success = await unassignGroups(newlyUnassignedGroups);
-    }
+        if (success) {
+            if (newlyAssignedGroups.length > 0 || newlyUnassignedGroups.length > 0) {
+                await chrome.tabs.reload(props.context.originalTabId);
+            }
 
-    if (success) {
-        // If there's been a change, refresh the page.
-        if (newlyAssignedGroups.length > 0 || newlyUnassignedGroups.length > 0) {
-            await chrome.tabs.reload(props.context.originalTabId);
+            const currentPopup = await chrome.windows.getCurrent();
+            await chrome.windows.remove(currentPopup.id!);
         }
-
-        const currentPopup = await chrome.windows.getCurrent();
-        await chrome.windows.remove(currentPopup.id!);
+    } finally {
+        saving.value = false;
     }
-
-    saving.value = false;
 }
 
 async function assignGroups(groups: Array<Group>): Promise<boolean> {

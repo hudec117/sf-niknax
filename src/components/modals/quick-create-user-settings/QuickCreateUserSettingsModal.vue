@@ -119,7 +119,7 @@ defineExpose<{
                                     </svg>
                                 </button>
                                 <div class="slds-popover slds-popover_tooltip slds-nubbin_bottom-left popover-help" role="tooltip" v-show="showDefaultRoleTooltip">
-                                    <div class="slds-popover__body">The developer name of a role to default to. Falls back to None.</div>
+                                    <div class="slds-popover__body">The developer name of a role to default to. Falls back to no role.</div>
                                 </div>
                             </div>
                             <div class="slds-form-element__control">
