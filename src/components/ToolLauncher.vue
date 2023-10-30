@@ -43,7 +43,7 @@ onMounted(() => {
 
     chrome.runtime.sendMessage({ operation: 'get-session-id', host: loadedServerHost }, async function (session: any) {
         if (!session.id) {
-            error.value = 'Session not found. Close all Salesforce Niknax windows, log into Salesforce and try again.';
+            error.value = 'Session expired or invalid. Close all Salesforce Niknax windows, log into Salesforce and try again.';
             return;
         }
 
