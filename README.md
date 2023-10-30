@@ -2,7 +2,7 @@
 
 # Salesforce Niknax
 
-<!-- ![Chrome Web Store](https://img.shields.io/chrome-web-store/v/gkibdicghcpcikhjpgjoijpobdipklnp?style=flat-square) -->
+![Chrome Web Store](https://img.shields.io/chrome-web-store/v/oppifclggmgkdnafjhcjojmmiegomlio?style=flat-square)
 
 Browser extension providing various QoL improvements in Salesforce, with emphasis on familiar design and excellent UX.
 
@@ -20,17 +20,17 @@ Roadmap
  - 🔄 Enhanced API event log viewer
  - 🔄 Edge support
 
-<!-- <br />
+<br />
 
 ## Download
 
 This extension is compatible with: Chrome 88, Edge 88 or later.
 
-<a href="TODO">
+<a href="https://chrome.google.com/webstore/detail/salesforce-user-permissio/oppifclggmgkdnafjhcjojmmiegomlio">
 
 ![Chrome Web Store](https://storage.googleapis.com/chrome-gcs-uploader.appspot.com/image/WlD8wC6g8khYWPJUsQceQkhXSlv1/mPGKYBIR2uCP0ApchDXE.png)
 
-</a> -->
+</a>
 
 ## Usage
 
