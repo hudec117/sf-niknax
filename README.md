@@ -1,4 +1,4 @@
-<img align="left" width="80" height="80" style="margin-right: 5px;" src="branding\store\icon.png">
+<img align="left" width="70" height="70" src="branding\store\icon.png">
 
 # Salesforce Niknax
 
@@ -13,12 +13,12 @@ Features
  - Sleek & familiar SLDS design
 
 Roadmap
- - 🔄 Edge support
  - 🔄 User Cloning
  - 🔄 Bulk Freeze/Unfreeze Users
  - 🔄 Deployment progress bar
  - 🔄 Enhanced debug logs view
  - 🔄 Enhanced API event log viewer
+ - 🔄 Edge support
 
 <!-- <br />
 
