@@ -128,13 +128,24 @@ defineExpose<{
                         </div>
 
                         <fieldset class="slds-form-element slds-form-element_stacked">
+                            <!-- Grab email from clipboard checkbox -->
+                            <div class="slds-form-element__control">
+                                <div class="slds-checkbox">
+                                    <input type="checkbox" id="email-from-clipboard" v-model="form.grabEmailFromClipboard" />
+                                    <label class="slds-checkbox__label" for="email-from-clipboard">
+                                        <span class="slds-checkbox_faux"></span>
+                                        <span class="slds-form-element__label">Try to grab email from the clipboard?</span>
+                                    </label>
+                                </div>
+                            </div>
+
                             <!-- Extract first/last name checkbox -->
                             <div class="slds-form-element__control">
                                 <div class="slds-checkbox">
                                     <input type="checkbox" id="extract-first-last-name-from-email-checkbox" v-model="form.extractFirstLastNameFromEmail" />
                                     <label class="slds-checkbox__label" for="extract-first-last-name-from-email-checkbox">
                                         <span class="slds-checkbox_faux"></span>
-                                        <span class="slds-form-element__label">Extract First/Last name from Email</span>
+                                        <span class="slds-form-element__label">Extract First/Last name automatically from Email?</span>
                                     </label>
                                 </div>
                             </div>
