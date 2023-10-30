@@ -1,4 +1,4 @@
-<img align="left" width="40" height="40" style="margin-right: 5px;" src="branding\store\icon.png">
+<img align="left" width="80" height="80" style="margin-right: 5px;" src="branding\store\icon.png">
 
 # Salesforce Niknax
 
