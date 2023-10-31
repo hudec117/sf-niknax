@@ -85,6 +85,15 @@ async function loadData() {
 
     form.value.resetPassword = settings.value.resetPasswordDefault;
 
+    // Attempt to load email from clipboard
+    if (settings.value.grabEmailFromClipboard) {
+        const clipboardText = (await navigator.clipboard.readText()).trim();
+        if (userService.isValidEmail(clipboardText)) {
+            form.value.email = clipboardText;
+            onEmailEntered();
+        }
+    }
+
     // Load profiles/roles
     await Promise.all([loadProfiles(), loadRoles()]);
 

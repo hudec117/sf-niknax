@@ -3,7 +3,7 @@ import './assets/main.css';
 import 'slds/assets/styles/salesforce-lightning-design-system.css';
 
 import { createApp } from 'vue';
-import { vue3Debounce } from 'vue-debounce'
+import { vue3Debounce } from 'vue-debounce';
 import App from './App.vue';
 
 const app = createApp(App);

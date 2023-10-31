@@ -13,15 +13,17 @@ const displayCloneUser = ref(false);
 const displayBulkFreezeUsers = ref(false);
 const displayQuickCreateUser = ref(false);
 
+const error = ref('');
 const groupType = ref('');
 
 const context = ref<Context>();
 
 onMounted(() => {
     const params = new URLSearchParams(window.location.search);
+
     const loadedServerHost = params.get('host');
     if (!loadedServerHost) {
-        // TODO: handle
+        error.value = 'Missing "host" from the URL, please re-open the window.';
         return;
     }
 
@@ -29,19 +31,19 @@ onMounted(() => {
 
     const loadedOriginalTabId = params.get('tab');
     if (!loadedOriginalTabId) {
-        // TODO: handle
+        error.value = 'Missing "tab" from the URL, please re-open the window.';
         return;
     }
 
     const loadedPage = params.get('page');
     if (!loadedPage) {
-        // TODO: handle
+        error.value = 'Missing "page" from the URL, please re-open the window.';
         return;
     }
 
     chrome.runtime.sendMessage({ operation: 'get-session-id', host: loadedServerHost }, async function (session: any) {
         if (!session.id) {
-            // TODO: handle
+            error.value = 'Session expired or invalid. Close all Salesforce Niknax windows, log into Salesforce and try again.';
             return;
         }
 
@@ -70,14 +72,18 @@ onMounted(() => {
         <CloneUser v-else-if="displayCloneUser" :context="context!" />
         <BulkFreezeUsers v-else-if="displayBulkFreezeUsers" :context="context!" />
         <QuickCreateUser v-else-if="displayQuickCreateUser" :context="context!" />
+
+        <p v-if="error" class="slds-text-color_error">{{ error }}</p>
     </div>
 </template>
 
 <style>
+/* Used in GroupdMembership.vue and QuickCreateUser.vue */
 .align-card-action-button {
     margin-top: -4px;
 }
 
+/* QuickCreateUser.vue and QuickCreateUserSettings.vue */
 .popover-help {
     position: absolute;
     top: -45px;
