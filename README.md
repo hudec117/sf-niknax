@@ -54,7 +54,7 @@ Features
  - Configurable Default Profile/Role
  - Available from nearly anywhere in Salesforce!
 
-   <img src="branding/other/quick-create-user-button.png">
+<img src="branding/other/quick-create-user-button.png">
 
 ## Public Group/Queue Membership Editing
 
@@ -71,7 +71,8 @@ TODO
 </p>
 
 [![Salesforce Niknax YouTube](https://img.youtube.com/vi/XXYy9Lf_ACQ/0.jpg)](https://www.youtube.com/watch?v=XXYy9Lf_ACQ)
-(Click for a video)
+
+(^ click for a video)
 
 ## Q&A
 
