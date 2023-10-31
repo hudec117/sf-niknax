@@ -4,7 +4,7 @@
 
 ![Chrome Web Store](https://img.shields.io/chrome-web-store/v/oppifclggmgkdnafjhcjojmmiegomlio?style=flat-square)
 
-Browser extension providing various QoL improvements in Salesforce, with emphasis on familiar design and excellent UX.
+Browser extension for various QoL improvements in Salesforce, with emphasis on familiar design and excellent UX.
 
 Features
  - 2-click user creation from anywhere in Salesforce
@@ -24,25 +24,42 @@ Roadmap
 
 ## Download
 
-This extension is compatible with: Chrome 88, Edge 88 or later.
+This extension is compatible with: Chrome 88 or later.
 
-<a href="https://chrome.google.com/webstore/detail/salesforce-user-permissio/oppifclggmgkdnafjhcjojmmiegomlio">
+<a href="https://chrome.google.com/webstore/detail/salesforce-niknax/oppifclggmgkdnafjhcjojmmiegomlio">
 
 ![Chrome Web Store](https://storage.googleapis.com/chrome-gcs-uploader.appspot.com/image/WlD8wC6g8khYWPJUsQceQkhXSlv1/mPGKYBIR2uCP0ApchDXE.png)
 
 </a>
 
-## Usage
+## Quick Create User
 
-### Quick User Create
+**Use case**: creating users in a sandbox using only an email
+
+The Quick Create User tool was built to replace the long process of creating a user in a sandbox. 90% of the time you have an email address and you just want to give System Administrator access, this tool drives the population of all the required User fields based on the email and other configurable defaults.
+
+Features
+ - Smart auto-population of required User fields
+ - Uniquely generated Username/Nickname
+ - First/Last name extraction from email
+   - Where the format is first.last@domain.com
+   - In the case of first.middle.last@domain.com only "first" and "last" are used.
+   - In the case of first@domain.com only "first" is put in the Last Name field and the First Name field is kept empty.
+ - Automatic Clipboard scan for an email on open
+   - Enable in the Settings, re-open the window and grant the Clipboard permission.
+   - If no valid email is found, the field will be kept blank.
+   - When enabled, you can achieve 2-click user creation!
+ - Configurable Username generation
+   - Change the domain
+ - Configurable Default Profile/Role
+ - Available from nearly anywhere in Salesforce!
+   <img src="branding/other/quick-create-user-button.png">
+
+## Public Group/Queue Membership Editing
 
 TODO
 
-### Public Group/Queue Membership Editing
-
-TODO
-
-## Screenshots
+## Visuals
 
 <p>
     <img src="branding/store/quick-create-user.png" height="460">
@@ -51,6 +68,9 @@ TODO
 <p>
     <img src="branding/store/memberships-group.png" height="460">
 </p>
+
+Click below for a video demo.
+[![Salesforce Niknax YouTube](https://img.youtube.com/vi/XXYy9Lf_ACQ/0.jpg)](https://www.youtube.com/watch?v=XXYy9Lf_ACQ)
 
 ## Q&A
 
