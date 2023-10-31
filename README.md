@@ -53,6 +53,7 @@ Features
    - Change the domain
  - Configurable Default Profile/Role
  - Available from nearly anywhere in Salesforce!
+
    <img src="branding/other/quick-create-user-button.png">
 
 ## Public Group/Queue Membership Editing
@@ -69,8 +70,8 @@ TODO
     <img src="branding/store/memberships-group.png" height="460">
 </p>
 
-Click below for a video demo.
 [![Salesforce Niknax YouTube](https://img.youtube.com/vi/XXYy9Lf_ACQ/0.jpg)](https://www.youtube.com/watch?v=XXYy9Lf_ACQ)
+(Click for a video)
 
 ## Q&A
 
