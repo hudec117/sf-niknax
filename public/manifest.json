@@ -1,7 +1,7 @@
 {
     "name": "Salesforce Niknax",
-    "description": "Various QoL and productivity improvements for Salesforce.",
-    "version": "1.0.0",
+    "description": "Browser extension for various QoL improvements in Salesforce, with emphasis on familiar design and excellent UX.",
+    "version": "1.0.1",
     "author": "Aurel Hudec",
     "homepage_url": "https://github.com/hudec117/sf-niknax",
     "incognito": "split",
