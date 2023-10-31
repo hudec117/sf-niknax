@@ -20,7 +20,7 @@ Roadmap
  - 🔄 Enhanced API event log viewer
  - 🔄 Edge support
 
-<br />
+(Not an official Salesforce® product)
 
 ## Download
 
