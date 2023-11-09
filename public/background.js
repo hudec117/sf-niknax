@@ -5,7 +5,7 @@ const SF_NIKNAX_PAGE = 'sf-niknax.html';
 const PAGE_DIMENSIONS = {
     'edit-public-group-memberships':    { width: 673, height: 537 },
     'edit-queue-memberships':           { width: 673, height: 537 },
-    'clone-user':                       { width: 620, height: 694 },
+    'clone-user':                       { width: 627, height: 211 },
     'bulk-freeze-users':                { width: 620, height: 630 },
     'quick-create-user':                { width: 616, height: 605 },
 };

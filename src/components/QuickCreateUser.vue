@@ -55,7 +55,6 @@ const roles = ref({
     error: ''
 });
 
-
 const isValidForm = computed(() => {
     return userService.isValidEmail(form.value.email)
         && userService.isValidFirstName(form.value.firstName)
@@ -273,64 +272,64 @@ async function closeWindow() {
 <template>
     <article class="slds-card">
         <div class="slds-card__header slds-grid">
-                <header class="slds-media slds-media_center slds-has-flexi-truncate">
-                    <div class="slds-media__figure">
-                        <span class="slds-icon_container slds-icon-standard-user">
-                            <svg class="slds-icon slds-icon_small">
-                                <use xlink:href="slds/assets/icons/standard-sprite/svg/symbols.svg#user"></use>
-                            </svg>
-                        </span>
-                    </div>
-                    <div class="slds-media__body">
-                        <h2 class="slds-card__header-title">
-                            <span>{{ title }}</span>
-                        </h2>
-                    </div>
-                    <div class="slds-no-flex">
-                        <!-- Setting button -->
-                        <button class="slds-button slds-button_icon slds-button_icon-border-filled align-card-action-button"
-                                title="Settings"
-                               @click="onSettingsClick">
+            <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                <div class="slds-media__figure">
+                    <span class="slds-icon_container slds-icon-standard-user">
+                        <svg class="slds-icon slds-icon_small">
+                            <use xlink:href="slds/assets/icons/standard-sprite/svg/symbols.svg#user"></use>
+                        </svg>
+                    </span>
+                </div>
+                <div class="slds-media__body">
+                    <h2 class="slds-card__header-title">
+                        <span>{{ title }}</span>
+                    </h2>
+                </div>
+                <div class="slds-no-flex">
+                    <!-- Setting button -->
+                    <button class="slds-button slds-button_icon slds-button_icon-border-filled align-card-action-button"
+                            title="Settings"
+                            @click="onSettingsClick">
+                        <svg class="slds-button__icon">
+                            <use xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#settings"></use>
+                        </svg>
+                    </button>
+
+                    <!-- Create & Close button -->
+                    <button class="slds-button slds-button_brand"
+                            @click="onCreateAndCloseClick"
+                            :disabled="loading || creating || !isValidForm">
+                        {{ creating ? 'Creating...' : 'Create & Close' }}
+                    </button>
+
+                    <!-- Error popover -->
+                    <section id="create-popover" class="slds-popover slds-popover_error slds-nubbin_top-right slds-is-absolute" role="dialog" v-if="createAndCloseError">
+                        <button class="slds-button slds-button_icon slds-button_icon-small slds-float_right slds-popover__close slds-button_icon-inverse slds-m-top_x-small slds-m-right_small" title="Close" @click="createAndCloseError = ''">
                             <svg class="slds-button__icon">
-                                <use xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#settings"></use>
+                                <use xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#close"></use>
                             </svg>
                         </button>
-
-                        <!-- Create & Close button -->
-                        <button class="slds-button slds-button_brand"
-                               @click="onCreateAndCloseClick"
-                               :disabled="loading || creating || !isValidForm">
-                            {{ creating ? 'Creating...' : 'Create & Close' }}
-                        </button>
-
-                        <!-- Error popover -->
-                        <section id="create-popover" class="slds-popover slds-popover_error slds-nubbin_top-right slds-is-absolute" role="dialog" v-if="createAndCloseError">
-                            <button class="slds-button slds-button_icon slds-button_icon-small slds-float_right slds-popover__close slds-button_icon-inverse slds-m-top_x-small slds-m-right_small" title="Close" @click="createAndCloseError = ''">
-                                <svg class="slds-button__icon">
-                                    <use xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#close"></use>
-                                </svg>
-                            </button>
-                            <header class="slds-popover__header">
-                                <div class="slds-media slds-media_center slds-has-flexi-truncate ">
-                                    <div class="slds-media__figure">
-                                        <span class="slds-icon_container slds-icon-utility-error">
-                                            <svg class="slds-icon slds-icon_x-small">
-                                                <use xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#error"></use>
-                                            </svg>
-                                        </span>
-                                    </div>
-                                    <div class="slds-media__body">
-                                        <h2 class="slds-truncate slds-text-heading_medium">We hit a snag</h2>
-                                    </div>
+                        <header class="slds-popover__header">
+                            <div class="slds-media slds-media_center slds-has-flexi-truncate ">
+                                <div class="slds-media__figure">
+                                    <span class="slds-icon_container slds-icon-utility-error">
+                                        <svg class="slds-icon slds-icon_x-small">
+                                            <use xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#error"></use>
+                                        </svg>
+                                    </span>
                                 </div>
-                            </header>
-                            <div class="slds-popover__body">
-                                <p>{{ createAndCloseError }}</p>
+                                <div class="slds-media__body">
+                                    <h2 class="slds-truncate slds-text-heading_medium">We hit a snag</h2>
+                                </div>
                             </div>
-                        </section>
-                    </div>
-                </header>
-            </div>
+                        </header>
+                        <div class="slds-popover__body">
+                            <p>{{ createAndCloseError }}</p>
+                        </div>
+                    </section>
+                </div>
+            </header>
+        </div>
         <div class="slds-card__body slds-card__body_inner">
             <p class="slds-m-bottom_x-small">Enter an email address and the rest of the form will auto-populate.</p>
 
@@ -370,7 +369,7 @@ async function closeWindow() {
                                 Last Name
                             </label>
                             <div class="slds-form-element__control">
-                                <input type="text" id="last-name-input" class="slds-input" v-model.trim="form.lastName" required />
+                                <input type="text" id="last-name-input" class="slds-input" v-model.trim="form.lastName" />
                             </div>
                         </div>
                     </div>
@@ -439,7 +438,7 @@ async function closeWindow() {
                         Alias
                     </label>
                     <div class="slds-form-element__control">
-                        <input type="text" id="alias-input" class="slds-input" v-model.trim="form.alias" required />
+                        <input type="text" id="alias-input" class="slds-input" v-model.trim="form.alias" />
                     </div>
                 </div>
 
@@ -460,7 +459,7 @@ async function closeWindow() {
                         </div>
                     </div>
                     <div class="slds-form-element__control">
-                        <input type="text" id="username-input" class="slds-input" v-model.trim="form.username" required />
+                        <input type="text" id="username-input" class="slds-input" v-model.trim="form.username" />
                     </div>
                 </div>
 
@@ -471,7 +470,7 @@ async function closeWindow() {
                         Nickname
                     </label>
                     <div class="slds-form-element__control">
-                        <input type="text" id="nickname-input" class="slds-input" v-model.trim="form.nickname" required />
+                        <input type="text" id="nickname-input" class="slds-input" v-model.trim="form.nickname" />
                     </div>
                 </div>
 

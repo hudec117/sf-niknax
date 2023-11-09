@@ -103,7 +103,7 @@ defineExpose<{
                     <h1 class="slds-text-heading_medium">Select a User</h1>
                 </div>
                 <div class="slds-modal__content slds-p-around_medium">
-                    <SearchLookup placeholder="Search by name, username or email..."
+                    <SearchLookup placeholder="Search by name, username or email"
                                   empty-list-label="No records found"
                                   :error-label="error"
                                  :do-search="doSearch"

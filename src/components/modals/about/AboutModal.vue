@@ -51,7 +51,7 @@ defineExpose<{
                         </h3>
                         <div class="slds-section__content">
                             <ul class="slds-list_dotted">
-                                <li class="slds-item">Found a bug? Create an Issue on the <a href="https://github.com/hudec117/sf-niknax/issues" target="_blank">sf-niknax GitHub repository</a>.</li>
+                                <li class="slds-item">Found a bug? Create an Issue on the <a href="https://github.com/hudec117/sf-niknax/issues" class="external-link" target="_blank">sf-niknax GitHub repository</a></li>
                             </ul>
                         </div>
                     </div>
