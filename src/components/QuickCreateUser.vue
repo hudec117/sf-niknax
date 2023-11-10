@@ -6,6 +6,7 @@ import FullscreenOverlay from '@/components/slds/FullscreenOverlay.vue';
 import SalesforceToolingService from '@/services/salesforce-tooling-service';
 import Context from '@/models/context';
 import QuickCreateUserSettingsModal from '@/components/modals/quick-create-user-settings/QuickCreateUserSettingsModal.vue';
+import UserSelectModal from '@/components/modals/user-select/UserSelectModal.vue';
 import UserCreateForm from '@/models/UserCreateForm';
 import SalesforceUserService from '@/services/salesforce-user-service';
 import Profile from '@/models/Profile';
@@ -19,16 +20,17 @@ const props = defineProps<{
 }>();
 
 const settingsModal = ref<InstanceType<typeof QuickCreateUserSettingsModal> | null>(null);
+const userSelectModal = ref<InstanceType<typeof UserSelectModal> | null>(null);
 
 let userService: SalesforceUserService;
 let toolingService: SalesforceToolingService;
 let createdUserId = '';
 
-const title = ref('');
 const createAndCloseError = ref('');
 
 const form = ref(new UserCreateForm());
 
+const mode = ref<'create' | 'clone'>('create');
 const loading = ref(true);
 const creating = ref(false);
 const overlay = ref({
@@ -38,7 +40,12 @@ const overlay = ref({
     passwordResetError: ''
 });
 const showUsernameTooltip = ref(false);
+const showProfileTooltip = ref(false);
 const showRoleTooltip = ref(false);
+const cloneTargetUser = ref({
+    id: '',
+    name: ''
+});
 
 const isValidEmail = ref(false);
 
@@ -65,6 +72,8 @@ const isValidForm = computed(() => {
 });
 
 onMounted(() => {
+    document.title = 'Salesforce Niknax: Quick Create User';
+
     // Initialise Salesforce services
     userService = new SalesforceUserService(props.context.serverHost, props.context.sessionId);
     toolingService = new SalesforceToolingService(props.context.serverHost, props.context.sessionId);
@@ -73,9 +82,6 @@ onMounted(() => {
 });
 
 async function loadData() {
-    title.value = `Quick Create User`;
-    document.title = `Salesforce Niknax: ${title.value}`;
-
     // Load settings
     const settingsResult = await chrome.storage.local.get([SETTINGS_KEY]);
     if (SETTINGS_KEY in settingsResult) {
@@ -200,6 +206,32 @@ async function onSettingsClick() {
     }
 }
 
+async function onCloneClick() {
+    const cloneTargetUserId = await userSelectModal.value?.show(props.context);
+    if (cloneTargetUserId) {
+        const result = await userService.query(`SELECT Name, ProfileId, UserRoleId FROM User WHERE Id = '${cloneTargetUserId}'`);
+        if (!result.success) {
+            // TODO: handle
+            return;
+        }
+
+        const userRecord = (result.data as Array<any>)[0];
+
+        // Save clone target user ID for later and Name to display in the title
+        cloneTargetUser.value.id = cloneTargetUserId;
+        cloneTargetUser.value.name = userRecord.Name;
+
+        // Populate the Profile/Role picklists
+        form.value.profileId = userRecord.ProfileId;
+        form.value.roleId = userRecord.UserRoleId ?? '';
+
+        // Resize window to accomodate visible checkboxes, change the title and mode.
+        resizeTo(627, 721);
+        document.title = `Salesforce Niknax: Clone ${userRecord.Name}`;
+        mode.value = 'clone';
+    }
+}
+
 async function onCreateAndCloseClick() {
     creating.value = true;
     createAndCloseError.value = '';
@@ -282,7 +314,8 @@ async function closeWindow() {
                 </div>
                 <div class="slds-media__body">
                     <h2 class="slds-card__header-title">
-                        <span>{{ title }}</span>
+                        <template v-if="mode === 'create'">Quick Create User</template>
+                        <span v-else-if="mode === 'clone'" class="slds-truncate slds-m-right_x-small">Clone {{ cloneTargetUser.name }}</span>
                     </h2>
                 </div>
                 <div class="slds-no-flex">
@@ -295,11 +328,19 @@ async function closeWindow() {
                         </svg>
                     </button>
 
+                    <!-- Clone button -->
+                    <button class="slds-button slds-button_neutral"
+                           @click="onCloneClick"
+                           :disabled="loading || creating">
+                        Clone a User
+                    </button>
+
                     <!-- Create & Close button -->
                     <button class="slds-button slds-button_brand"
                             @click="onCreateAndCloseClick"
                             :disabled="loading || creating || !isValidForm">
-                        {{ creating ? 'Creating...' : 'Create & Close' }}
+                        <template v-if="mode === 'create'">{{ creating ? 'Creating...' : 'Create & Close' }}</template>
+                        <template v-if="mode === 'clone'">{{ creating ? 'Cloning...' : 'Clone & Close' }}</template>
                     </button>
 
                     <!-- Error popover -->
@@ -383,6 +424,16 @@ async function closeWindow() {
                                 <abbr class="slds-required" title="required">* </abbr>
                                 Profile
                             </label>
+                            <div class="slds-form-element__icon">
+                                <button class="slds-button slds-button_icon" @mouseenter="showProfileTooltip = true" @mouseleave="showProfileTooltip = false">
+                                    <svg class="slds-button__icon">
+                                        <use xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#info"></use>
+                                    </svg>
+                                </button>
+                                <div class="slds-popover slds-popover_tooltip slds-nubbin_bottom-left popover-help" role="tooltip" v-show="showProfileTooltip">
+                                    <div class="slds-popover__body">The license is shown in brackets.</div>
+                                </div>
+                            </div>
                             <div class="slds-form-element__control">
                                 <div class="slds-select_container">
                                 <select id="profile-input" class="slds-select" :disabled="profiles.loading || profiles.error.length > 0" v-model="form.profileId">
@@ -391,7 +442,7 @@ async function closeWindow() {
                                     <option v-for="profile of profiles.items"
                                            :key="profile.id"
                                            :value="profile.id">
-                                           {{ profile.name }}
+                                           {{ profile.name }} ({{ profile.userLicenseName }})
                                     </option>
                                 </select>
                                 </div>
@@ -474,10 +525,47 @@ async function closeWindow() {
                     </div>
                 </div>
 
-                <fieldset class="slds-form-element">
+                <fieldset class="slds-form-element slds-form-element_stacked" v-if="mode === 'clone'">
+                    <legend class="slds-form-element__legend slds-form-element__label">Cloning Options</legend>
                     <div class="slds-form-element__control">
                         <div class="slds-checkbox">
-                            <input type="checkbox" name="advanced-group" id="generate-password-checkbox" v-model="form.resetPassword" />
+                            <input type="checkbox" id="permission-set-assignments-checkbox" v-model="form.clonePermissionSetAssignments" />
+                            <label class="slds-checkbox__label" for="permission-set-assignments-checkbox">
+                                <span class="slds-checkbox_faux"></span>
+                                <span class="slds-form-element__label">Permission Set Assignments</span>
+                            </label>
+                        </div>
+
+                        <div class="slds-checkbox">
+                            <input type="checkbox" id="public-group-memberships-checkbox" v-model="form.clonePublicGroupMemberships" />
+                            <label class="slds-checkbox__label" for="public-group-memberships-checkbox">
+                                <span class="slds-checkbox_faux"></span>
+                                <span class="slds-form-element__label">Public Group Memberships</span>
+                            </label>
+                        </div>
+
+                        <div class="slds-checkbox">
+                            <input type="checkbox" id="queue-memberships-checkbox" v-model="form.cloneQueueMemberships" />
+                            <label class="slds-checkbox__label" for="queue-memberships-checkbox">
+                                <span class="slds-checkbox_faux"></span>
+                                <span class="slds-form-element__label">Queue Memberships</span>
+                            </label>
+                        </div>
+
+                        <div class="slds-checkbox">
+                            <input type="checkbox"  id="permission-set-license-assignments-checkbox" v-model="form.clonePermissionSetLicenseAssignments" />
+                            <label class="slds-checkbox__label" for="permission-set-license-assignments-checkbox">
+                                <span class="slds-checkbox_faux"></span>
+                                <span class="slds-form-element__label">Permission Set License Assignments</span>
+                            </label>
+                        </div>
+                    </div>
+                </fieldset>
+
+                <fieldset class="slds-form-element slds-form-element_stacked">
+                    <div class="slds-form-element__control">
+                        <div class="slds-checkbox">
+                            <input type="checkbox" id="generate-password-checkbox" v-model="form.resetPassword" />
                             <label class="slds-checkbox__label" for="generate-password-checkbox">
                                 <span class="slds-checkbox_faux"></span>
                                 <span class="slds-form-element__label">Reset password and notify user immediately</span>
@@ -492,6 +580,7 @@ async function closeWindow() {
     </article>
 
     <QuickCreateUserSettingsModal ref="settingsModal" />
+    <UserSelectModal ref="userSelectModal" />
 
     <FullscreenOverlay :visible="overlay.visible" :type="overlay.type">
         <span class="slds-icon_container slds-m-bottom_x-small">

@@ -88,7 +88,7 @@ window.onload = function () {
         cloneUserButton.type = 'button';
         cloneUserButton.style = 'margin-left: 5px; border: 1px solid #2574a9;';
         cloneUserButton.addEventListener('click', () => {
-            chrome.runtime.sendMessage({ operation: 'open-sf-niknax', page: 'clone-user' });
+            chrome.runtime.sendMessage({ operation: 'open-sf-niknax', page: 'quick-create-user' });
         });
 
         const topButtonRow = document.getElementById('topButtonRow');

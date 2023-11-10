@@ -18,22 +18,6 @@ window.onload = function () {
         </button>
     `;
 
-    const CLONE_USER_GLOBAL_ACTION_HTML = `
-        <button id="sf-niknax-clone-user-button" type="button" class="slds-button slds-button slds-button_icon slds-button_icon slds-button_icon-container slds-button_icon-small slds-global-actions__item-action forceHeaderButton" title="Salesforce Niknax: Clone any User">
-            <lightning-icon icon-name="utility:adduser" class="slds-icon-utility-adduser slds-global-header__icon slds-button__icon slds-icon_container forceIcon">
-                <lightning-primitive-icon>
-                    <svg class="slds-icon slds-icon_xx-small" focusable="false" viewBox="0 0 52 52" part="icon">
-                        <g id="Layer">
-                            <path fill="#2574a9" d="m20.8 39.7c-2.5-1-2.9-1.9-2.9-2.9 0-0.9 0.7-1.9 1.6-2.6 1.4-1.3 2.3-3.1 2.3-5.2 0-3.9-2.6-7.2-7.2-7.2-4.5 0-7.1 3.3-7.1 7.2 0 2.1 0.8 3.9 2.3 5.2 0.8 0.7 1.5 1.7 1.5 2.6 0 1-0.3 2-2.9 2.9-3.8 1.5-7.4 3.2-7.4 6.4v0.2 0.7c0 1.7 1.3 3 3.1 3h20.6c1.7 0 3.1-1.3 3.1-3v-0.7-0.3c0-3.1-3.3-4.8-7-6.3z"/>
-                            <path fill="#2574a9" d="m44.5 19.9c-2.5-1-2.9-1.9-2.9-2.8 0-1 0.7-1.9 1.6-2.6 1.4-1.3 2.2-3 2.2-5.1 0-3.8-2.5-7.1-7-7.1-4.5 0-7 3.3-7 7.1 0 2.1 0.8 3.8 2.3 5.1 0.8 0.7 1.5 1.6 1.5 2.6 0 0.9-0.4 1.9-2.9 2.8-3.7 1.5-7.3 3.2-7.3 6.3v0.2 0.7c0 1.6 1.3 2.9 3 2.9h20.3c1.7 0 3-1.3 3-2.9v-0.7-0.3c0-3-3.2-4.7-6.8-6.2z"/>
-                            <path fill="#2574a9" d="m25 6.5l0.1-4.3 5.2 6.7-5.3 5.9-0.1-3.7c0 0-3.4 0-6.4 2.1-2.2 1.6-2.5 6.8-2.5 6.8h-4c0 0-2.1-4.8 3.7-10.4 3.5-3.5 9.3-3.1 9.3-3.1z"/>
-                        </g>
-                    </svg>
-                </lightning-primitive-icon>
-            </lightning-icon>
-        </button>
-    `;
-
     // The inject is unreliable due to LX's long loading and so different pages (e.g. normal vs setup)
     // would load differently requiring an interval timer to wait to find the right element to inject next to.
     // We wait for up to a minute to allow for super slow loading times.
@@ -46,7 +30,6 @@ window.onload = function () {
         const helpListItemDiv = document.querySelector('li.slds-global-actions__item div.oneHelpAndTrainingExperience');
         if (helpListItemDiv) {
             clearInterval(intervalTimer);
-            injectCloneUserButton(helpListItemDiv);
             injectQuickCreateUserButton(helpListItemDiv);
         } else {
             tries++;
@@ -68,20 +51,6 @@ window.onload = function () {
         const quickCreateUserButton = document.getElementById('sf-niknax-quick-create-user-button');
         quickCreateUserButton.addEventListener('click', function() {
             chrome.runtime.sendMessage({ operation: 'open-sf-niknax', page: 'quick-create-user' });
-        });
-    }
-
-    function injectCloneUserButton(helpListItemDiv) {
-        const cloneUserListItem = document.createElement('li');
-        cloneUserListItem.className = 'slds-global-actions__item slds-dropdown-trigger slds-dropdown-trigger--click';
-        cloneUserListItem.innerHTML = CLONE_USER_GLOBAL_ACTION_HTML;
-
-        // Go up to the "li" and insert ours after it.
-        helpListItemDiv.parentNode.after(cloneUserListItem);
-
-        const cloneUserButton = document.getElementById('sf-niknax-clone-user-button');
-        cloneUserButton.addEventListener('click', function() {
-            chrome.runtime.sendMessage({ operation: 'open-sf-niknax', page: 'clone-user' });
         });
     }
 }

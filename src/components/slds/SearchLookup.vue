@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 
 import SearchLookupItem from './SearchLookupItem';
 
@@ -22,9 +22,14 @@ const empty = ref(false);
 const loading = ref(false);
 const items = ref<Array<SearchLookupItem>>([]);
 const selectedItem = ref<SearchLookupItem | undefined>();
+const searchCombobox = ref<HTMLInputElement>();
 
 const dropdownOpen = computed(() => {
     return selectedItem.value === undefined && (loading.value || empty.value || items.value.length > 0);
+});
+
+onMounted(() => {
+    searchCombobox.value?.focus();
 });
 
 async function onSearch() {
@@ -87,6 +92,7 @@ function onItemUnselected() {
                             <input type="text"
                                    class="slds-input slds-combobox__input"
                                    id="search-combobox"
+                                   ref="searchCombobox"
                                    autoComplete="off"
                                    role="combobox"
                                    v-debounce:500ms="onSearch"

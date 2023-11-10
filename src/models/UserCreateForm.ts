@@ -9,5 +9,10 @@ export default class UserCreateForm {
     profileId = '';
     roleId = '';
 
+    clonePermissionSetAssignments = true;
+    clonePublicGroupMemberships = true;
+    cloneQueueMemberships = true;
+    clonePermissionSetLicenseAssignments = true;
+
     resetPassword = true;
 }

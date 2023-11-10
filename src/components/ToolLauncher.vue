@@ -2,14 +2,12 @@
 import { onMounted, ref } from 'vue';
 
 import GroupMemberships from './GroupMemberships.vue';
-import CloneUser from './CloneUser.vue';
 import BulkFreezeUsers from './BulkFreezeUsers.vue';
 import QuickCreateUser from './QuickCreateUser.vue';
 
 import Context from '@/models/context';
 
 const displayEditGroupMemberships = ref(false);
-const displayCloneUser = ref(false);
 const displayBulkFreezeUsers = ref(false);
 const displayQuickCreateUser = ref(false);
 
@@ -55,9 +53,7 @@ onMounted(() => {
         } else if (loadedPage === 'edit-queue-memberships') {
             groupType.value = 'Queue';
             displayEditGroupMemberships.value = true;
-        } else if (loadedPage === 'clone-user') {
-            displayCloneUser.value = true;
-        } else if (loadedPage === 'bulk-freeze-users') {
+        } if (loadedPage === 'bulk-freeze-users') {
             displayBulkFreezeUsers.value = true;
         } else if (loadedPage === 'quick-create-user') {
             displayQuickCreateUser.value = true;
@@ -69,7 +65,6 @@ onMounted(() => {
 <template>
     <div class="slds-grid slds-var-p-around_small">
         <GroupMemberships v-if="displayEditGroupMemberships" :type="groupType" :context="context!" />
-        <CloneUser v-else-if="displayCloneUser" :context="context!" />
         <BulkFreezeUsers v-else-if="displayBulkFreezeUsers" :context="context!" />
         <QuickCreateUser v-else-if="displayQuickCreateUser" :context="context!" />
 
@@ -88,6 +83,6 @@ onMounted(() => {
     position: absolute;
     top: -45px;
     left: -15px;
-    width: 45vw;
+    width: max-content;
 }
 </style>
