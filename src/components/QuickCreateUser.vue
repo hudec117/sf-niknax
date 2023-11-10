@@ -26,13 +26,14 @@ let userService: SalesforceUserService;
 let toolingService: SalesforceToolingService;
 let createdUserId = '';
 
-const createAndCloseError = ref('');
 
 const form = ref(new UserCreateForm());
 
 const mode = ref<'create' | 'clone'>('create');
 const loading = ref(true);
 const creating = ref(false);
+const cloning = ref(false);
+const primaryButtonError = ref('');
 const overlay = ref({
     visible: false,
     type: 'success',
@@ -232,9 +233,22 @@ async function onCloneClick() {
     }
 }
 
+async function onCloneAndCloseClick() {
+    cloning.value = true;
+
+    try {
+        
+
+        // Show the overlay
+        // overlay.value.visible = true;
+    } finally {
+        // cloning.value = false;
+    }
+}
+
 async function onCreateAndCloseClick() {
     creating.value = true;
-    createAndCloseError.value = '';
+    primaryButtonError.value = '';
 
     try {
         const org = await userService.getOrganisation();
@@ -255,7 +269,7 @@ async function onCreateAndCloseClick() {
             EmailEncodingKey: 'UTF-8'
         });
         if (!userCreateResult.success) {
-            createAndCloseError.value = `Failed to create the user. ${userCreateResult.error}`;
+            primaryButtonError.value = `Failed to create the user. ${userCreateResult.error}`;
             return;
         }
 
@@ -337,15 +351,23 @@ async function closeWindow() {
 
                     <!-- Create & Close button -->
                     <button class="slds-button slds-button_brand"
-                            @click="onCreateAndCloseClick"
-                            :disabled="loading || creating || !isValidForm">
-                        <template v-if="mode === 'create'">{{ creating ? 'Creating...' : 'Create & Close' }}</template>
-                        <template v-if="mode === 'clone'">{{ creating ? 'Cloning...' : 'Clone & Close' }}</template>
+                           @click="onCreateAndCloseClick"
+                           :disabled="loading || creating || !isValidForm"
+                            v-if="mode === 'create'">
+                        {{ creating ? 'Creating...' : 'Create & Close' }}
+                    </button>
+
+                    <!-- Clone & Close button -->
+                    <button class="slds-button slds-button_brand"
+                           @click="onCloneAndCloseClick"
+                           :disabled="cloning || !isValidForm"
+                            v-if="mode === 'clone'">
+                        {{ cloning ? 'Cloning...' : 'Clone & Close' }}
                     </button>
 
                     <!-- Error popover -->
-                    <section id="create-popover" class="slds-popover slds-popover_error slds-nubbin_top-right slds-is-absolute" role="dialog" v-if="createAndCloseError">
-                        <button class="slds-button slds-button_icon slds-button_icon-small slds-float_right slds-popover__close slds-button_icon-inverse slds-m-top_x-small slds-m-right_small" title="Close" @click="createAndCloseError = ''">
+                    <section id="create-popover" class="slds-popover slds-popover_error slds-nubbin_top-right slds-is-absolute" role="dialog" v-if="primaryButtonError">
+                        <button class="slds-button slds-button_icon slds-button_icon-small slds-float_right slds-popover__close slds-button_icon-inverse slds-m-top_x-small slds-m-right_small" title="Close" @click="primaryButtonError = ''">
                             <svg class="slds-button__icon">
                                 <use xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#close"></use>
                             </svg>
@@ -365,7 +387,7 @@ async function closeWindow() {
                             </div>
                         </header>
                         <div class="slds-popover__body">
-                            <p>{{ createAndCloseError }}</p>
+                            <p>{{ primaryButtonError }}</p>
                         </div>
                     </section>
                 </div>
@@ -605,7 +627,7 @@ async function closeWindow() {
 
 <style scoped>
 #create-popover {
-    left: 200px;
+    right: 50px;
     top: 55px;
 }
 

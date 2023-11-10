@@ -17,7 +17,7 @@ const error = ref('');
 const selectedUserId = ref<string | undefined>();
 
 async function doSearch(value: string): Promise<Array<SearchLookupItem>> {
-    const result = await restService.query(`SELECT Id, FirstName, LastName, Username, Email FROM User WHERE Name LIKE '%${value}%' OR Username LIKE '%${value}%' OR Email LIKE '%${value}%'`);
+    const result = await restService.query(`SELECT Id, FirstName, LastName, Username, Email FROM User WHERE (Name LIKE '%${value}%' OR Username LIKE '%${value}%' OR Email LIKE '%${value}%') AND UserType != 'AutomatedProcess' AND UserType != 'CloudIntegrationUser'`);
     if (!result.success) {
         error.value = `Failed to query for users because ${result.error}`;
         return [];
