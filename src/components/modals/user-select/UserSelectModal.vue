@@ -7,6 +7,10 @@ import SearchLookupItem from '@/components/slds/SearchLookupItem';
 import Context from '@/models/context';
 import SalesforceRESTService from '@/services/salesforce-rest-service';
 
+const props = defineProps<{
+    immediateSelect?: boolean
+}>();
+
 let restService: SalesforceRESTService;
 
 // Setup promise to defer until the user has either selected a user or closed the dialog.
@@ -17,15 +21,15 @@ const error = ref('');
 const selectedUserId = ref<string | undefined>();
 
 async function doSearch(value: string): Promise<Array<SearchLookupItem>> {
-    const result = await restService.query(`SELECT Id, FirstName, LastName, Username, Email FROM User WHERE (Name LIKE '%${value}%' OR Username LIKE '%${value}%' OR Email LIKE '%${value}%') AND UserType != 'AutomatedProcess' AND UserType != 'CloudIntegrationUser'`);
-    if (!result.success) {
-        error.value = `Failed to query for users because ${result.error}`;
+    const queryResult = await restService.query(`SELECT Id, FirstName, LastName, Username, Email FROM User WHERE (Name LIKE '%${value}%' OR Username LIKE '%${value}%' OR Email LIKE '%${value}%') AND UserType != 'AutomatedProcess' AND UserType != 'CloudIntegrationUser'`);
+    if (!queryResult.success) {
+        error.value = `Failed to query for users because ${queryResult.error}`;
         return [];
     }
 
     error.value = '';
 
-    return (result.data as Array<any>).map(record => {
+    return (queryResult.data as Array<any>).map(record => {
         const user = record as User;
 
         let fullName = user.LastName;
@@ -41,6 +45,10 @@ async function doSearch(value: string): Promise<Array<SearchLookupItem>> {
 
 function onSearchSelected(item: SearchLookupItem) {
     selectedUserId.value = item.value;
+
+    if (props.immediateSelect) {
+        onSelectClick();
+    }
 }
 
 function onSearchUnselected() {
@@ -110,7 +118,7 @@ defineExpose<{
                                  @selected="onSearchSelected"
                                  @unselected="onSearchUnselected" />
                 </div>
-                <div class="slds-modal__footer slds-theme_default">
+                <div class="slds-modal__footer slds-theme_default" v-if="!immediateSelect">
                     <button class="slds-button slds-button_brand" :disabled="selectedUserId == undefined" @click="onSelectClick">Select</button>
                 </div>
             </div>
