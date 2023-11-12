@@ -3,15 +3,16 @@ import { computed, onMounted, ref } from 'vue';
 
 import PopoutCardFooter from './PopoutCardFooter.vue';
 import FullscreenOverlay from '@/components/slds/FullscreenOverlay.vue';
-import SalesforceToolingService from '@/services/salesforce-tooling-service';
-import Context from '@/models/context';
 import QuickCreateUserSettingsModal from '@/components/modals/quick-create-user-settings/QuickCreateUserSettingsModal.vue';
 import UserSelectModal from '@/components/modals/user-select/UserSelectModal.vue';
+import SalesforceToolingService from '@/services/salesforce-tooling-service';
+import Context from '@/models/context';
 import UserCreateForm from '@/models/UserCreateForm';
 import SalesforceUserService from '@/services/salesforce-user-service';
 import Profile from '@/models/Profile';
 import Role from '@/models/Role';
 import UserQuickCreateSettings from '@/models/UserQuickCreateSettings';
+import type User from '@/models/User';
 
 const SETTINGS_KEY = 'quick-create-user-settings';
 
@@ -25,7 +26,6 @@ const userSelectModal = ref<InstanceType<typeof UserSelectModal> | null>(null);
 let userService: SalesforceUserService;
 let toolingService: SalesforceToolingService;
 let createdUserId = '';
-
 
 const form = ref(new UserCreateForm());
 
@@ -43,10 +43,7 @@ const overlay = ref({
 const showUsernameTooltip = ref(false);
 const showProfileTooltip = ref(false);
 const showRoleTooltip = ref(false);
-const cloneTargetUser = ref({
-    id: '',
-    name: ''
-});
+const cloneTargetUser = ref<User | undefined>();
 
 const isValidEmail = ref(false);
 
@@ -210,25 +207,21 @@ async function onSettingsClick() {
 async function onCloneClick() {
     const cloneTargetUserId = await userSelectModal.value?.show(props.context);
     if (cloneTargetUserId) {
-        const result = await userService.query(`SELECT Name, ProfileId, UserRoleId FROM User WHERE Id = '${cloneTargetUserId}'`);
-        if (!result.success) {
+        const queryResult = await userService.query(`SELECT FirstName, LastName, Email, Alias, Username, CommunityNickname, LocaleSidKey, TimeZoneSidKey, ProfileId, UserRoleId, LanguageLocaleKey, EmailEncodingKey FROM User WHERE Id = '${cloneTargetUserId}'`);
+        if (!queryResult.success) {
             // TODO: handle
             return;
         }
 
-        const userRecord = (result.data as Array<any>)[0];
-
-        // Save clone target user ID for later and Name to display in the title
-        cloneTargetUser.value.id = cloneTargetUserId;
-        cloneTargetUser.value.name = userRecord.Name;
+        cloneTargetUser.value = (queryResult.data as Array<User>)[0];
 
         // Populate the Profile/Role picklists
-        form.value.profileId = userRecord.ProfileId;
-        form.value.roleId = userRecord.UserRoleId ?? '';
+        form.value.profileId = cloneTargetUser.value.ProfileId;
+        form.value.roleId = cloneTargetUser.value.UserRoleId ?? '';
 
         // Resize window to accomodate visible checkboxes, change the title and mode.
         resizeTo(627, 721);
-        document.title = `Salesforce Niknax: Clone ${userRecord.Name}`;
+        document.title = `Salesforce Niknax: Clone ${cloneTargetUser.value.Username}`;
         mode.value = 'clone';
     }
 }
@@ -329,7 +322,7 @@ async function closeWindow() {
                 <div class="slds-media__body">
                     <h2 class="slds-card__header-title">
                         <template v-if="mode === 'create'">Quick Create User</template>
-                        <span v-else-if="mode === 'clone'" class="slds-truncate slds-m-right_x-small">Clone {{ cloneTargetUser.name }}</span>
+                        <span v-else-if="mode === 'clone'" class="slds-truncate slds-m-right_x-small">Clone {{ cloneTargetUser?.Username }}</span>
                     </h2>
                 </div>
                 <div class="slds-no-flex">
@@ -602,7 +595,7 @@ async function closeWindow() {
     </article>
 
     <QuickCreateUserSettingsModal ref="settingsModal" />
-    <UserSelectModal ref="userSelectModal" />
+    <UserSelectModal ref="userSelectModal" immediate-select />
 
     <FullscreenOverlay :visible="overlay.visible" :type="overlay.type">
         <span class="slds-icon_container slds-m-bottom_x-small">

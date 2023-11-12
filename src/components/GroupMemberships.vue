@@ -353,7 +353,7 @@ async function unassignGroups(groups: Array<Group>): Promise<boolean> {
         <PopoutCardFooter />
     </article>
 
-    <UserSelectModal ref="userSelectModal" />
+    <UserSelectModal ref="userSelectModal" immediate-select />
 </template>
 
 <style scoped>

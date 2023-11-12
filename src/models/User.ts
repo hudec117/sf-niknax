@@ -8,7 +8,8 @@ export default interface User {
     CommunityNickname: string;
     LocaleSidKey: string;
     TimeZoneSidKey: string;
-    ProfileID: string;
+    ProfileId: string;
+    UserRoleId?: string;
     LanguageLocaleKey: string;
     EmailEncodingKey: string;
 }
