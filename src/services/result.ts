@@ -8,4 +8,12 @@ export default class ServiceResult {
         this.data = data;
         this.error = error;
     }
+
+    static success(data?: any) {
+        return new ServiceResult(true, data);
+    }
+
+    static fail(error?: string) {
+        return new ServiceResult(false, null, error);
+    }
 }

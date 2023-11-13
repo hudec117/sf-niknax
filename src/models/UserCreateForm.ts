@@ -12,7 +12,6 @@ export default class UserCreateForm {
     clonePermissionSetAssignments = true;
     clonePublicGroupMemberships = true;
     cloneQueueMemberships = true;
-    clonePermissionSetLicenseAssignments = true;
 
     resetPassword = true;
 }

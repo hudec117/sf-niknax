@@ -259,7 +259,7 @@ async function unassignGroups(groups: Array<Group>): Promise<boolean> {
     const groupMembersToDelete = groups.map(group => userGroupMembers.filter(groupMember => group.Id == groupMember.GroupId)[0]);
 
     for (const groupMember of groupMembersToDelete) {
-        const result = await restService.delete('GroupMember', groupMember.Id);
+        const result = await restService.delete('GroupMember', groupMember.Id!);
         if (!result.success) {
             error.value = `Failed to unassign (delete) user from group "${groupMember.GroupId}" because ${result.error}`;
             return false;

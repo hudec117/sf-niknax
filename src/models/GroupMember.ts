@@ -1,5 +1,5 @@
 export default interface GroupMember {
-    Id: string;
+    Id?: string;
     GroupId: string;
     UserOrGroupId: string;
 }

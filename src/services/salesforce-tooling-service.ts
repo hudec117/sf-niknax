@@ -30,12 +30,9 @@ export default class SalesforceToolingService {
 
         const successfullyExecuted = response.ok && !responseBody.exceptionMessage && !responseBody.compileProblem;
         if (successfullyExecuted) {
-            return { success: true };
+            return ServiceResult.success();
         } else {
-            return {
-                success: false,
-                error: responseBody.exceptionMessage || responseBody.compileProblem
-            };
+            return ServiceResult.fail(responseBody.exceptionMessage || responseBody.compileProblem);
         }
     }
 }

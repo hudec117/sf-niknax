@@ -1,6 +1,7 @@
-import type User from '@/models/User';
 import SalesforceRESTService from './salesforce-rest-service';
 import type PermissionSetAssignment from '@/models/PermissionSetAssignment';
+import type GroupMember from '@/models/GroupMember';
+import ServiceResult from './result';
 
 export default class SalesforceUserService extends SalesforceRESTService {
     isValidEmail(email: string): boolean {
@@ -99,22 +100,10 @@ export default class SalesforceUserService extends SalesforceRESTService {
         return result;
     }
 
-    async clonePermissionSetAssignments(fromUserId: string, toUserId: string) {
-        // Get the TO user's license.
-        const toUserQueryResult = await this.query(`SELECT Profile.UserLicense.Name FROM User WHERE Id = '${toUserId}'`);
-        if (!toUserQueryResult.success) {
-            // TODO: handle
-            return;
-        }
-
-        const toUserLicense = (toUserQueryResult.data as Array<User>)[0].Profile.UserLicense.Name;
-
-        // Important: when cloning permission set assignments from one user to another, we need to consider that the two user's may have different licenses
-        // and so only attempt to copy the ones that are compatible with the TO user's license.
-        const permissionSetAssignmentQueryResult = await this.query(`SELECT AssigneeId, PermissionSetId FROM PermissionSetAssignment WHERE AssigneeId = '${fromUserId}' AND PermissionSet.IsOwnedByProfile = false AND (PermissionSet.LicenseId = null OR PermissionSet.License.Name = '${toUserLicense}')`);
+    async clonePermissionSetAssignments(fromUserId: string, toUserId: string): Promise<ServiceResult> {
+        const permissionSetAssignmentQueryResult = await this.query(`SELECT AssigneeId, PermissionSetId FROM PermissionSetAssignment WHERE AssigneeId = '${fromUserId}' AND PermissionSet.IsOwnedByProfile = false`);
         if (!permissionSetAssignmentQueryResult.success) {
-            // TODO: handle
-            return;
+            return ServiceResult.fail(permissionSetAssignmentQueryResult.error);
         }
 
         for (const permissionSetAssignment of (permissionSetAssignmentQueryResult.data as Array<PermissionSetAssignment>)) {
@@ -124,5 +113,24 @@ export default class SalesforceUserService extends SalesforceRESTService {
                 // TODO: handle
             }
         }
+
+        return ServiceResult.success();
+    }
+
+    async cloneGroupMemberships(fromUserId: string, toUserId: string, groupType: string): Promise<ServiceResult> {
+        const groupMembershipsQueryResult = await this.query(`SELECT Id, GroupId, UserOrGroupId FROM GroupMember WHERE UserOrGroupId = '${fromUserId}' AND Group.Type = '${groupType}'`);
+        if (!groupMembershipsQueryResult.success) {
+            return ServiceResult.fail(groupMembershipsQueryResult.error);
+        }
+
+        for (const groupMember of (groupMembershipsQueryResult.data as Array<GroupMember>)) {
+            groupMember.UserOrGroupId = toUserId;
+            const cloneGroupResult = await this.create('GroupMember', groupMember);
+            if (!cloneGroupResult.success) {
+                // TODO: handle
+            }
+        }
+
+        return ServiceResult.success();
     }
 }

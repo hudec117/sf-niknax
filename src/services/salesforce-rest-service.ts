@@ -1,4 +1,3 @@
-import type Organisation from '@/models/Organisation';
 import ServiceResult from './result';
 
 export default class SalesforceRESTService {
@@ -39,23 +38,16 @@ export default class SalesforceRESTService {
                 method: 'GET'
             });
             const responseBody = await response.json();
-            
+
             if (response.ok) {
-                return {
-                    success: true,
-                    data: responseBody.records
-                };
+                return ServiceResult.success(responseBody.records);
             } else {
-                return {
-                    success: false,
-                    error: responseBody.map((error: Error) => error.message).join('\n')
-                };
+                return ServiceResult.fail(
+                    responseBody.map((error: Error) => error.message).join('\n')
+                );
             }
         } catch (error) {
-            return {
-                success: false,
-                error: (error as Error).message
-            };
+            return ServiceResult.fail((error as Error).message);
         }
     }
 
@@ -68,27 +60,22 @@ export default class SalesforceRESTService {
             const responseBody = await response.json();
 
             if (response.ok) {
-                return {
-                    success: true,
-                    data: responseBody.records
-                };
+                return ServiceResult.success(responseBody.records);
             } else {
-                return {
-                    success: false,
-                    error: responseBody.map((error: Error) => error.message).join('\n')
-                };
+                return ServiceResult.fail(
+                    responseBody.map((error: Error) => error.message).join('\n')
+                );
             }
         } catch (error) {
-            return {
-                success: false,
-                error: (error as Error).message
-            };
+            return ServiceResult.fail((error as Error).message);
         }
     }
 
     async create(object: string, data: Object): Promise<ServiceResult> {
         const requestUrl = new URL(`${this.OBJECT_ENDPOINT}/${object}`, this.serverBaseUrl);
 
+        delete (data as any).Id;
+        delete (data as any).attributes;
         const jsonData = JSON.stringify(data);
 
         try {
@@ -100,23 +87,16 @@ export default class SalesforceRESTService {
                 body: jsonData
             });
             const responseBody = await response.json();
-    
+
             if (response.ok) {
-                return {
-                    success: true,
-                    data: responseBody
-                };
+                return ServiceResult.success(responseBody);
             } else {
-                return {
-                    success: false,
-                    error: responseBody.map((error: Error) => error.message).join('\n')
-                };
+                return ServiceResult.fail(
+                    responseBody.map((error: Error) => error.message).join('\n')
+                );
             }
         } catch (error) {
-            return {
-                success: false,
-                error: (error as Error).message
-            };
+            return ServiceResult.fail((error as Error).message);
         }
     }
 
@@ -127,23 +107,19 @@ export default class SalesforceRESTService {
             const response = await this.authFetch(requestUrl, {
                 method: 'DELETE'
             });
-    
+
             return { success: response.ok };
         } catch (error) {
-            return {
-                success: false,
-                error: (error as Error).message
-            };
+            return ServiceResult.fail((error as Error).message);
         }
     }
 
-    async getOrganisation(): Promise<Organisation> {
+    async getOrganisation(): Promise<ServiceResult> {
         const result = await this.query('SELECT DefaultLocaleSidKey, TimeZoneSidKey, LanguageLocaleKey, OrganizationType, IsSandbox FROM Organization');
         if (!result.success) {
-            // TODO: handle
-            throw 'failed';
+            return ServiceResult.fail(result.error);
         }
 
-        return (result.data as Array<Organisation>)[0];
+        return ServiceResult.success((result.data as Array<any>)[0]);
     }
 }

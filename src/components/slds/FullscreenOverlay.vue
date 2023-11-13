@@ -29,7 +29,20 @@ const overlayClasses = computed(() => {
     <Transition>
         <div :class="overlayClasses" v-if="props.visible">
             <div class="overlay-content">
-                <slot></slot>
+                <span class="slds-icon_container slds-m-bottom_x-small">
+                    <svg class="slds-icon overlay-check-icon">
+                        <use v-if="type === 'success'" xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#success"></use>
+                        <use v-else-if="type === 'warning'" xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#warning"></use>
+                        <use v-else-if="type === 'error'" xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#error"></use>
+                    </svg>
+                </span>
+
+                <div class="slds-text-heading_medium slds-m-bottom_x-small">
+                    <slot name="title"></slot>
+                </div>
+                <div class="slds-text-heading_small">
+                    <slot name="subtitle"></slot>
+                </div>
             </div>
         </div>
     </Transition>
@@ -60,6 +73,10 @@ const overlayClasses = computed(() => {
 .overlay-content {
     text-align: center;
     color: white;
+}
+
+.overlay-check-icon {
+    fill: white;
 }
 
 .v-enter-active {

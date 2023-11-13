@@ -12,6 +12,7 @@ import SalesforceUserService from '@/services/salesforce-user-service';
 import type Profile from '@/models/Profile';
 import type Role from '@/models/Role';
 import type User from '@/models/User';
+import type Organisation from '@/models/Organisation';
 import UserQuickCreateSettings from '@/models/UserQuickCreateSettings';
 
 const SETTINGS_KEY = 'quick-create-user-settings';
@@ -30,10 +31,10 @@ let createdUserId = '';
 const form = ref(new UserCreateForm());
 
 const mode = ref<'create' | 'clone'>('create');
-const loading = ref(true);
-const creating = ref(false);
-const cloning = ref(false);
+const primaryButtonText = ref('Create & Close');
 const primaryButtonError = ref('');
+const loading = ref(true);
+const working = ref(false);
 const overlay = ref({
     visible: false,
     type: 'success',
@@ -43,10 +44,8 @@ const overlay = ref({
 const showUsernameTooltip = ref(false);
 const showProfileTooltip = ref(false);
 const showRoleTooltip = ref(false);
-const cloneTargetUser = ref<User | undefined>();
-
 const isValidEmail = ref(false);
-
+const cloneTargetUser = ref<User | undefined>();
 const settings = ref(new UserQuickCreateSettings());
 
 const profiles = ref({
@@ -220,11 +219,10 @@ async function onCloneClick() {
     cloneTargetUser.value = (queryResult.data as Array<User>)[0];
 
     // Resize window to accomodate visible checkboxes, change the title and mode.
-    resizeTo(627, 721);
+    resizeTo(627, 701);
     document.title = `Salesforce Niknax: Clone ${cloneTargetUser.value.Username}`;
     mode.value = 'clone';
-
-    // Load the available profiles for the selected License
+    primaryButtonText.value = 'Clone & Close';
 
     // Populate the Profile/Role picklists
     form.value.profileId = cloneTargetUser.value.ProfileId;
@@ -233,8 +231,18 @@ async function onCloneClick() {
     loading.value = false;
 }
 
+async function onPrimaryButtonClick() {
+    if (mode.value === 'create') {
+        onCreateAndCloseClick();
+    } else if (mode.value === 'clone') {
+        onCloneAndCloseClick();
+    }
+}
+
 async function onCloneAndCloseClick() {
-    cloning.value = true;
+    working.value = true;
+    primaryButtonText.value = 'Cloning...';
+    primaryButtonError.value = '';
 
     if (!cloneTargetUser.value) {
         // TODO: handle
@@ -242,65 +250,92 @@ async function onCloneAndCloseClick() {
     }
 
     try {
-        // const userCloneResult = await userService.create('User', {
-        //     FirstName: form.value.firstName,
-        //     LastName: form.value.lastName,
-        //     Email: form.value.email,
-        //     Alias: form.value.alias,
-        //     Username: form.value.username,
-        //     CommunityNickname: form.value.nickname,
-        //     LocaleSidKey: cloneTargetUser.value.LocaleSidKey,
-        //     TimeZoneSidKey: cloneTargetUser.value.TimeZoneSidKey,
-        //     ProfileId: form.value.profileId,
-        //     UserRoleId: form.value.roleId,
-        //     LanguageLocaleKey: cloneTargetUser.value.LanguageLocaleKey,
-        //     EmailEncodingKey: 'UTF-8'
-        // });
-        // if (!userCloneResult.success) {
-        //     primaryButtonError.value = `Failed to clone the user. ${userCloneResult.error}`;
-        //     return;
-        // }
+        const userCloneResult = await userService.create('User', {
+            FirstName: form.value.firstName,
+            LastName: form.value.lastName,
+            Email: form.value.email,
+            Alias: form.value.alias,
+            Username: form.value.username,
+            CommunityNickname: form.value.nickname,
+            LocaleSidKey: cloneTargetUser.value.LocaleSidKey,
+            TimeZoneSidKey: cloneTargetUser.value.TimeZoneSidKey,
+            ProfileId: form.value.profileId,
+            UserRoleId: form.value.roleId,
+            LanguageLocaleKey: cloneTargetUser.value.LanguageLocaleKey,
+            EmailEncodingKey: cloneTargetUser.value.EmailEncodingKey
+        });
+        if (!userCloneResult.success) {
+            primaryButtonError.value = `Failed to clone the user. ${userCloneResult.error}`;
+            return;
+        }
 
-        // createdUserId = userCloneResult.data.id;
+        createdUserId = userCloneResult.data.id;
 
-        // // Attempt to reset the password
-        // let allSuccessful = true;
-        // if (form.value.resetPassword) {
-        //     const resetPasswordResult = await toolingService.executeAnonymous(`System.resetPassword('${createdUserId}', true);`);
-        //     if (!resetPasswordResult.success) {
-        //         overlay.value.type = 'warning';
-        //         overlay.value.passwordResetSuccessful = false;
-        //         overlay.value.passwordResetError = `Failed to reset the password. ${resetPasswordResult.error}`;
+        // Attempt to reset the password
+        let allSuccessful = true;
+        if (form.value.resetPassword) {
+            primaryButtonText.value = 'Resetting password...';
 
-        //         allSuccessful = false;
-        //     }
-        // }
+            const resetPasswordResult = await toolingService.executeAnonymous(`System.resetPassword('${createdUserId}', true);`);
+            if (!resetPasswordResult.success) {
+                overlay.value.type = 'warning';
+                overlay.value.passwordResetSuccessful = false;
+                overlay.value.passwordResetError = `Failed to reset the password. ${resetPasswordResult.error}`;
 
-        // await userService.clonePermissionSetAssignments(cloneTargetUser.value.Id, createdUserId);
-        await userService.clonePermissionSetAssignments('0058d000008kTE6', '0058d000007IxgRAAS');
+                allSuccessful = false;
+            }
+        }
 
-        // TODO: clone public group memberships
-        // TODO: clone queue memberships
-        // TODO: clone permission set license assignment
+        if (form.value.clonePermissionSetAssignments) {
+            const clonePermSetAssignmentsResult = await userService.clonePermissionSetAssignments(cloneTargetUser.value.Id, createdUserId);
+            if (!clonePermSetAssignmentsResult.success) {
+                // TODO: handle
+                allSuccessful = false;
+            }
+        }
+
+        if (form.value.clonePublicGroupMemberships) {
+            const cloneGroupMembershipsResult = await userService.cloneGroupMemberships(cloneTargetUser.value.Id, createdUserId, 'Regular');
+            if (!cloneGroupMembershipsResult.success) {
+                // TODO: handle
+                allSuccessful = false;
+            }
+        }
+
+        if (form.value.cloneQueueMemberships) {
+            const cloneQueueMembershipsResult = await userService.cloneGroupMemberships(cloneTargetUser.value.Id, createdUserId, 'Queue');
+            if (!cloneQueueMembershipsResult.success) {
+                // TODO: handle
+                allSuccessful = false;
+            }
+        }
 
         // Only auto-close the window if the entire cloning process is successful.
-        // if (allSuccessful) {
-        //     setTimeout(closeWindow, 3000);
-        // }
+        if (allSuccessful) {
+            setTimeout(closeWindow, 3000);
+        }
 
         // Show the overlay
-        // overlay.value.visible = true;
+        overlay.value.visible = true;
     } finally {
-        cloning.value = false;
+        working.value = false;
+        primaryButtonText.value = 'Clone & Close';
     }
 }
 
 async function onCreateAndCloseClick() {
-    creating.value = true;
+    working.value = true;
+    primaryButtonText.value = 'Creating...';
     primaryButtonError.value = '';
 
     try {
-        const org = await userService.getOrganisation();
+        const getOrgResult = await userService.getOrganisation();
+        if (!getOrgResult.success) {
+            // TODO: handle
+            return;
+        }
+
+        const org = getOrgResult.data as Organisation;
 
         // Create the user
         const userCreateResult = await userService.create('User', {
@@ -327,6 +362,8 @@ async function onCreateAndCloseClick() {
         // Attempt to reset the password
         let allSuccessful = true;
         if (form.value.resetPassword) {
+            primaryButtonText.value = 'Resetting password...';
+
             const resetPasswordResult = await toolingService.executeAnonymous(`System.resetPassword('${createdUserId}', true);`);
             if (!resetPasswordResult.success) {
                 overlay.value.type = 'warning';
@@ -337,15 +374,15 @@ async function onCreateAndCloseClick() {
             }
         }
 
-        // Only auto-close the window if the user creation and password reset (if chosen) has succedded.
+        // Only auto-close the window if the entire process (including password reset if chosen) is successful.
         if (allSuccessful) {
             setTimeout(closeWindow, 3000);
         }
 
-        // Show the overlay
         overlay.value.visible = true;
     } finally {
-        creating.value = false;
+        working.value = false;
+        primaryButtonText.value = 'Create & Close';
     }
 }
 
@@ -391,27 +428,18 @@ async function closeWindow() {
                         </svg>
                     </button>
 
-                    <!-- Clone button -->
+                    <!-- Clone a User button -->
                     <button class="slds-button slds-button_neutral"
                            @click="onCloneClick"
-                           :disabled="loading || creating">
+                           :disabled="loading || working">
                         Clone a User
                     </button>
 
-                    <!-- Create & Close button -->
+                    <!-- Create/Clone & Close (aka primary) button -->
                     <button class="slds-button slds-button_brand"
-                           @click="onCreateAndCloseClick"
-                           :disabled="loading || creating || !isValidForm"
-                            v-if="mode === 'create'">
-                        {{ creating ? 'Creating...' : 'Create & Close' }}
-                    </button>
-
-                    <!-- Clone & Close button -->
-                    <button class="slds-button slds-button_brand"
-                           @click="onCloneAndCloseClick"
-                           :disabled="cloning || !isValidForm"
-                            v-if="mode === 'clone'">
-                        {{ cloning ? 'Cloning...' : 'Clone & Close' }}
+                           @click="onPrimaryButtonClick"
+                           :disabled="loading || working || !isValidForm">
+                        {{ primaryButtonText }}
                     </button>
 
                     <!-- Error popover -->
@@ -622,14 +650,6 @@ async function closeWindow() {
                                 <span class="slds-form-element__label">Queue Memberships</span>
                             </label>
                         </div>
-
-                        <div class="slds-checkbox">
-                            <input type="checkbox"  id="permission-set-license-assignments-checkbox" v-model="form.clonePermissionSetLicenseAssignments" />
-                            <label class="slds-checkbox__label" for="permission-set-license-assignments-checkbox">
-                                <span class="slds-checkbox_faux"></span>
-                                <span class="slds-form-element__label">Permission Set License Assignments</span>
-                            </label>
-                        </div>
                     </div>
                 </fieldset>
 
@@ -654,14 +674,7 @@ async function closeWindow() {
     <UserSelectModal ref="userSelectModal" immediate-select />
 
     <FullscreenOverlay :visible="overlay.visible" :type="overlay.type">
-        <span class="slds-icon_container slds-m-bottom_x-small">
-            <svg class="slds-icon overlay-check-icon">
-                <use v-if="overlay.type === 'success'" xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#success"></use>
-                <use v-else-if="overlay.type === 'warning'" xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#warning"></use>
-            </svg>
-        </span>
-
-        <div class="slds-text-heading_medium slds-m-bottom_x-small">
+        <template v-slot:title>
             <span class="overlay-user-link" @click="onOpenUser" title="Open User detail page in a new tab.">User</span>
             <template v-if="overlay.passwordResetSuccessful">
                 created!
@@ -669,8 +682,11 @@ async function closeWindow() {
             <template v-else>
                 created but...
             </template>
-        </div>
-        <div class="slds-text-heading_small" v-if="!overlay.passwordResetSuccessful">{{ overlay.passwordResetError }}</div>
+        </template>
+
+        <template v-slot:subtitle>
+            {{ overlay.passwordResetError }}
+        </template>
     </FullscreenOverlay>
 </template>
 
@@ -678,10 +694,6 @@ async function closeWindow() {
 #create-popover {
     right: 50px;
     top: 55px;
-}
-
-.overlay-check-icon {
-    fill: white;
 }
 
 .overlay-user-link {
