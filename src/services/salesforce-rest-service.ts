@@ -1,4 +1,4 @@
-import Organisation from '@/models/Organisation';
+import type Organisation from '@/models/Organisation';
 import ServiceResult from './result';
 
 export default class SalesforceRESTService {
@@ -144,8 +144,6 @@ export default class SalesforceRESTService {
             throw 'failed';
         }
 
-        const record = (result.data as Array<any>)[0];
-
-        return new Organisation(record.DefaultLocaleSidKey, record.TimeZoneSidKey, record.LanguageLocaleKey, record.OrganizationType, record.IsSandbox);
+        return (result.data as Array<Organisation>)[0];
     }
 }

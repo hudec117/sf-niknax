@@ -1,4 +1,6 @@
+import type User from '@/models/User';
 import SalesforceRESTService from './salesforce-rest-service';
+import type PermissionSetAssignment from '@/models/PermissionSetAssignment';
 
 export default class SalesforceUserService extends SalesforceRESTService {
     isValidEmail(email: string): boolean {
@@ -95,5 +97,32 @@ export default class SalesforceUserService extends SalesforceRESTService {
         }
 
         return result;
+    }
+
+    async clonePermissionSetAssignments(fromUserId: string, toUserId: string) {
+        // Get the TO user's license.
+        const toUserQueryResult = await this.query(`SELECT Profile.UserLicense.Name FROM User WHERE Id = '${toUserId}'`);
+        if (!toUserQueryResult.success) {
+            // TODO: handle
+            return;
+        }
+
+        const toUserLicense = (toUserQueryResult.data as Array<User>)[0].Profile.UserLicense.Name;
+
+        // Important: when cloning permission set assignments from one user to another, we need to consider that the two user's may have different licenses
+        // and so only attempt to copy the ones that are compatible with the TO user's license.
+        const permissionSetAssignmentQueryResult = await this.query(`SELECT AssigneeId, PermissionSetId FROM PermissionSetAssignment WHERE AssigneeId = '${fromUserId}' AND PermissionSet.IsOwnedByProfile = false AND (PermissionSet.LicenseId = null OR PermissionSet.License.Name = '${toUserLicense}')`);
+        if (!permissionSetAssignmentQueryResult.success) {
+            // TODO: handle
+            return;
+        }
+
+        for (const permissionSetAssignment of (permissionSetAssignmentQueryResult.data as Array<PermissionSetAssignment>)) {
+            permissionSetAssignment.AssigneeId = toUserId;
+            const clonePermissionSetAssignmentResult = await this.create('PermissionSetAssignment', permissionSetAssignment);
+            if (!clonePermissionSetAssignmentResult.success) {
+                // TODO: handle
+            }
+        }
     }
 }

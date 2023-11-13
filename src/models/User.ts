@@ -1,3 +1,5 @@
+import type Profile from './Profile';
+
 export default interface User {
     Id: string;
     FirstName?: string;
@@ -12,4 +14,5 @@ export default interface User {
     UserRoleId?: string;
     LanguageLocaleKey: string;
     EmailEncodingKey: string;
+    Profile: Profile;
 }

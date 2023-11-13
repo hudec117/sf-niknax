@@ -9,10 +9,10 @@ import SalesforceToolingService from '@/services/salesforce-tooling-service';
 import Context from '@/models/context';
 import UserCreateForm from '@/models/UserCreateForm';
 import SalesforceUserService from '@/services/salesforce-user-service';
-import Profile from '@/models/Profile';
-import Role from '@/models/Role';
-import UserQuickCreateSettings from '@/models/UserQuickCreateSettings';
+import type Profile from '@/models/Profile';
+import type Role from '@/models/Role';
 import type User from '@/models/User';
+import UserQuickCreateSettings from '@/models/UserQuickCreateSettings';
 
 const SETTINGS_KEY = 'quick-create-user-settings';
 
@@ -114,14 +114,14 @@ async function loadProfiles() {
             return;
         }
 
-        profiles.value.items = (result.data as Array<any>).map(record => new Profile(record.Id, record.Name, record.UserLicenseId, record.UserLicense.Name));
+        profiles.value.items = (result.data as Array<Profile>);
 
         // Attempt to find the default profile as defined in the settings, falling back to System Administrator if not found.
-        const matchedDefaultProfiles = profiles.value.items.filter(profile => profile.name === settings.value.defaultProfile);
+        const matchedDefaultProfiles = profiles.value.items.filter(profile => profile.Name === settings.value.defaultProfile);
         if (matchedDefaultProfiles.length > 0) {
-            form.value.profileId = matchedDefaultProfiles[0].id;
+            form.value.profileId = matchedDefaultProfiles[0].Id;
         } else {
-            form.value.profileId = profiles.value.items.filter(profile => profile.name === 'System Administrator')[0].id;
+            form.value.profileId = profiles.value.items.filter(profile => profile.Name === 'System Administrator')[0].Id;
         }
     } finally {
         profiles.value.loading = false;
@@ -139,12 +139,12 @@ async function loadRoles() {
             return;
         }
 
-        roles.value.items = (result.data as Array<any>).map(record => new Role(record.Id, record.Name, record.DeveloperName));
+        roles.value.items = (result.data as Array<Role>);
 
         // Attempt to find the default role as defined in the settings, falling back to None if not found.
-        const matchedDefaultRoles = roles.value.items.filter(role => role.developerName === settings.value.defaultRole);
+        const matchedDefaultRoles = roles.value.items.filter(role => role.DeveloperName === settings.value.defaultRole);
         if (matchedDefaultRoles.length > 0) {
-            form.value.roleId = matchedDefaultRoles[0].id;
+            form.value.roleId = matchedDefaultRoles[0].Id;
         } else {
             form.value.roleId = '';
         }
@@ -206,36 +206,92 @@ async function onSettingsClick() {
 
 async function onCloneClick() {
     const cloneTargetUserId = await userSelectModal.value?.show(props.context);
-    if (cloneTargetUserId) {
-        const queryResult = await userService.query(`SELECT FirstName, LastName, Email, Alias, Username, CommunityNickname, LocaleSidKey, TimeZoneSidKey, ProfileId, UserRoleId, LanguageLocaleKey, EmailEncodingKey FROM User WHERE Id = '${cloneTargetUserId}'`);
-        if (!queryResult.success) {
-            // TODO: handle
-            return;
-        }
-
-        cloneTargetUser.value = (queryResult.data as Array<User>)[0];
-
-        // Populate the Profile/Role picklists
-        form.value.profileId = cloneTargetUser.value.ProfileId;
-        form.value.roleId = cloneTargetUser.value.UserRoleId ?? '';
-
-        // Resize window to accomodate visible checkboxes, change the title and mode.
-        resizeTo(627, 721);
-        document.title = `Salesforce Niknax: Clone ${cloneTargetUser.value.Username}`;
-        mode.value = 'clone';
+    if (!cloneTargetUserId) {
+        return;
     }
+
+    loading.value = true;
+
+    const queryResult = await userService.query(`SELECT Id, FirstName, LastName, Email, Alias, Username, CommunityNickname, LocaleSidKey, TimeZoneSidKey, ProfileId, UserRoleId, LanguageLocaleKey, EmailEncodingKey FROM User WHERE Id = '${cloneTargetUserId}'`);
+    if (!queryResult.success) {
+        // TODO: handle
+        return;
+    }
+    cloneTargetUser.value = (queryResult.data as Array<User>)[0];
+
+    // Resize window to accomodate visible checkboxes, change the title and mode.
+    resizeTo(627, 721);
+    document.title = `Salesforce Niknax: Clone ${cloneTargetUser.value.Username}`;
+    mode.value = 'clone';
+
+    // Load the available profiles for the selected License
+
+    // Populate the Profile/Role picklists
+    form.value.profileId = cloneTargetUser.value.ProfileId;
+    form.value.roleId = cloneTargetUser.value.UserRoleId ?? '';
+
+    loading.value = false;
 }
 
 async function onCloneAndCloseClick() {
     cloning.value = true;
 
+    if (!cloneTargetUser.value) {
+        // TODO: handle
+        return;
+    }
+
     try {
-        
+        // const userCloneResult = await userService.create('User', {
+        //     FirstName: form.value.firstName,
+        //     LastName: form.value.lastName,
+        //     Email: form.value.email,
+        //     Alias: form.value.alias,
+        //     Username: form.value.username,
+        //     CommunityNickname: form.value.nickname,
+        //     LocaleSidKey: cloneTargetUser.value.LocaleSidKey,
+        //     TimeZoneSidKey: cloneTargetUser.value.TimeZoneSidKey,
+        //     ProfileId: form.value.profileId,
+        //     UserRoleId: form.value.roleId,
+        //     LanguageLocaleKey: cloneTargetUser.value.LanguageLocaleKey,
+        //     EmailEncodingKey: 'UTF-8'
+        // });
+        // if (!userCloneResult.success) {
+        //     primaryButtonError.value = `Failed to clone the user. ${userCloneResult.error}`;
+        //     return;
+        // }
+
+        // createdUserId = userCloneResult.data.id;
+
+        // // Attempt to reset the password
+        // let allSuccessful = true;
+        // if (form.value.resetPassword) {
+        //     const resetPasswordResult = await toolingService.executeAnonymous(`System.resetPassword('${createdUserId}', true);`);
+        //     if (!resetPasswordResult.success) {
+        //         overlay.value.type = 'warning';
+        //         overlay.value.passwordResetSuccessful = false;
+        //         overlay.value.passwordResetError = `Failed to reset the password. ${resetPasswordResult.error}`;
+
+        //         allSuccessful = false;
+        //     }
+        // }
+
+        // await userService.clonePermissionSetAssignments(cloneTargetUser.value.Id, createdUserId);
+        await userService.clonePermissionSetAssignments('0058d000008kTE6', '0058d000007IxgRAAS');
+
+        // TODO: clone public group memberships
+        // TODO: clone queue memberships
+        // TODO: clone permission set license assignment
+
+        // Only auto-close the window if the entire cloning process is successful.
+        // if (allSuccessful) {
+        //     setTimeout(closeWindow, 3000);
+        // }
 
         // Show the overlay
         // overlay.value.visible = true;
     } finally {
-        // cloning.value = false;
+        cloning.value = false;
     }
 }
 
@@ -254,11 +310,11 @@ async function onCreateAndCloseClick() {
             Alias: form.value.alias,
             Username: form.value.username,
             CommunityNickname: form.value.nickname,
-            LocaleSidKey: org.defaultLocaleSidKey,
-            TimeZoneSidKey: org.timeZoneSidKey,
+            LocaleSidKey: org.DefaultLocaleSidKey,
+            TimeZoneSidKey: org.TimeZoneSidKey,
             ProfileId: form.value.profileId,
             UserRoleId: form.value.roleId,
-            LanguageLocaleKey: org.languageLocaleKey,
+            LanguageLocaleKey: org.LanguageLocaleKey,
             EmailEncodingKey: 'UTF-8'
         });
         if (!userCreateResult.success) {
@@ -281,7 +337,7 @@ async function onCreateAndCloseClick() {
             }
         }
 
-        // Only auto-cloes the window if the user creation and password reset (if chosen) has succedded.
+        // Only auto-close the window if the user creation and password reset (if chosen) has succedded.
         if (allSuccessful) {
             setTimeout(closeWindow, 3000);
         }
@@ -455,9 +511,9 @@ async function closeWindow() {
                                     <option v-if="profiles.loading" value="loading">Loading...</option>
 
                                     <option v-for="profile of profiles.items"
-                                           :key="profile.id"
-                                           :value="profile.id">
-                                           {{ profile.name }} ({{ profile.userLicenseName }})
+                                           :key="profile.Id"
+                                           :value="profile.Id">
+                                           {{ profile.Name }} ({{ profile.UserLicense.Name }})
                                     </option>
                                 </select>
                                 </div>
@@ -485,9 +541,9 @@ async function closeWindow() {
 
                                     <option v-else value="">None</option>
                                     <option v-for="role of roles.items"
-                                           :key="role.id"
-                                           :value="role.id">
-                                           {{ role.name }} ({{ role.developerName }})
+                                           :key="role.Id"
+                                           :value="role.Id">
+                                           {{ role.Name }} ({{ role.DeveloperName }})
                                     </option>
                                 </select>
                                 </div>

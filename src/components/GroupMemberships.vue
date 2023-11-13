@@ -5,10 +5,10 @@ import SalesforceRESTService from '@/services/salesforce-rest-service';
 import DuelingPicklist from './slds/DuelingPicklist.vue';
 import UserSelectModal from './modals/user-select/UserSelectModal.vue';
 import PopoutCardFooter from './PopoutCardFooter.vue';
-import Group from '@/models/Group';
-import GroupMember from '@/models/GroupMember';
-import Context from '@/models/context';
+import type Group from '@/models/Group';
+import type GroupMember from '@/models/GroupMember';
 import DuelingPicklistItem from './slds/DuelingPicklistItem';
+import type Context from '@/models/context';
 
 const props = defineProps<{
     context: Context,
@@ -45,15 +45,15 @@ const groupTypeLabel = computed(() => {
 
 const leftListItems = computed(() => {
     return availableGroups.value.map((group) => {
-        const displayName = showAPINames.value ? group.developerName : group.name;
-        return new DuelingPicklistItem(group.id, displayName);
+        const displayName = showAPINames.value ? group.DeveloperName : group.Name;
+        return new DuelingPicklistItem(group.Id, displayName);
     });
 });
 
 const rightListItems = computed(() => {
     return assignedGroups.value.map((group) => {
-        const displayName = showAPINames.value ? group.developerName : group.name;
-        return new DuelingPicklistItem(group.id, displayName);
+        const displayName = showAPINames.value ? group.DeveloperName : group.Name;
+        return new DuelingPicklistItem(group.Id, displayName);
     });
 });
 
@@ -74,9 +74,7 @@ async function loadData() {
         error.value = `Initial query for all Group records failed because ${allGroupsQueryResult.error}`;
         return;
     }
-    const allGroups = (allGroupsQueryResult.data as Array<any>).map((record) => {
-        return new Group(record.Id, record.Name, record.DeveloperName);
-    });
+    const allGroups = (allGroupsQueryResult.data as Array<Group>);
 
     // Group memberships
     const groupMembersQueryResult = await restService.query(`SELECT Id, GroupId, UserOrGroupId FROM GroupMember WHERE UserOrGroupId = '${props.context.userId}'`);
@@ -84,14 +82,12 @@ async function loadData() {
         error.value = `Initial query for GroupMember records failed because ${groupMembersQueryResult.error}`;
         return;
     }
-    userGroupMembers = (groupMembersQueryResult.data as Array<any>).map((record) => {
-        return new GroupMember(record.GroupId, record.UserOrGroupId, record.Id);
-    });
+    userGroupMembers = (groupMembersQueryResult.data as Array<GroupMember>);
 
     // Assigned groups
     originalAssignedGroups = allGroups.filter(group => {
         for (const groupMember of userGroupMembers) {
-            if (groupMember.groupId === group.id) {
+            if (groupMember.GroupId === group.Id) {
                 return true;
             }
         }
@@ -103,7 +99,7 @@ async function loadData() {
     // Available groups
     originalAvailableGroups = allGroups.filter(group => {
         for (const assignedGroup of assignedGroups.value) {
-            if (assignedGroup.id === group.id) {
+            if (assignedGroup.Id === group.Id) {
                 return false;
             }
         }
@@ -117,7 +113,7 @@ async function loadData() {
 
 function onAssignGroups(items: Array<DuelingPicklistItem>) {
     for (const item of items) {
-        const group = availableGroups.value.filter(group => group.id === item.value)[0];
+        const group = availableGroups.value.filter(group => group.Id === item.value)[0];
 
         // Remove from available groups
         const groupIndex = availableGroups.value.indexOf(group);
@@ -130,7 +126,7 @@ function onAssignGroups(items: Array<DuelingPicklistItem>) {
 
 function onUnassignGroups(items: Array<DuelingPicklistItem>) {
     for (const item of items) {
-        const group = assignedGroups.value.filter(group => group.id === item.value)[0];
+        const group = assignedGroups.value.filter(group => group.Id === item.value)[0];
 
         // Remove from assigned groups
         const groupIndex = assignedGroups.value.indexOf(group);
@@ -150,9 +146,7 @@ async function onMatchUserClick() {
             return;
         }
 
-        const matchUserGroupMembers = (cloneUserGroupMembershipsQueryResult.data as Array<any>).map((record) => {
-            return new GroupMember(record.GroupId, record.UserOrGroupId, record.Id);
-        });
+        const matchUserGroupMembers = (cloneUserGroupMembershipsQueryResult.data as Array<GroupMember>);
 
         if (matchUserGroupMembers.length === 0) {
             // TODO: handle if match user has no groups
@@ -167,12 +161,12 @@ async function onMatchUserClick() {
 
         // Assign the ones from the query
         for (const groupMember of matchUserGroupMembers) {
-            const groupFinds = availableGroups.value.filter(group => group.id === groupMember.groupId);
+            const groupFinds = availableGroups.value.filter(group => group.Id === groupMember.GroupId);
             if (groupFinds.length < 1) {
-                error.value = `Available groups does not contain the match user's group "${groupMember.groupId}".`;
+                error.value = `Available groups does not contain the match user's group "${groupMember.GroupId}".`;
                 return;
             } else if (groupFinds.length > 1) {
-                error.value = `Available groups contains too many groups matching "${groupMember.groupId}".`;
+                error.value = `Available groups contains too many groups matching "${groupMember.GroupId}".`;
                 return;
             }
 
@@ -198,7 +192,7 @@ async function onSaveAndCloseClick() {
         // Create a list of groups that have been newly assigned
         const newlyAssignedGroups = assignedGroups.value.filter(group => {
             for (const originalAssignedGroup of originalAssignedGroups) {
-                if (originalAssignedGroup.id === group.id) {
+                if (originalAssignedGroup.Id === group.Id) {
                     return false;
                 }
             }
@@ -212,7 +206,7 @@ async function onSaveAndCloseClick() {
         // Create a list of groups that have been newly unassigned
         const newlyUnassignedGroups = availableGroups.value.filter(group => {
             for (const originalAvailableGroup of originalAvailableGroups) {
-                if (originalAvailableGroup.id === group.id) {
+                if (originalAvailableGroup.Id === group.Id) {
                     return false;
                 }
             }
@@ -243,12 +237,17 @@ async function assignGroups(groups: Array<Group>): Promise<boolean> {
         return false;
     }
 
-    const groupMembersToCreate = groups.map(group => new GroupMember(group.id, assignToUserId));
+    const groupMembersToCreate = groups.map(group => {
+        return {
+            GroupId: group.Id,
+            UserOrGroupId: assignToUserId
+        } as GroupMember;
+    });
 
     for (const groupMember of groupMembersToCreate) {
         const result = await restService.create('GroupMember', groupMember);
         if (!result.success) {
-            error.value = `Failed to assign (create) user to group "${groupMember.groupId}" because ${result.error}`;
+            error.value = `Failed to assign (create) user to group "${groupMember.GroupId}" because ${result.error}`;
             return false;
         }
     }
@@ -257,12 +256,12 @@ async function assignGroups(groups: Array<Group>): Promise<boolean> {
 }
 
 async function unassignGroups(groups: Array<Group>): Promise<boolean> {
-    const groupMembersToDelete = groups.map(group => userGroupMembers.filter(groupMember => group.id == groupMember.groupId)[0]);
+    const groupMembersToDelete = groups.map(group => userGroupMembers.filter(groupMember => group.Id == groupMember.GroupId)[0]);
 
     for (const groupMember of groupMembersToDelete) {
-        const result = await restService.delete('GroupMember', groupMember.id!);
+        const result = await restService.delete('GroupMember', groupMember.Id);
         if (!result.success) {
-            error.value = `Failed to unassign (delete) user from group "${groupMember.groupId}" because ${result.error}`;
+            error.value = `Failed to unassign (delete) user from group "${groupMember.GroupId}" because ${result.error}`;
             return false;
         }
     }
