@@ -2,6 +2,7 @@ import SalesforceRESTService from './salesforce-rest-service';
 import type PermissionSetAssignment from '@/models/PermissionSetAssignment';
 import type GroupMember from '@/models/GroupMember';
 import ServiceResult from './result';
+import type Field from '@/models/Field';
 
 export default class SalesforceUserService extends SalesforceRESTService {
     isValidEmail(email: string): boolean {
@@ -98,6 +99,44 @@ export default class SalesforceUserService extends SalesforceRESTService {
         }
 
         return result;
+    }
+
+    async cloneUser(userId: string, overridenFieldValues: Map<string, unknown>): Promise<ServiceResult> {
+        const getUserFieldsResult = await this.getObjectFields('User');
+        if (!getUserFieldsResult.success) {
+            return getUserFieldsResult;
+        }
+
+        // Get all the original user's field values (apart from the ones given in the form)
+        let userFields = getUserFieldsResult.data as Array<Field>;
+        userFields = userFields.filter(field => field.createable && !overridenFieldValues.has(field.name));
+        const userFieldNames = userFields.map(field => field.name);
+
+        // Get the original user's data
+        const origUserQuery = `SELECT ${userFieldNames.join(', ')} FROM User WHERE Id = '${userId}'`;
+        const origUserQueryResult = await this.query(origUserQuery);
+        if (!origUserQueryResult.success) {
+            return origUserQueryResult;
+        }
+
+        const origUser = (origUserQueryResult.data as Array<{ [field: string]: unknown; }>)[0];
+
+        // Modify the origUser to include the overridenFieldValues therefore making it the cloned user.
+        for (const field of overridenFieldValues.keys()) {
+            const value = overridenFieldValues.get(field);
+
+            origUser[field] = value;
+        }
+
+        // Create the new User record
+        const createUserResult = await this.create('User', origUser);
+        if (!createUserResult.success) {
+            return createUserResult;
+        }
+
+        origUser['Id'] = createUserResult.data.id;
+
+        return ServiceResult.success(origUser);
     }
 
     async clonePermissionSetAssignments(fromUserId: string, toUserId: string): Promise<ServiceResult> {

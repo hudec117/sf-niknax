@@ -211,7 +211,7 @@ async function onCloneClick() {
 
     loading.value = true;
 
-    const queryResult = await userService.query(`SELECT Id, FirstName, LastName, Email, Alias, Username, CommunityNickname, LocaleSidKey, TimeZoneSidKey, ProfileId, UserRoleId, LanguageLocaleKey, EmailEncodingKey FROM User WHERE Id = '${cloneTargetUserId}'`);
+    const queryResult = await userService.query(`SELECT Id, Username, ProfileId, UserRoleId FROM User WHERE Id = '${cloneTargetUserId}'`);
     if (!queryResult.success) {
         // TODO: handle
         return;
@@ -250,26 +250,23 @@ async function onCloneAndCloseClick() {
     }
 
     try {
-        const userCloneResult = await userService.create('User', {
-            FirstName: form.value.firstName,
-            LastName: form.value.lastName,
-            Email: form.value.email,
-            Alias: form.value.alias,
-            Username: form.value.username,
-            CommunityNickname: form.value.nickname,
-            LocaleSidKey: cloneTargetUser.value.LocaleSidKey,
-            TimeZoneSidKey: cloneTargetUser.value.TimeZoneSidKey,
-            ProfileId: form.value.profileId,
-            UserRoleId: form.value.roleId,
-            LanguageLocaleKey: cloneTargetUser.value.LanguageLocaleKey,
-            EmailEncodingKey: cloneTargetUser.value.EmailEncodingKey
-        });
-        if (!userCloneResult.success) {
-            primaryButtonError.value = `Failed to clone the user. ${userCloneResult.error}`;
+        const overridenFieldValues = new Map<string, unknown>();
+        overridenFieldValues.set('FirstName', form.value.firstName);
+        overridenFieldValues.set('LastName', form.value.lastName);
+        overridenFieldValues.set('Email', form.value.email);
+        overridenFieldValues.set('Alias', form.value.alias);
+        overridenFieldValues.set('Username', form.value.username);
+        overridenFieldValues.set('CommunityNickname', form.value.nickname);
+        overridenFieldValues.set('ProfileId', form.value.profileId);
+        overridenFieldValues.set('UserRoleId', form.value.roleId);
+
+        const cloneUserResult = await userService.cloneUser(cloneTargetUser.value.Id, overridenFieldValues);
+        if (!cloneUserResult.success) {
+            primaryButtonError.value = `Failed to clone the user. ${cloneUserResult.error}`;
             return;
         }
 
-        createdUserId = userCloneResult.data.id;
+        createdUserId = cloneUserResult.data.Id;
 
         // Attempt to reset the password
         let allSuccessful = true;

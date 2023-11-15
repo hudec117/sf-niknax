@@ -122,4 +122,23 @@ export default class SalesforceRESTService {
 
         return ServiceResult.success((result.data as Array<any>)[0]);
     }
+
+    async getObjectFields(object: string): Promise<ServiceResult> {
+        const requestUrl = new URL(`${this.OBJECT_ENDPOINT}/${object}/describe`, this.serverBaseUrl);
+
+        try {
+            const response = await this.authFetch(requestUrl);
+            const responseBody = await response.json();
+
+            if (response.ok) {
+                return ServiceResult.success(responseBody.fields);
+            } else {
+                return ServiceResult.fail(
+                    responseBody.map((error: Error) => error.message).join('\n')
+                );
+            }
+        } catch (error) {
+            return ServiceResult.fail((error as Error).message);
+        }
+    }
 }
