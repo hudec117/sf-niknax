@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 
-import SalesforceRESTService from '@/services/salesforce-rest-service';
+import SalesforceRESTService from '@/services/SalesforceRESTService';
 import DuelingPicklist from './slds/DuelingPicklist.vue';
 import UserSelectModal from './modals/user-select/UserSelectModal.vue';
 import PopoutCardFooter from './PopoutCardFooter.vue';
 import type Group from '@/models/Group';
 import type GroupMember from '@/models/GroupMember';
 import DuelingPicklistItem from './slds/DuelingPicklistItem';
-import type Context from '@/models/context';
+import type Context from '@/models/Context';
 
 const props = defineProps<{
     context: Context,
@@ -69,20 +69,20 @@ async function loadData() {
     document.title = `Salesforce Niknax: ${title.value}`;
 
     // Get all groups
-    const allGroupsQueryResult = await restService.query(`SELECT Id, Name, DeveloperName FROM Group WHERE Type = '${props.type}'`);
+    const allGroupsQueryResult = await restService.query<Group>(`SELECT Id, Name, DeveloperName FROM Group WHERE Type = '${props.type}'`);
     if (!allGroupsQueryResult.success) {
         error.value = `Initial query for all Group records failed because ${allGroupsQueryResult.error}`;
         return;
     }
-    const allGroups = (allGroupsQueryResult.data as Array<Group>);
+    const allGroups = allGroupsQueryResult.guardedData;
 
     // Group memberships
-    const groupMembersQueryResult = await restService.query(`SELECT Id, GroupId, UserOrGroupId FROM GroupMember WHERE UserOrGroupId = '${props.context.userId}'`);
+    const groupMembersQueryResult = await restService.query<GroupMember>(`SELECT Id, GroupId, UserOrGroupId FROM GroupMember WHERE UserOrGroupId = '${props.context.userId}'`);
     if (!groupMembersQueryResult.success) {
         error.value = `Initial query for GroupMember records failed because ${groupMembersQueryResult.error}`;
         return;
     }
-    userGroupMembers = (groupMembersQueryResult.data as Array<GroupMember>);
+    userGroupMembers = groupMembersQueryResult.guardedData;
 
     // Assigned groups
     originalAssignedGroups = allGroups.filter(group => {
@@ -140,14 +140,13 @@ function onUnassignGroups(items: Array<DuelingPicklistItem>) {
 async function onMatchUserClick() {
     const userId = await userSelectModal.value?.show(props.context);
     if (userId) {
-        const cloneUserGroupMembershipsQueryResult = await restService.query(`SELECT Id, GroupId, UserOrGroupId FROM GroupMember WHERE UserOrGroupId = '${userId}' AND Group.Type = '${props.type}'`);
+        const cloneUserGroupMembershipsQueryResult = await restService.query<GroupMember>(`SELECT Id, GroupId, UserOrGroupId FROM GroupMember WHERE UserOrGroupId = '${userId}' AND Group.Type = '${props.type}'`);
         if (!cloneUserGroupMembershipsQueryResult.success) {
             error.value = `Query to retrieve match user's GroupMember records failed because ${cloneUserGroupMembershipsQueryResult.error}`
             return;
         }
 
-        const matchUserGroupMembers = (cloneUserGroupMembershipsQueryResult.data as Array<GroupMember>);
-
+        const matchUserGroupMembers = cloneUserGroupMembershipsQueryResult.guardedData;
         if (matchUserGroupMembers.length === 0) {
             // TODO: handle if match user has no groups
             return;

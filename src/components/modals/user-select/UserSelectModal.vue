@@ -4,8 +4,8 @@ import { ref } from 'vue';
 import type User from '@/models/User';
 import SearchLookup from '../../slds/SearchLookup.vue';
 import SearchLookupItem from '@/components/slds/SearchLookupItem';
-import Context from '@/models/context';
-import SalesforceRESTService from '@/services/salesforce-rest-service';
+import Context from '@/models/Context';
+import SalesforceRESTService from '@/services/SalesforceRESTService';
 
 const props = defineProps<{
     immediateSelect?: boolean
@@ -21,7 +21,7 @@ const error = ref('');
 const selectedUserId = ref<string | undefined>();
 
 async function doSearch(value: string): Promise<Array<SearchLookupItem>> {
-    const queryResult = await restService.query(`SELECT Id, FirstName, LastName, Username, Email FROM User WHERE (Name LIKE '%${value}%' OR Username LIKE '%${value}%' OR Email LIKE '%${value}%') AND UserType != 'AutomatedProcess' AND UserType != 'CloudIntegrationUser'`);
+    const queryResult = await restService.query<User>(`SELECT Id, FirstName, LastName, Username, Email FROM User WHERE (Name LIKE '%${value}%' OR Username LIKE '%${value}%' OR Email LIKE '%${value}%') AND UserType != 'AutomatedProcess' AND UserType != 'CloudIntegrationUser'`);
     if (!queryResult.success) {
         error.value = `Failed to query for users because ${queryResult.error}`;
         return [];
@@ -29,9 +29,7 @@ async function doSearch(value: string): Promise<Array<SearchLookupItem>> {
 
     error.value = '';
 
-    return (queryResult.data as Array<any>).map(record => {
-        const user = record as User;
-
+    return queryResult.guardedData.map(user => {
         let fullName = user.LastName;
         if (user.FirstName) {
             fullName = user.FirstName + ' ' + fullName;

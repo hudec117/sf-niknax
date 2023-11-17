@@ -1,4 +1,7 @@
-import ServiceResult from './result';
+import type Record from '@/models/Record';
+import { Result } from './Results';
+import type Organisation from '@/models/Organisation';
+import type Field from '@/models/Field';
 
 export default class SalesforceRESTService {
     QUERY_ENDPOINT = '/services/data/v58.0/query';
@@ -30,28 +33,28 @@ export default class SalesforceRESTService {
         return fetch(actualRequestUrl, requestInfo);
     }
 
-    async get(object: string, id: string): Promise<ServiceResult> {
-        const requestUrl = new URL(`${this.OBJECT_ENDPOINT}/${object}/${id}`, this.serverBaseUrl);
+    // async get(object: string, id: string): Promise<Result<Array<Record>>> {
+    //     const requestUrl = new URL(`${this.OBJECT_ENDPOINT}/${object}/${id}`, this.serverBaseUrl);
 
-        try {
-            const response = await this.authFetch(requestUrl, {
-                method: 'GET'
-            });
-            const responseBody = await response.json();
+    //     try {
+    //         const response = await this.authFetch(requestUrl, {
+    //             method: 'GET'
+    //         });
+    //         const responseBody = await response.json();
 
-            if (response.ok) {
-                return ServiceResult.success(responseBody.records);
-            } else {
-                return ServiceResult.fail(
-                    responseBody.map((error: Error) => error.message).join('\n')
-                );
-            }
-        } catch (error) {
-            return ServiceResult.fail((error as Error).message);
-        }
-    }
+    //         if (response.ok) {
+    //             return Result.success(responseBody.records as Array<Record>);
+    //         } else {
+    //             return Result.fail(
+    //                 responseBody.map((error: Error) => error.message).join('\n')
+    //             );
+    //         }
+    //     } catch (error) {
+    //         return Result.fail((error as Error).message);
+    //     }
+    // }
 
-    async query(soql: string): Promise<ServiceResult> {
+    async query<T = Record>(soql: string): Promise<Result<Array<T>>> {
         const requestUrl = new URL(this.QUERY_ENDPOINT, this.serverBaseUrl);
         requestUrl.searchParams.set('q', soql);
 
@@ -60,18 +63,18 @@ export default class SalesforceRESTService {
             const responseBody = await response.json();
 
             if (response.ok) {
-                return ServiceResult.success(responseBody.records);
+                return Result.success(responseBody.records as Array<T>);
             } else {
-                return ServiceResult.fail(
+                return Result.fail(
                     responseBody.map((error: Error) => error.message).join('\n')
                 );
             }
         } catch (error) {
-            return ServiceResult.fail((error as Error).message);
+            return Result.fail((error as Error).message);
         }
     }
 
-    async create(object: string, data: Object): Promise<ServiceResult> {
+    async create<T>(object: string, data: Object): Promise<Result<T>> {
         const requestUrl = new URL(`${this.OBJECT_ENDPOINT}/${object}`, this.serverBaseUrl);
 
         delete (data as any).Id;
@@ -89,18 +92,18 @@ export default class SalesforceRESTService {
             const responseBody = await response.json();
 
             if (response.ok) {
-                return ServiceResult.success(responseBody);
+                return Result.success(responseBody as T);
             } else {
-                return ServiceResult.fail(
+                return Result.fail(
                     responseBody.map((error: Error) => error.message).join('\n')
                 );
             }
         } catch (error) {
-            return ServiceResult.fail((error as Error).message);
+            return Result.fail((error as Error).message);
         }
     }
 
-    async delete(object: string, id: string): Promise<ServiceResult> {
+    async delete(object: string, id: string): Promise<Result> {
         const requestUrl = new URL(`${this.OBJECT_ENDPOINT}/${object}/${id}`, this.serverBaseUrl);
 
         try {
@@ -108,22 +111,22 @@ export default class SalesforceRESTService {
                 method: 'DELETE'
             });
 
-            return { success: response.ok };
+            return Result.conditional(response.ok);
         } catch (error) {
-            return ServiceResult.fail((error as Error).message);
+            return Result.fail((error as Error).message);
         }
     }
 
-    async getOrganisation(): Promise<ServiceResult> {
-        const result = await this.query('SELECT DefaultLocaleSidKey, TimeZoneSidKey, LanguageLocaleKey, OrganizationType, IsSandbox FROM Organization');
+    async getOrganisation(): Promise<Result<Organisation>> {
+        const result = await this.query<Organisation>('SELECT DefaultLocaleSidKey, TimeZoneSidKey, LanguageLocaleKey, OrganizationType, IsSandbox FROM Organization');
         if (!result.success) {
-            return ServiceResult.fail(result.error);
+            return Result.fail(result.error);
         }
 
-        return ServiceResult.success((result.data as Array<any>)[0]);
+        return Result.success(result.guardedData[0]);
     }
 
-    async getObjectFields(object: string): Promise<ServiceResult> {
+    async getObjectFields(object: string): Promise<Result<Array<Field>>> {
         const requestUrl = new URL(`${this.OBJECT_ENDPOINT}/${object}/describe`, this.serverBaseUrl);
 
         try {
@@ -131,14 +134,14 @@ export default class SalesforceRESTService {
             const responseBody = await response.json();
 
             if (response.ok) {
-                return ServiceResult.success(responseBody.fields);
+                return Result.success(responseBody.fields as Array<Field>);
             } else {
-                return ServiceResult.fail(
+                return Result.fail(
                     responseBody.map((error: Error) => error.message).join('\n')
                 );
             }
         } catch (error) {
-            return ServiceResult.fail((error as Error).message);
+            return Result.fail((error as Error).message);
         }
     }
 }

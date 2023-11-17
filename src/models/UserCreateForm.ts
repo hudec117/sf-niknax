@@ -1,4 +1,4 @@
-export default class UserCreateForm {
+export default class UserCreateCloneForm {
     firstName = '';
     lastName = '';
     alias = '';

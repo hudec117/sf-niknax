@@ -1,6 +1,7 @@
+import type Record from './Record';
 import type Profile from './Profile';
 
-export default interface User {
+export default interface User extends Record {
     Id: string;
     FirstName?: string;
     LastName: string;

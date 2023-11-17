@@ -1,8 +1,9 @@
-import SalesforceRESTService from './salesforce-rest-service';
+import SalesforceRESTService from './SalesforceRESTService';
 import type PermissionSetAssignment from '@/models/PermissionSetAssignment';
 import type GroupMember from '@/models/GroupMember';
-import ServiceResult from './result';
+import { ItemCloneResult, Result } from './Results';
 import type Field from '@/models/Field';
+import type User from '@/models/User';
 
 export default class SalesforceUserService extends SalesforceRESTService {
     isValidEmail(email: string): boolean {
@@ -101,10 +102,10 @@ export default class SalesforceUserService extends SalesforceRESTService {
         return result;
     }
 
-    async cloneUser(userId: string, overridenFieldValues: Map<string, unknown>): Promise<ServiceResult> {
+    async cloneUser(userId: string, overridenFieldValues: Map<string, unknown>): Promise<Result<User>> {
         const getUserFieldsResult = await this.getObjectFields('User');
         if (!getUserFieldsResult.success) {
-            return getUserFieldsResult;
+            return Result.fail(getUserFieldsResult.error);
         }
 
         // Get all the original user's field values (apart from the ones given in the form)
@@ -114,12 +115,12 @@ export default class SalesforceUserService extends SalesforceRESTService {
 
         // Get the original user's data
         const origUserQuery = `SELECT ${userFieldNames.join(', ')} FROM User WHERE Id = '${userId}'`;
-        const origUserQueryResult = await this.query(origUserQuery);
+        const origUserQueryResult = await this.query<User>(origUserQuery);
         if (!origUserQueryResult.success) {
-            return origUserQueryResult;
+            return Result.fail(origUserQueryResult.error);
         }
 
-        const origUser = (origUserQueryResult.data as Array<{ [field: string]: unknown; }>)[0];
+        const origUser = origUserQueryResult.guardedData[0];
 
         // Modify the origUser to include the overridenFieldValues therefore making it the cloned user.
         for (const field of overridenFieldValues.keys()) {
@@ -129,23 +130,23 @@ export default class SalesforceUserService extends SalesforceRESTService {
         }
 
         // Create the new User record
-        const createUserResult = await this.create('User', origUser);
+        const createUserResult = await this.create<User>('User', origUser);
         if (!createUserResult.success) {
             return createUserResult;
         }
 
-        origUser['Id'] = createUserResult.data.id;
+        origUser['Id'] = createUserResult.guardedData.Id;
 
-        return ServiceResult.success(origUser);
+        return Result.success(origUser);
     }
 
-    async clonePermissionSetAssignments(fromUserId: string, toUserId: string): Promise<ServiceResult> {
-        const permissionSetAssignmentQueryResult = await this.query(`SELECT AssigneeId, PermissionSetId FROM PermissionSetAssignment WHERE AssigneeId = '${fromUserId}' AND PermissionSet.IsOwnedByProfile = false`);
+    async clonePermissionSetAssignments(fromUserId: string, toUserId: string): Promise<Result<Array<ItemCloneResult>>> {
+        const permissionSetAssignmentQueryResult = await this.query<PermissionSetAssignment>(`SELECT AssigneeId, PermissionSetId FROM PermissionSetAssignment WHERE AssigneeId = '${fromUserId}' AND PermissionSet.IsOwnedByProfile = false`);
         if (!permissionSetAssignmentQueryResult.success) {
-            return ServiceResult.fail(permissionSetAssignmentQueryResult.error);
+            return Result.fail(permissionSetAssignmentQueryResult.error);
         }
 
-        for (const permissionSetAssignment of (permissionSetAssignmentQueryResult.data as Array<PermissionSetAssignment>)) {
+        for (const permissionSetAssignment of permissionSetAssignmentQueryResult.guardedData) {
             permissionSetAssignment.AssigneeId = toUserId;
             const clonePermissionSetAssignmentResult = await this.create('PermissionSetAssignment', permissionSetAssignment);
             if (!clonePermissionSetAssignmentResult.success) {
@@ -153,16 +154,16 @@ export default class SalesforceUserService extends SalesforceRESTService {
             }
         }
 
-        return ServiceResult.success();
+        return Result.success();
     }
 
-    async cloneGroupMemberships(fromUserId: string, toUserId: string, groupType: string): Promise<ServiceResult> {
-        const groupMembershipsQueryResult = await this.query(`SELECT Id, GroupId, UserOrGroupId FROM GroupMember WHERE UserOrGroupId = '${fromUserId}' AND Group.Type = '${groupType}'`);
+    async cloneGroupMemberships(fromUserId: string, toUserId: string, groupType: string): Promise<Result<Array<ItemCloneResult>>> {
+        const groupMembershipsQueryResult = await this.query<GroupMember>(`SELECT Id, GroupId, UserOrGroupId FROM GroupMember WHERE UserOrGroupId = '${fromUserId}' AND Group.Type = '${groupType}'`);
         if (!groupMembershipsQueryResult.success) {
-            return ServiceResult.fail(groupMembershipsQueryResult.error);
+            return Result.fail(groupMembershipsQueryResult.error);
         }
 
-        for (const groupMember of (groupMembershipsQueryResult.data as Array<GroupMember>)) {
+        for (const groupMember of groupMembershipsQueryResult.guardedData) {
             groupMember.UserOrGroupId = toUserId;
             const cloneGroupResult = await this.create('GroupMember', groupMember);
             if (!cloneGroupResult.success) {
@@ -170,6 +171,6 @@ export default class SalesforceUserService extends SalesforceRESTService {
             }
         }
 
-        return ServiceResult.success();
+        return Result.success();
     }
 }

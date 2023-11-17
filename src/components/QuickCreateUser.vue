@@ -5,12 +5,12 @@ import PopoutCardFooter from './PopoutCardFooter.vue';
 import FullscreenOverlay from '@/components/slds/FullscreenOverlay.vue';
 import QuickCreateUserSettingsModal from '@/components/modals/quick-create-user-settings/QuickCreateUserSettingsModal.vue';
 import UserSelectModal from '@/components/modals/user-select/UserSelectModal.vue';
-import SalesforceToolingService from '@/services/salesforce-tooling-service';
-import Context from '@/models/context';
-import UserCreateForm from '@/models/UserCreateForm';
-import SalesforceUserService from '@/services/salesforce-user-service';
+import SalesforceToolingService from '@/services/SalesforceToolingService';
+import Context from '@/models/Context';
+import UserCreateCloneForm from '@/models/UserCreateForm';
+import SalesforceUserService from '@/services/SalesforceUserService';
 import type Profile from '@/models/Profile';
-import type Role from '@/models/Role';
+import type UserRole from '@/models/UserRole';
 import type User from '@/models/User';
 import type Organisation from '@/models/Organisation';
 import UserQuickCreateSettings from '@/models/UserQuickCreateSettings';
@@ -28,18 +28,25 @@ let userService: SalesforceUserService;
 let toolingService: SalesforceToolingService;
 let createdUserId = '';
 
-const form = ref(new UserCreateForm());
-
 const mode = ref<'create' | 'clone'>('create');
+const form = ref(new UserCreateCloneForm());
+
 const primaryButtonText = ref('Create & Close');
 const primaryButtonError = ref('');
 const loading = ref(true);
 const working = ref(false);
-const overlay = ref({
+const createOverlay = ref({
     visible: false,
     type: 'success',
     passwordResetSuccessful: true,
     passwordResetError: ''
+});
+const cloneOverlay = ref({
+    visible: false,
+    type: 'success',
+    passwordResetSuccessful: true,
+    passwordResetError: '',
+    cloneOperationResults: [],
 });
 const showUsernameTooltip = ref(false);
 const showProfileTooltip = ref(false);
@@ -55,7 +62,7 @@ const profiles = ref({
 });
 const roles = ref({
     loading: true,
-    items: new Array<Role>(),
+    items: new Array<UserRole>(),
     error: ''
 });
 
@@ -107,13 +114,13 @@ async function loadProfiles() {
     profiles.value.loading = true;
 
     try {
-        const result = await userService.query('SELECT Id, Name, UserLicenseId, UserLicense.Name FROM Profile');
+        const result = await userService.query<Profile>('SELECT Id, Name, UserLicenseId, UserLicense.Name FROM Profile');
         if (!result.success) {
             profiles.value.error = result.error as string;
             return;
         }
 
-        profiles.value.items = (result.data as Array<Profile>);
+        profiles.value.items = result.guardedData;
 
         // Attempt to find the default profile as defined in the settings, falling back to System Administrator if not found.
         const matchedDefaultProfiles = profiles.value.items.filter(profile => profile.Name === settings.value.defaultProfile);
@@ -132,13 +139,13 @@ async function loadRoles() {
     roles.value.loading = true;
 
     try {
-        const result = await userService.query('SELECT Id, Name, DeveloperName FROM UserRole');
+        const result = await userService.query<UserRole>('SELECT Id, Name, DeveloperName FROM UserRole');
         if (!result.success) {
             roles.value.error = result.error as string;
             return;
         }
 
-        roles.value.items = (result.data as Array<Role>);
+        roles.value.items = result.guardedData;
 
         // Attempt to find the default role as defined in the settings, falling back to None if not found.
         const matchedDefaultRoles = roles.value.items.filter(role => role.DeveloperName === settings.value.defaultRole);
@@ -211,12 +218,12 @@ async function onCloneClick() {
 
     loading.value = true;
 
-    const queryResult = await userService.query(`SELECT Id, Username, ProfileId, UserRoleId FROM User WHERE Id = '${cloneTargetUserId}'`);
+    const queryResult = await userService.query<User>(`SELECT Id, Username, ProfileId, UserRoleId FROM User WHERE Id = '${cloneTargetUserId}'`);
     if (!queryResult.success) {
         // TODO: handle
         return;
     }
-    cloneTargetUser.value = (queryResult.data as Array<User>)[0];
+    cloneTargetUser.value = queryResult.guardedData[0];
 
     // Resize window to accomodate visible checkboxes, change the title and mode.
     resizeTo(627, 701);
@@ -245,7 +252,8 @@ async function onCloneAndCloseClick() {
     primaryButtonError.value = '';
 
     if (!cloneTargetUser.value) {
-        // TODO: handle
+        // Note: should never happen
+        primaryButtonError.value = '"cloneTargetUser" is not set, please report this on GitHub.';
         return;
     }
 
@@ -266,7 +274,7 @@ async function onCloneAndCloseClick() {
             return;
         }
 
-        createdUserId = cloneUserResult.data.Id;
+        createdUserId = cloneUserResult.guardedData.Id;
 
         // Attempt to reset the password
         let allSuccessful = true;
@@ -275,9 +283,9 @@ async function onCloneAndCloseClick() {
 
             const resetPasswordResult = await toolingService.executeAnonymous(`System.resetPassword('${createdUserId}', true);`);
             if (!resetPasswordResult.success) {
-                overlay.value.type = 'warning';
-                overlay.value.passwordResetSuccessful = false;
-                overlay.value.passwordResetError = `Failed to reset the password. ${resetPasswordResult.error}`;
+                createOverlay.value.type = 'warning';
+                createOverlay.value.passwordResetSuccessful = false;
+                createOverlay.value.passwordResetError = `Failed to reset the password. ${resetPasswordResult.error}`;
 
                 allSuccessful = false;
             }
@@ -313,7 +321,7 @@ async function onCloneAndCloseClick() {
         }
 
         // Show the overlay
-        overlay.value.visible = true;
+        createOverlay.value.visible = true;
     } finally {
         working.value = false;
         primaryButtonText.value = 'Clone & Close';
@@ -335,7 +343,7 @@ async function onCreateAndCloseClick() {
         const org = getOrgResult.data as Organisation;
 
         // Create the user
-        const userCreateResult = await userService.create('User', {
+        const userCreateResult = await userService.create<User>('User', {
             FirstName: form.value.firstName,
             LastName: form.value.lastName,
             Email: form.value.email,
@@ -354,7 +362,7 @@ async function onCreateAndCloseClick() {
             return;
         }
 
-        createdUserId = userCreateResult.data.id;
+        createdUserId = userCreateResult.guardedData.Id;
 
         // Attempt to reset the password
         let allSuccessful = true;
@@ -363,9 +371,9 @@ async function onCreateAndCloseClick() {
 
             const resetPasswordResult = await toolingService.executeAnonymous(`System.resetPassword('${createdUserId}', true);`);
             if (!resetPasswordResult.success) {
-                overlay.value.type = 'warning';
-                overlay.value.passwordResetSuccessful = false;
-                overlay.value.passwordResetError = `Failed to reset the password. ${resetPasswordResult.error}`;
+                createOverlay.value.type = 'warning';
+                createOverlay.value.passwordResetSuccessful = false;
+                createOverlay.value.passwordResetError = `Failed to reset the password. ${resetPasswordResult.error}`;
 
                 allSuccessful = false;
             }
@@ -376,7 +384,7 @@ async function onCreateAndCloseClick() {
             setTimeout(closeWindow, 3000);
         }
 
-        overlay.value.visible = true;
+        createOverlay.value.visible = true;
     } finally {
         working.value = false;
         primaryButtonText.value = 'Create & Close';
@@ -670,10 +678,11 @@ async function closeWindow() {
     <QuickCreateUserSettingsModal ref="settingsModal" />
     <UserSelectModal ref="userSelectModal" immediate-select />
 
-    <FullscreenOverlay :visible="overlay.visible" :type="overlay.type">
+    <!-- User Create overlay -->
+    <FullscreenOverlay :visible="createOverlay.visible" :type="createOverlay.type">
         <template v-slot:title>
             <span class="overlay-user-link" @click="onOpenUser" title="Open User detail page in a new tab.">User</span>
-            <template v-if="overlay.passwordResetSuccessful">
+            <template v-if="createOverlay.passwordResetSuccessful">
                 created!
             </template>
             <template v-else>
@@ -682,7 +691,20 @@ async function closeWindow() {
         </template>
 
         <template v-slot:subtitle>
-            {{ overlay.passwordResetError }}
+            {{ createOverlay.passwordResetError }}
+        </template>
+    </FullscreenOverlay>
+
+    <!-- Clone overlay -->
+    <FullscreenOverlay :visible="createOverlay.visible" :type="createOverlay.type">
+        <template v-slot:title>
+            <span class="overlay-user-link" @click="onOpenUser" title="Open User detail page in a new tab.">User</span>
+            <template v-if="createOverlay.passwordResetSuccessful">
+                created!
+            </template>
+            <template v-else>
+                created but...
+            </template>
         </template>
     </FullscreenOverlay>
 </template>

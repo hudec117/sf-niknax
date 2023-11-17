@@ -1,4 +1,4 @@
-import ServiceResult from './result';
+import { Result } from './Results';
 
 export default class SalesforceToolingService {
     EXECUTE_ANONYMOUS_ENDPOINT = '/services/data/v58.0/tooling/executeAnonymous';
@@ -21,7 +21,7 @@ export default class SalesforceToolingService {
         return fetch(actualRequestUrl, requestInfo);
     }
 
-    async executeAnonymous(code: string): Promise<ServiceResult> {
+    async executeAnonymous(code: string): Promise<Result> {
         const urlEncodedCode = encodeURIComponent(code);
         const requestUrl = new URL(`${this.EXECUTE_ANONYMOUS_ENDPOINT}?anonymousBody=${urlEncodedCode}`, this.serverBaseUrl);
 
@@ -30,9 +30,9 @@ export default class SalesforceToolingService {
 
         const successfullyExecuted = response.ok && !responseBody.exceptionMessage && !responseBody.compileProblem;
         if (successfullyExecuted) {
-            return ServiceResult.success();
+            return Result.success();
         } else {
-            return ServiceResult.fail(responseBody.exceptionMessage || responseBody.compileProblem);
+            return Result.fail(responseBody.exceptionMessage || responseBody.compileProblem);
         }
     }
 }

@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 
-import SalesforceRESTService from '@/services/salesforce-rest-service';
-import SalesforceToolingService from '@/services/salesforce-tooling-service';
+import SalesforceRESTService from '@/services/SalesforceRESTService';
+import SalesforceToolingService from '@/services/SalesforceToolingService';
 import PopoutCardFooter from './PopoutCardFooter.vue';
-import Context from '@/models/context';
+import Context from '@/models/Context';
 
 const props = defineProps<{
     context: Context
