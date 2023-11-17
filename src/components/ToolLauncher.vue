@@ -5,7 +5,7 @@ import GroupMemberships from './GroupMemberships.vue';
 import BulkFreezeUsers from './BulkFreezeUsers.vue';
 import QuickCreateUser from './QuickCreateUser.vue';
 
-import Context from '@/models/context';
+import Context from '@/models/Context';
 
 const displayEditGroupMemberships = ref(false);
 const displayBulkFreezeUsers = ref(false);

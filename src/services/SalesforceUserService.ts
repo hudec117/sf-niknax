@@ -130,14 +130,14 @@ export default class SalesforceUserService extends SalesforceRESTService {
         }
 
         // Create the new User record
-        const createUserResult = await this.create<User>('User', origUser);
+        const createUserResult = await this.create('User', origUser);
         if (!createUserResult.success) {
-            return createUserResult;
+            return Result.fail(createUserResult.error);
         }
 
-        origUser['Id'] = createUserResult.guardedData.Id;
+        origUser['Id'] = createUserResult.guardedData;
 
-        return Result.success(origUser);
+        return Result.success<User>(origUser);
     }
 
     async clonePermissionSetAssignments(fromUserId: string, toUserId: string): Promise<Result<Array<ItemCloneResult>>> {

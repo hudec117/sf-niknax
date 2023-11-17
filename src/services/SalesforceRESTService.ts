@@ -63,7 +63,7 @@ export default class SalesforceRESTService {
             const responseBody = await response.json();
 
             if (response.ok) {
-                return Result.success(responseBody.records as Array<T>);
+                return Result.success<Array<T>>(responseBody.records);
             } else {
                 return Result.fail(
                     responseBody.map((error: Error) => error.message).join('\n')
@@ -74,12 +74,12 @@ export default class SalesforceRESTService {
         }
     }
 
-    async create<T>(object: string, data: Object): Promise<Result<T>> {
+    async create(object: string, record: object): Promise<Result<string>> {
         const requestUrl = new URL(`${this.OBJECT_ENDPOINT}/${object}`, this.serverBaseUrl);
 
-        delete (data as any).Id;
-        delete (data as any).attributes;
-        const jsonData = JSON.stringify(data);
+        delete (record as any).Id;
+        delete (record as any).attributes;
+        const jsonData = JSON.stringify(record);
 
         try {
             const response = await this.authFetch(requestUrl, {
@@ -92,7 +92,7 @@ export default class SalesforceRESTService {
             const responseBody = await response.json();
 
             if (response.ok) {
-                return Result.success(responseBody as T);
+                return Result.success<string>(responseBody.id);
             } else {
                 return Result.fail(
                     responseBody.map((error: Error) => error.message).join('\n')
@@ -123,7 +123,7 @@ export default class SalesforceRESTService {
             return Result.fail(result.error);
         }
 
-        return Result.success(result.guardedData[0]);
+        return Result.success<Organisation>(result.guardedData[0]);
     }
 
     async getObjectFields(object: string): Promise<Result<Array<Field>>> {
@@ -134,7 +134,7 @@ export default class SalesforceRESTService {
             const responseBody = await response.json();
 
             if (response.ok) {
-                return Result.success(responseBody.fields as Array<Field>);
+                return Result.success<Array<Field>>(responseBody.fields as Array<Field>);
             } else {
                 return Result.fail(
                     responseBody.map((error: Error) => error.message).join('\n')

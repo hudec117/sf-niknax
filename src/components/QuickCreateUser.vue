@@ -343,7 +343,7 @@ async function onCreateAndCloseClick() {
         const org = getOrgResult.data as Organisation;
 
         // Create the user
-        const userCreateResult = await userService.create<User>('User', {
+        const userCreateResult = await userService.create('User', {
             FirstName: form.value.firstName,
             LastName: form.value.lastName,
             Email: form.value.email,
@@ -362,7 +362,7 @@ async function onCreateAndCloseClick() {
             return;
         }
 
-        createdUserId = userCreateResult.guardedData.Id;
+        createdUserId = userCreateResult.guardedData;
 
         // Attempt to reset the password
         let allSuccessful = true;
@@ -696,11 +696,11 @@ async function closeWindow() {
     </FullscreenOverlay>
 
     <!-- Clone overlay -->
-    <FullscreenOverlay :visible="createOverlay.visible" :type="createOverlay.type">
+    <FullscreenOverlay :visible="cloneOverlay.visible" :type="cloneOverlay.type">
         <template v-slot:title>
             <span class="overlay-user-link" @click="onOpenUser" title="Open User detail page in a new tab.">User</span>
-            <template v-if="createOverlay.passwordResetSuccessful">
-                created!
+            <template v-if="cloneOverlay.passwordResetSuccessful">
+                cloned!
             </template>
             <template v-else>
                 created but...
