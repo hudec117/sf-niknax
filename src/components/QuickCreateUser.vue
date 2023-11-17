@@ -283,9 +283,9 @@ async function onCloneAndCloseClick() {
 
             const resetPasswordResult = await toolingService.executeAnonymous(`System.resetPassword('${createdUserId}', true);`);
             if (!resetPasswordResult.success) {
-                createOverlay.value.type = 'warning';
-                createOverlay.value.passwordResetSuccessful = false;
-                createOverlay.value.passwordResetError = `Failed to reset the password. ${resetPasswordResult.error}`;
+                cloneOverlay.value.type = 'warning';
+                cloneOverlay.value.passwordResetSuccessful = false;
+                cloneOverlay.value.passwordResetError = `Failed to reset the password. ${resetPasswordResult.error}`;
 
                 allSuccessful = false;
             }
@@ -321,7 +321,7 @@ async function onCloneAndCloseClick() {
         }
 
         // Show the overlay
-        createOverlay.value.visible = true;
+        cloneOverlay.value.visible = true;
     } finally {
         working.value = false;
         primaryButtonText.value = 'Clone & Close';
