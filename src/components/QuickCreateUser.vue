@@ -14,6 +14,7 @@ import type UserRole from '@/models/UserRole';
 import type User from '@/models/User';
 import type Organisation from '@/models/Organisation';
 import UserQuickCreateSettings from '@/models/UserQuickCreateSettings';
+import LightningSpinner from './slds/LightningSpinner.vue';
 
 const SETTINGS_KEY = 'quick-create-user-settings';
 
@@ -248,7 +249,6 @@ async function onPrimaryButtonClick() {
 
 async function onCloneAndCloseClick() {
     working.value = true;
-    primaryButtonText.value = 'Cloning...';
     primaryButtonError.value = '';
 
     if (!cloneTargetUser.value) {
@@ -279,8 +279,6 @@ async function onCloneAndCloseClick() {
         // Attempt to reset the password
         let allSuccessful = true;
         if (form.value.resetPassword) {
-            primaryButtonText.value = 'Resetting password...';
-
             const resetPasswordResult = await toolingService.executeAnonymous(`System.resetPassword('${createdUserId}', true);`);
             if (!resetPasswordResult.success) {
                 cloneOverlay.value.type = 'warning';
@@ -330,7 +328,6 @@ async function onCloneAndCloseClick() {
 
 async function onCreateAndCloseClick() {
     working.value = true;
-    primaryButtonText.value = 'Creating...';
     primaryButtonError.value = '';
 
     try {
@@ -367,8 +364,6 @@ async function onCreateAndCloseClick() {
         // Attempt to reset the password
         let allSuccessful = true;
         if (form.value.resetPassword) {
-            primaryButtonText.value = 'Resetting password...';
-
             const resetPasswordResult = await toolingService.executeAnonymous(`System.resetPassword('${createdUserId}', true);`);
             if (!resetPasswordResult.success) {
                 createOverlay.value.type = 'warning';
@@ -387,7 +382,6 @@ async function onCreateAndCloseClick() {
         createOverlay.value.visible = true;
     } finally {
         working.value = false;
-        primaryButtonText.value = 'Create & Close';
     }
 }
 
@@ -408,6 +402,8 @@ async function closeWindow() {
 
 <template>
     <article class="slds-card">
+        <LightningSpinner :visible="loading || working" />
+
         <div class="slds-card__header slds-grid">
             <header class="slds-media slds-media_center slds-has-flexi-truncate">
                 <div class="slds-media__figure">
@@ -437,7 +433,7 @@ async function closeWindow() {
                     <button class="slds-button slds-button_neutral"
                            @click="onCloneClick"
                            :disabled="loading || working">
-                        Clone a User
+                        Clone a User...
                     </button>
 
                     <!-- Create/Clone & Close (aka primary) button -->
@@ -491,7 +487,8 @@ async function closeWindow() {
                                id="email-input"
                                class="slds-input"
                                v-model.trim="form.email"
-                               @input="onEmailEntered"
+                              @input="onEmailEntered"
+                              :disabled="working"
                                autofocus
                                required />
                     </div>
@@ -503,7 +500,11 @@ async function closeWindow() {
                         <div class="slds-form-element slds-form-element_horizontal slds-is-editing">
                             <label class="slds-form-element__label" for="first-name-input">First Name</label>
                             <div class="slds-form-element__control">
-                                <input type="text" id="first-name-input" class="slds-input" v-model.trim="form.firstName" />
+                                <input type="text"
+                                       id="first-name-input"
+                                       class="slds-input"
+                                       v-model.trim="form.firstName"
+                                      :disabled="working" />
                             </div>
                         </div>
                     </div>
@@ -514,7 +515,11 @@ async function closeWindow() {
                                 Last Name
                             </label>
                             <div class="slds-form-element__control">
-                                <input type="text" id="last-name-input" class="slds-input" v-model.trim="form.lastName" />
+                                <input type="text"
+                                       id="last-name-input"
+                                       class="slds-input"
+                                       v-model.trim="form.lastName"
+                                      :disabled="working" />
                             </div>
                         </div>
                     </div>
@@ -540,7 +545,7 @@ async function closeWindow() {
                             </div>
                             <div class="slds-form-element__control">
                                 <div class="slds-select_container">
-                                <select id="profile-input" class="slds-select" :disabled="profiles.loading || profiles.error.length > 0" v-model="form.profileId">
+                                <select id="profile-input" class="slds-select" :disabled="working || profiles.loading || profiles.error.length > 0" v-model="form.profileId">
                                     <option v-if="profiles.loading" value="loading">Loading...</option>
 
                                     <option v-for="profile of profiles.items"
@@ -569,7 +574,7 @@ async function closeWindow() {
                             </div>
                             <div class="slds-form-element__control">
                                 <div class="slds-select_container">
-                                <select class="slds-select" id="role-input" :disabled="roles.loading || roles.error.length > 0" v-model="form.roleId">
+                                <select class="slds-select" id="role-input" :disabled="working || roles.loading || roles.error.length > 0" v-model="form.roleId">
                                     <option v-if="roles.loading" value="loading">Loading...</option>
 
                                     <option v-else value="">None</option>
@@ -593,7 +598,11 @@ async function closeWindow() {
                         Alias
                     </label>
                     <div class="slds-form-element__control">
-                        <input type="text" id="alias-input" class="slds-input" v-model.trim="form.alias" />
+                        <input type="text"
+                               id="alias-input"
+                               class="slds-input"
+                               v-model.trim="form.alias"
+                              :disabled="working" />
                     </div>
                 </div>
 
@@ -614,7 +623,11 @@ async function closeWindow() {
                         </div>
                     </div>
                     <div class="slds-form-element__control">
-                        <input type="text" id="username-input" class="slds-input" v-model.trim="form.username" />
+                        <input type="text"
+                               id="username-input"
+                               class="slds-input"
+                               v-model.trim="form.username"
+                              :disabled="working" />
                     </div>
                 </div>
 
@@ -625,7 +638,11 @@ async function closeWindow() {
                         Nickname
                     </label>
                     <div class="slds-form-element__control">
-                        <input type="text" id="nickname-input" class="slds-input" v-model.trim="form.nickname" />
+                        <input type="text"
+                               id="nickname-input"
+                               class="slds-input"
+                               v-model.trim="form.nickname"
+                              :disabled="working" />
                     </div>
                 </div>
 
@@ -633,7 +650,10 @@ async function closeWindow() {
                     <legend class="slds-form-element__legend slds-form-element__label">Cloning Options</legend>
                     <div class="slds-form-element__control">
                         <div class="slds-checkbox">
-                            <input type="checkbox" id="permission-set-assignments-checkbox" v-model="form.clonePermissionSetAssignments" />
+                            <input type="checkbox"
+                                   id="permission-set-assignments-checkbox"
+                                   v-model="form.clonePermissionSetAssignments"
+                                  :disabled="working" />
                             <label class="slds-checkbox__label" for="permission-set-assignments-checkbox">
                                 <span class="slds-checkbox_faux"></span>
                                 <span class="slds-form-element__label">Permission Set Assignments</span>
@@ -641,7 +661,10 @@ async function closeWindow() {
                         </div>
 
                         <div class="slds-checkbox">
-                            <input type="checkbox" id="public-group-memberships-checkbox" v-model="form.clonePublicGroupMemberships" />
+                            <input type="checkbox"
+                                   id="public-group-memberships-checkbox"
+                                   v-model="form.clonePublicGroupMemberships"
+                                  :disabled="working" />
                             <label class="slds-checkbox__label" for="public-group-memberships-checkbox">
                                 <span class="slds-checkbox_faux"></span>
                                 <span class="slds-form-element__label">Public Group Memberships</span>
@@ -649,7 +672,10 @@ async function closeWindow() {
                         </div>
 
                         <div class="slds-checkbox">
-                            <input type="checkbox" id="queue-memberships-checkbox" v-model="form.cloneQueueMemberships" />
+                            <input type="checkbox"
+                                   id="queue-memberships-checkbox"
+                                   v-model="form.cloneQueueMemberships"
+                                  :disabled="working" />
                             <label class="slds-checkbox__label" for="queue-memberships-checkbox">
                                 <span class="slds-checkbox_faux"></span>
                                 <span class="slds-form-element__label">Queue Memberships</span>
@@ -661,7 +687,10 @@ async function closeWindow() {
                 <fieldset class="slds-form-element slds-form-element_stacked">
                     <div class="slds-form-element__control">
                         <div class="slds-checkbox">
-                            <input type="checkbox" id="generate-password-checkbox" v-model="form.resetPassword" />
+                            <input type="checkbox"
+                                   id="generate-password-checkbox"
+                                   v-model="form.resetPassword"
+                                  :disabled="working" />
                             <label class="slds-checkbox__label" for="generate-password-checkbox">
                                 <span class="slds-checkbox_faux"></span>
                                 <span class="slds-form-element__label">Reset password and notify user immediately</span>
