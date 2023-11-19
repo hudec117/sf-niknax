@@ -1,3 +1,5 @@
+import * as EmailValidator from 'email-validator';
+
 import SalesforceRESTService from './SalesforceRESTService';
 import type PermissionSetAssignment from '@/models/PermissionSetAssignment';
 import type GroupMember from '@/models/GroupMember';
@@ -7,7 +9,7 @@ import type User from '@/models/User';
 
 export default class SalesforceUserService extends SalesforceRESTService {
     isValidEmail(email: string): boolean {
-        return /^[a-zA-Z0-9][a-zA-Z0-9._%+-]*@[^.@][a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email);
+        return EmailValidator.validate(email);
     }
 
     isValidFirstName(firstName: string): boolean {

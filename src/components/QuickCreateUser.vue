@@ -167,17 +167,18 @@ async function onEmailEntered() {
 
     const emailUsername = form.value.email.substring(0, form.value.email.indexOf('@'));
 
-    const nameComponents = emailUsername.split('.');
-    if (settings.value.extractFirstLastNameFromEmail && nameComponents.length > 1) {
-        let firstName = nameComponents[0];
-        let lastName = nameComponents[nameComponents.length - 1];
-
+    const fullNameRegexResult = /^(\w+)\.(\w+)/.exec(emailUsername);
+    if (fullNameRegexResult) {
+        // Get and format first name
+        let firstName = fullNameRegexResult[1];
         firstName = firstName[0].toUpperCase() + firstName.slice(1);
-        lastName = lastName[0].toUpperCase() + lastName.slice(1);
-
         if (!form.value.firstName) {
             form.value.firstName = firstName;
         }
+
+        // Get and format last name
+        let lastName = fullNameRegexResult[2];
+        lastName = lastName[0].toUpperCase() + lastName.slice(1);
         if (!form.value.lastName) {
             form.value.lastName = lastName;
         }
