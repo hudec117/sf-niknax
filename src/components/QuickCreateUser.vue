@@ -767,7 +767,7 @@ async function closeWindow() {
 }
 
 #clone-button-popover {
-    right: 175px;
+    right: 170px;
     top: 55px;
 }
 
