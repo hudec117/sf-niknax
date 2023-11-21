@@ -108,6 +108,11 @@ async function loadData() {
     // Load profiles/roles
     await Promise.all([loadProfiles(), loadRoles()]);
 
+    // If the user ID is in the context, switch to clone mode immediately.
+    if (props.context.userId) {
+        switchToCloneMode(props.context.userId);
+    }
+
     loading.value = false;
 }
 
@@ -219,6 +224,10 @@ async function onCloneClick() {
         return;
     }
 
+    switchToCloneMode(cloneTargetUserId);
+}
+
+async function switchToCloneMode(cloneTargetUserId: string) {
     loading.value = true;
 
     try {
