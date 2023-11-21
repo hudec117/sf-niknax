@@ -33,7 +33,8 @@ const mode = ref<'create' | 'clone'>('create');
 const form = ref(new UserCreateCloneForm());
 
 const primaryButtonText = ref('Create & Close');
-const primaryButtonError = ref('');
+const primaryButtonError = ref<string | undefined>();
+const cloneButtonError = ref<string | undefined>();
 const loading = ref(true);
 const working = ref(false);
 const createOverlay = ref({
@@ -220,24 +221,26 @@ async function onCloneClick() {
 
     loading.value = true;
 
-    const queryResult = await userService.query<User>(`SELECT Id, Username, ProfileId, UserRoleId FROM User WHERE Id = '${cloneTargetUserId}'`);
-    if (!queryResult.success) {
-        // TODO: handle
-        return;
+    try {
+        const queryResult = await userService.query<User>(`SELECT Id, Username, ProfileId, UserRoleId FROM User WHERE Id = '${cloneTargetUserId}'`);
+        if (!queryResult.success) {
+            cloneButtonError.value = queryResult.error;
+            return;
+        }
+        cloneTargetUser.value = queryResult.guardedData[0];
+    
+        // Resize window to accomodate visible checkboxes, change the title and mode.
+        resizeTo(627, 701);
+        document.title = `Salesforce Niknax: Clone ${cloneTargetUser.value.Username}`;
+        mode.value = 'clone';
+        primaryButtonText.value = 'Clone & Close';
+    
+        // Populate the Profile/Role picklists
+        form.value.profileId = cloneTargetUser.value.ProfileId;
+        form.value.roleId = cloneTargetUser.value.UserRoleId ?? '';
+    } finally {
+        loading.value = false;
     }
-    cloneTargetUser.value = queryResult.guardedData[0];
-
-    // Resize window to accomodate visible checkboxes, change the title and mode.
-    resizeTo(627, 701);
-    document.title = `Salesforce Niknax: Clone ${cloneTargetUser.value.Username}`;
-    mode.value = 'clone';
-    primaryButtonText.value = 'Clone & Close';
-
-    // Populate the Profile/Role picklists
-    form.value.profileId = cloneTargetUser.value.ProfileId;
-    form.value.roleId = cloneTargetUser.value.UserRoleId ?? '';
-
-    loading.value = false;
 }
 
 async function onPrimaryButtonClick() {
@@ -444,8 +447,9 @@ async function closeWindow() {
                         {{ primaryButtonText }}
                     </button>
 
-                    <!-- Error popover -->
-                    <section id="create-popover" class="slds-popover slds-popover_error slds-nubbin_top-right slds-is-absolute" role="dialog" v-if="primaryButtonError">
+                    <!-- Primary button popover -->
+                    <!-- TODO: refactor -->
+                    <section id="primary-button-popover" class="slds-popover slds-popover_error slds-nubbin_top-right slds-is-absolute" role="dialog" v-if="primaryButtonError">
                         <button class="slds-button slds-button_icon slds-button_icon-small slds-float_right slds-popover__close slds-button_icon-inverse slds-m-top_x-small slds-m-right_small" title="Close" @click="primaryButtonError = ''">
                             <svg class="slds-button__icon">
                                 <use xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#close"></use>
@@ -467,6 +471,33 @@ async function closeWindow() {
                         </header>
                         <div class="slds-popover__body">
                             <p>{{ primaryButtonError }}</p>
+                        </div>
+                    </section>
+
+                    <!-- Clone button popover -->
+                    <!-- TODO: refactor -->
+                    <section id="clone-button-popover" class="slds-popover slds-popover_error slds-nubbin_top-right slds-is-absolute" role="dialog" v-if="cloneButtonError">
+                        <button class="slds-button slds-button_icon slds-button_icon-small slds-float_right slds-popover__close slds-button_icon-inverse slds-m-top_x-small slds-m-right_small" title="Close" @click="cloneButtonError = ''">
+                            <svg class="slds-button__icon">
+                                <use xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#close"></use>
+                            </svg>
+                        </button>
+                        <header class="slds-popover__header">
+                            <div class="slds-media slds-media_center slds-has-flexi-truncate ">
+                                <div class="slds-media__figure">
+                                    <span class="slds-icon_container slds-icon-utility-error">
+                                        <svg class="slds-icon slds-icon_x-small">
+                                            <use xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#error"></use>
+                                        </svg>
+                                    </span>
+                                </div>
+                                <div class="slds-media__body">
+                                    <h2 class="slds-truncate slds-text-heading_medium">We hit a snag</h2>
+                                </div>
+                            </div>
+                        </header>
+                        <div class="slds-popover__body">
+                            <p>{{ cloneButtonError }}</p>
                         </div>
                     </section>
                 </div>
@@ -730,8 +761,13 @@ async function closeWindow() {
 </template>
 
 <style scoped>
-#create-popover {
+#primary-button-popover {
     right: 50px;
+    top: 55px;
+}
+
+#clone-button-popover {
+    right: 175px;
     top: 55px;
 }
 
