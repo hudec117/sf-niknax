@@ -489,7 +489,6 @@ async function closeWindow() {
                                class="slds-input"
                                v-model.trim="form.email"
                               @input="onEmailEntered"
-                              :disabled="working"
                                autofocus
                                required />
                     </div>
@@ -504,8 +503,7 @@ async function closeWindow() {
                                 <input type="text"
                                        id="first-name-input"
                                        class="slds-input"
-                                       v-model.trim="form.firstName"
-                                      :disabled="working" />
+                                       v-model.trim="form.firstName" />
                             </div>
                         </div>
                     </div>
@@ -519,8 +517,7 @@ async function closeWindow() {
                                 <input type="text"
                                        id="last-name-input"
                                        class="slds-input"
-                                       v-model.trim="form.lastName"
-                                      :disabled="working" />
+                                       v-model.trim="form.lastName" />
                             </div>
                         </div>
                     </div>
@@ -546,7 +543,7 @@ async function closeWindow() {
                             </div>
                             <div class="slds-form-element__control">
                                 <div class="slds-select_container">
-                                <select id="profile-input" class="slds-select" :disabled="working || profiles.loading || profiles.error.length > 0" v-model="form.profileId">
+                                <select id="profile-input" class="slds-select" :disabled="profiles.loading || profiles.error.length > 0" v-model="form.profileId">
                                     <option v-if="profiles.loading" value="loading">Loading...</option>
 
                                     <option v-for="profile of profiles.items"
@@ -575,7 +572,7 @@ async function closeWindow() {
                             </div>
                             <div class="slds-form-element__control">
                                 <div class="slds-select_container">
-                                <select class="slds-select" id="role-input" :disabled="working || roles.loading || roles.error.length > 0" v-model="form.roleId">
+                                <select class="slds-select" id="role-input" :disabled="roles.loading || roles.error.length > 0" v-model="form.roleId">
                                     <option v-if="roles.loading" value="loading">Loading...</option>
 
                                     <option v-else value="">None</option>
@@ -602,8 +599,7 @@ async function closeWindow() {
                         <input type="text"
                                id="alias-input"
                                class="slds-input"
-                               v-model.trim="form.alias"
-                              :disabled="working" />
+                               v-model.trim="form.alias" />
                     </div>
                 </div>
 
@@ -627,8 +623,7 @@ async function closeWindow() {
                         <input type="text"
                                id="username-input"
                                class="slds-input"
-                               v-model.trim="form.username"
-                              :disabled="working" />
+                               v-model.trim="form.username" />
                     </div>
                 </div>
 
@@ -642,8 +637,7 @@ async function closeWindow() {
                         <input type="text"
                                id="nickname-input"
                                class="slds-input"
-                               v-model.trim="form.nickname"
-                              :disabled="working" />
+                               v-model.trim="form.nickname" />
                     </div>
                 </div>
 
@@ -653,8 +647,7 @@ async function closeWindow() {
                         <div class="slds-checkbox">
                             <input type="checkbox"
                                    id="permission-set-assignments-checkbox"
-                                   v-model="form.clonePermissionSetAssignments"
-                                  :disabled="working" />
+                                   v-model="form.clonePermissionSetAssignments" />
                             <label class="slds-checkbox__label" for="permission-set-assignments-checkbox">
                                 <span class="slds-checkbox_faux"></span>
                                 <span class="slds-form-element__label">Permission Set Assignments</span>
@@ -664,8 +657,7 @@ async function closeWindow() {
                         <div class="slds-checkbox">
                             <input type="checkbox"
                                    id="public-group-memberships-checkbox"
-                                   v-model="form.clonePublicGroupMemberships"
-                                  :disabled="working" />
+                                   v-model="form.clonePublicGroupMemberships" />
                             <label class="slds-checkbox__label" for="public-group-memberships-checkbox">
                                 <span class="slds-checkbox_faux"></span>
                                 <span class="slds-form-element__label">Public Group Memberships</span>
@@ -675,8 +667,7 @@ async function closeWindow() {
                         <div class="slds-checkbox">
                             <input type="checkbox"
                                    id="queue-memberships-checkbox"
-                                   v-model="form.cloneQueueMemberships"
-                                  :disabled="working" />
+                                   v-model="form.cloneQueueMemberships" />
                             <label class="slds-checkbox__label" for="queue-memberships-checkbox">
                                 <span class="slds-checkbox_faux"></span>
                                 <span class="slds-form-element__label">Queue Memberships</span>
@@ -690,8 +681,7 @@ async function closeWindow() {
                         <div class="slds-checkbox">
                             <input type="checkbox"
                                    id="generate-password-checkbox"
-                                   v-model="form.resetPassword"
-                                  :disabled="working" />
+                                   v-model="form.resetPassword" />
                             <label class="slds-checkbox__label" for="generate-password-checkbox">
                                 <span class="slds-checkbox_faux"></span>
                                 <span class="slds-form-element__label">Reset password and notify user immediately</span>
