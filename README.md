@@ -53,23 +53,35 @@ Features
    - Change the domain
  - Configurable Default Profile/Role
  - Available from nearly anywhere in Salesforce!
-   <img src="branding/other/quick-create-user-button.png">
 
-## Public Group/Queue Membership Editing
-
-TODO
-
-## Visuals
+<br />
 
 <p>
     <img src="branding/store/quick-create-user.png" height="460">
 </p>
 
+## Public Group/Queue Membership Editing
+
+**Use case**: editing Public Group/Queue memberships from the User detail page
+
+The Public Group/Queue Membership editing tool was built to replace the frustrating process of managing a User's Public Group/Queue membership. Usually, you'd need to navigate to each Public Group/Queue and edit it to include the user.
+
+Instead, a "Edit Memberships" button is now available on the Public Group Memberships and Queue Memberships related lists on the User detail page.
+
+Features
+ - Multi-select and Select All
+ - Toggle between label or API name
+ - Filter by label or API name
+ - Match another user's group memberships
+
+<br />
+
 <p>
     <img src="branding/store/memberships-group.png" height="460">
 </p>
 
-Click below for a video demo.
+## Video
+
 [![Salesforce Niknax YouTube](https://img.youtube.com/vi/XXYy9Lf_ACQ/0.jpg)](https://www.youtube.com/watch?v=XXYy9Lf_ACQ)
 
 ## Q&A
