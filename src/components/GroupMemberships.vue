@@ -9,6 +9,7 @@ import type Group from '@/models/Group';
 import type GroupMember from '@/models/GroupMember';
 import DuelingPicklistItem from './slds/DuelingPicklistItem';
 import type Context from '@/models/Context';
+import LightningSpinner from './slds/LightningSpinner.vue';
 
 const props = defineProps<{
     context: Context,
@@ -31,7 +32,7 @@ const title = ref('');
 const error = ref('');
 const showAPINames = ref(false);
 const loading = ref(true);
-const saving = ref(false);
+const working = ref(false);
 
 const groupTypeLabel = computed(() => {
     if (props.type === 'Regular') {
@@ -182,7 +183,7 @@ async function onMatchUserClick() {
 }
 
 async function onSaveAndCloseClick() {
-    saving.value = true;
+    working.value = true;
     error.value = '';
 
     try {
@@ -225,7 +226,7 @@ async function onSaveAndCloseClick() {
             await chrome.windows.remove(currentPopup.id!);
         }
     } finally {
-        saving.value = false;
+        working.value = false;
     }
 }
 
@@ -271,6 +272,8 @@ async function unassignGroups(groups: Array<Group>): Promise<boolean> {
 
 <template>
     <article class="slds-card">
+        <LightningSpinner :visible="loading || working" />
+
         <div class="slds-card__header slds-grid">
             <header class="slds-media slds-media_center slds-has-flexi-truncate">
                 <div class="slds-media__figure">
@@ -289,8 +292,7 @@ async function unassignGroups(groups: Array<Group>): Promise<boolean> {
                     <!-- Toggle API names button -->
                     <button class="slds-button slds-button_icon slds-button_icon-border-filled align-card-action-button"
                             title="Toggle API Names"
-                           @click="showAPINames = !showAPINames"
-                           :disabled="loading || saving">
+                           @click="showAPINames = !showAPINames">
                         <svg class="slds-button__icon">
                             <use xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#preview"></use>
                         </svg>
@@ -299,16 +301,14 @@ async function unassignGroups(groups: Array<Group>): Promise<boolean> {
                     <!-- Match User button -->
                     <button class="slds-button slds-button_neutral"
                             title="Match another user's group memberships"
-                           @click="onMatchUserClick"
-                           :disabled="loading || saving">
+                           @click="onMatchUserClick">
                         Match a User
                     </button>
 
                     <!-- Save & Close button -->
                     <button class="slds-button slds-button_brand"
-                           @click="onSaveAndCloseClick"
-                           :disabled="loading || saving">
-                        {{ saving ? 'Saving...' : 'Save & Close' }}
+                           @click="onSaveAndCloseClick">
+                        Save & Close
                     </button>
 
                     <!-- Error popover -->
@@ -344,7 +344,6 @@ async function unassignGroups(groups: Array<Group>): Promise<boolean> {
                              :right-list-label="`Assigned ${groupTypeLabel}s`"
                             :left-list="leftListItems"
                             :right-list="rightListItems"
-                            :disabled="loading || saving"
                             @move-left="onUnassignGroups"
                             @move-right="onAssignGroups" />
         </div>
