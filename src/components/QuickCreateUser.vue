@@ -15,6 +15,7 @@ import type User from '@/models/User';
 import type Organisation from '@/models/Organisation';
 import UserQuickCreateSettings from '@/models/UserQuickCreateSettings';
 import LightningSpinner from './slds/LightningSpinner.vue';
+import ErrorPopover from './slds/ErrorPopover.vue';
 
 const SETTINGS_KEY = 'quick-create-user-settings';
 
@@ -88,32 +89,36 @@ onMounted(() => {
 });
 
 async function loadData() {
-    // Load settings
-    const settingsResult = await chrome.storage.local.get([SETTINGS_KEY]);
-    if (SETTINGS_KEY in settingsResult) {
-        settings.value = settingsResult[SETTINGS_KEY] as UserQuickCreateSettings;
-    }
-
-    form.value.resetPassword = settings.value.resetPasswordDefault;
-
-    // Attempt to load email from clipboard
-    if (settings.value.grabEmailFromClipboard) {
-        const clipboardText = (await navigator.clipboard.readText()).trim();
-        if (userService.isValidEmail(clipboardText)) {
-            form.value.email = clipboardText;
-            onEmailEntered();
+    try {
+        // Load settings
+        const settingsResult = await chrome.storage.local.get([SETTINGS_KEY]);
+        if (SETTINGS_KEY in settingsResult) {
+            settings.value = settingsResult[SETTINGS_KEY] as UserQuickCreateSettings;
         }
+
+        form.value.resetPassword = settings.value.resetPasswordDefault;
+
+        // Attempt to load email from clipboard
+        if (settings.value.grabEmailFromClipboard) {
+            const clipboardText = (await navigator.clipboard.readText()).trim();
+            if (userService.isValidEmail(clipboardText)) {
+                form.value.email = clipboardText;
+                onEmailEntered();
+            }
+        }
+
+        // Load profiles/roles
+        await Promise.all([loadProfiles(), loadRoles()]);
+
+        // If the user ID is in the context, switch to clone mode immediately.
+        if (props.context.userId) {
+            switchToCloneMode(props.context.userId);
+        }
+    } catch (error) {
+        primaryButtonError.value = `Something went wrong in the loadData function: ${(error as Error).message}`;
+    } finally {
+        loading.value = false;
     }
-
-    // Load profiles/roles
-    await Promise.all([loadProfiles(), loadRoles()]);
-
-    // If the user ID is in the context, switch to clone mode immediately.
-    if (props.context.userId) {
-        switchToCloneMode(props.context.userId);
-    }
-
-    loading.value = false;
 }
 
 async function loadProfiles() {
@@ -457,58 +462,10 @@ async function closeWindow() {
                     </button>
 
                     <!-- Primary button popover -->
-                    <!-- TODO: refactor -->
-                    <section id="primary-button-popover" class="slds-popover slds-popover_error slds-nubbin_top-right slds-is-absolute" role="dialog" v-if="primaryButtonError">
-                        <button class="slds-button slds-button_icon slds-button_icon-small slds-float_right slds-popover__close slds-button_icon-inverse slds-m-top_x-small slds-m-right_small" title="Close" @click="primaryButtonError = ''">
-                            <svg class="slds-button__icon">
-                                <use xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#close"></use>
-                            </svg>
-                        </button>
-                        <header class="slds-popover__header">
-                            <div class="slds-media slds-media_center slds-has-flexi-truncate ">
-                                <div class="slds-media__figure">
-                                    <span class="slds-icon_container slds-icon-utility-error">
-                                        <svg class="slds-icon slds-icon_x-small">
-                                            <use xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#error"></use>
-                                        </svg>
-                                    </span>
-                                </div>
-                                <div class="slds-media__body">
-                                    <h2 class="slds-truncate slds-text-heading_medium">We hit a snag</h2>
-                                </div>
-                            </div>
-                        </header>
-                        <div class="slds-popover__body">
-                            <p>{{ primaryButtonError }}</p>
-                        </div>
-                    </section>
+                    <ErrorPopover :message="primaryButtonError" :right="51" :top="55" @close="primaryButtonError = undefined" />
 
                     <!-- Clone button popover -->
-                    <!-- TODO: refactor -->
-                    <section id="clone-button-popover" class="slds-popover slds-popover_error slds-nubbin_top-right slds-is-absolute" role="dialog" v-if="cloneButtonError">
-                        <button class="slds-button slds-button_icon slds-button_icon-small slds-float_right slds-popover__close slds-button_icon-inverse slds-m-top_x-small slds-m-right_small" title="Close" @click="cloneButtonError = ''">
-                            <svg class="slds-button__icon">
-                                <use xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#close"></use>
-                            </svg>
-                        </button>
-                        <header class="slds-popover__header">
-                            <div class="slds-media slds-media_center slds-has-flexi-truncate ">
-                                <div class="slds-media__figure">
-                                    <span class="slds-icon_container slds-icon-utility-error">
-                                        <svg class="slds-icon slds-icon_x-small">
-                                            <use xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#error"></use>
-                                        </svg>
-                                    </span>
-                                </div>
-                                <div class="slds-media__body">
-                                    <h2 class="slds-truncate slds-text-heading_medium">We hit a snag</h2>
-                                </div>
-                            </div>
-                        </header>
-                        <div class="slds-popover__body">
-                            <p>{{ cloneButtonError }}</p>
-                        </div>
-                    </section>
+                    <ErrorPopover :message="cloneButtonError" :right="175" :top="55" @close="cloneButtonError = undefined" />
                 </div>
             </header>
         </div>
@@ -770,16 +727,6 @@ async function closeWindow() {
 </template>
 
 <style scoped>
-#primary-button-popover {
-    right: 50px;
-    top: 55px;
-}
-
-#clone-button-popover {
-    right: 170px;
-    top: 55px;
-}
-
 .overlay-user-link {
     text-decoration: underline;
     cursor: pointer;
