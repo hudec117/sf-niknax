@@ -224,32 +224,32 @@ async function onCloneClick() {
         return;
     }
 
-    switchToCloneMode(cloneTargetUserId);
-}
-
-async function switchToCloneMode(cloneTargetUserId: string) {
     loading.value = true;
 
     try {
-        const queryResult = await userService.query<User>(`SELECT Id, Username, ProfileId, UserRoleId FROM User WHERE Id = '${cloneTargetUserId}'`);
-        if (!queryResult.success) {
-            cloneButtonError.value = queryResult.error;
-            return;
-        }
-        cloneTargetUser.value = queryResult.guardedData[0];
-    
-        // Resize window to accomodate visible checkboxes, change the title and mode.
-        resizeTo(627, 701);
-        document.title = `Salesforce Niknax: Clone ${cloneTargetUser.value.Username}`;
-        mode.value = 'clone';
-        primaryButtonText.value = 'Clone & Close';
-    
-        // Populate the Profile/Role picklists
-        form.value.profileId = cloneTargetUser.value.ProfileId;
-        form.value.roleId = cloneTargetUser.value.UserRoleId ?? '';
+        switchToCloneMode(cloneTargetUserId);
     } finally {
         loading.value = false;
     }
+}
+
+async function switchToCloneMode(cloneTargetUserId: string) {
+    const queryResult = await userService.query<User>(`SELECT Id, Username, ProfileId, UserRoleId FROM User WHERE Id = '${cloneTargetUserId}'`);
+    if (!queryResult.success) {
+        cloneButtonError.value = queryResult.error;
+        return;
+    }
+    cloneTargetUser.value = queryResult.guardedData[0];
+
+    // Resize window to accomodate visible checkboxes, change the title and mode.
+    resizeTo(627, 701);
+    document.title = `Salesforce Niknax: Clone ${cloneTargetUser.value.Username}`;
+    mode.value = 'clone';
+    primaryButtonText.value = 'Clone & Close';
+
+    // Populate the Profile/Role picklists
+    form.value.profileId = cloneTargetUser.value.ProfileId;
+    form.value.roleId = cloneTargetUser.value.UserRoleId ?? '';
 }
 
 async function onPrimaryButtonClick() {
