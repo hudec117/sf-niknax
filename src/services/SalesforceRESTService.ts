@@ -118,7 +118,7 @@ export default class SalesforceRESTService {
     }
 
     async getOrganisation(): Promise<Result<Organisation>> {
-        const result = await this.query<Organisation>('SELECT DefaultLocaleSidKey, TimeZoneSidKey, LanguageLocaleKey, OrganizationType, IsSandbox FROM Organization');
+        const result = await this.query<Organisation>('SELECT Id, DefaultLocaleSidKey, TimeZoneSidKey, LanguageLocaleKey, OrganizationType, IsSandbox FROM Organization');
         if (!result.success) {
             return Result.fail(result.error);
         }

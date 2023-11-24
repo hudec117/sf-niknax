@@ -1,4 +1,5 @@
 export default interface Organisation {
+    Id: string;
     DefaultLocaleSidKey: string;
     TimeZoneSidKey: string;
     LanguageLocaleKey: string;

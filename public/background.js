@@ -5,8 +5,8 @@ const SF_NIKNAX_PAGE = 'sf-niknax.html';
 const PAGE_DIMENSIONS = {
     'edit-public-group-memberships':    { width: 673, height: 537 },
     'edit-queue-memberships':           { width: 673, height: 537 },
-    'bulk-freeze-users':                { width: 620, height: 630 },
     'quick-create-user':                { width: 616, height: 605 },
+    'setup-plus':                       { width: 1280, height: 720 },
 };
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
