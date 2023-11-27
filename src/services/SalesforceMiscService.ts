@@ -42,7 +42,8 @@ export default class SalesforceRESTService {
 
         const parseResult = Papa.parse(auditTrailContent, {
             header: true,
-            delimiter: ','
+            delimiter: ',',
+            skipEmptyLines: true
         });
 
         return Result.success(parseResult.data as Array<AuditLogEntry>);

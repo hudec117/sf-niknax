@@ -116,7 +116,7 @@ async function loadData() {
                 </div>
             </fieldset>
 
-            <LightningTable v-if="auditLogEntries" :records="auditLogEntries" :columns="tableColumns" />
+            <LightningTable v-if="auditLogEntries" :records="auditLogEntries" :columns="tableColumns" :height="600" />
         </div>
 
         <PopoutCardFooter />

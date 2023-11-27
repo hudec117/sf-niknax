@@ -38,7 +38,7 @@ async function loadData() {
 
 <template>
     <div class="slds-grid slds-size_full">
-        <div class="slds-col slds-grow-none">
+        <div class="slds-col slds-size_1-of-6">
             <article class="slds-card tool-selector-card">
                 <div class="slds-card__header slds-grid">
                     <header class="slds-media slds-media_center slds-has-flexi-truncate">
@@ -60,7 +60,7 @@ async function loadData() {
                 </div>
             </article>
         </div>
-        <div class="slds-col">
+        <div class="slds-col slds-size_5-of-6">
             <AuditLog :context="context" />
         </div>
     </div>
@@ -71,7 +71,6 @@ async function loadData() {
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
     border-right: none;
-    width: 12.5rem;
 }
 
 .tool-button {
