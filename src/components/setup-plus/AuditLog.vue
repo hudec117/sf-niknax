@@ -7,6 +7,7 @@ import SalesforceRESTService from '@/services/SalesforceRESTService';
 import LightningSpinner from '../slds/LightningSpinner.vue';
 import SalesforceMiscService from '@/services/SalesforceMiscService';
 import LightningTable from '../slds/LightningTable.vue';
+import type LightningTableColumn from '../slds/LightningTableColumn';
 import type AuditLogEntry from '@/models/AuditLogEntry';
 
 const props = defineProps<{
@@ -15,42 +16,54 @@ const props = defineProps<{
 
 let restService: SalesforceRESTService;
 let miscService: SalesforceMiscService;
-// let toolingService: SalesforceToolingService;
 
 const loading = ref(true);
-
 const auditLogEntries = ref<Array<AuditLogEntry> | undefined>();
-
-const tableColumns = ref([
+const tableColumns = ref<Array<LightningTableColumn>>([
     {
+        type: 'date',
         identifier: 'Date',
         label: 'Date (GMT)',
-        visible: true
+        visible: true,
+        orderable: true,
+        dateFormatter: (value) => {
+            return value.replace(',', '').replace(' GMT', '');
+        }
     },
     {
+        type: 'text',
         identifier: 'User',
         label: 'User',
-        visible: true
+        visible: true,
+        orderable: false,
     },
     {
+        type: 'text',
         identifier: 'Source Namespace Prefix',
         label: 'Source Namespace Prefix',
-        visible: false
+        visible: false,
+        orderable: false,
     },
     {
+        type: 'text',
         identifier: 'Section',
         label: 'Section',
-        visible: true
+        visible: true,
+        orderable: false,
     },
     {
+        type: 'text',
         identifier: 'Action',
         label: 'Action',
-        visible: true
+        visible: true,
+        orderable: false,
     },
     {
+        type: 'text',
         identifier: 'Delegate User',
         label: 'Delegate User',
-        visible: false
+        visible: false,
+        orderable: false,
     }
 ]);
 
@@ -102,19 +115,26 @@ async function loadData() {
             </header>
         </div>
         <div class="slds-card__body slds-card__body_inner">
-            <fieldset class="slds-form-element slds-m-bottom_medium">
-                <legend class="slds-form-element__legend slds-form-element__label">Visible Columns</legend>
-                <div class="slds-form-element__control">
-                    <div class="slds-checkbox_button-group">
-                        <span v-for="column of tableColumns" class="slds-button slds-checkbox_button" :key="column.identifier">
-                            <input type="checkbox" :id="`check-${column.identifier}`" v-model="column.visible" name="checkbox" />
-                            <label class="slds-checkbox_button__label" :for="`check-${column.identifier}`">
-                                <span class="slds-checkbox_faux">{{ column.label }}</span>
-                            </label>
-                        </span>
-                    </div>
+            <div class="slds-grid slds-m-bottom_medium">
+                <div class="slds-col">
+                    <fieldset class="slds-form-element">
+                        <legend class="slds-form-element__legend slds-form-element__label">Visible Columns</legend>
+                        <div class="slds-form-element__control">
+                            <div class="slds-checkbox_button-group">
+                                <span v-for="column of tableColumns" class="slds-button slds-checkbox_button" :key="column.identifier">
+                                    <input type="checkbox" :id="`check-${column.identifier}`" v-model="column.visible" name="checkbox" />
+                                    <label class="slds-checkbox_button__label" :for="`check-${column.identifier}`">
+                                        <span class="slds-checkbox_faux">{{ column.label }}</span>
+                                    </label>
+                                </span>
+                            </div>
+                        </div>
+                    </fieldset>
                 </div>
-            </fieldset>
+                <div class="slds-col">
+                    <button class="slds-button slds-button_neutral slds-m-top_large slds-float_right">Filters</button>
+                </div>
+            </div>
 
             <LightningTable v-if="auditLogEntries" :records="auditLogEntries" :columns="tableColumns" :height="600" />
         </div>

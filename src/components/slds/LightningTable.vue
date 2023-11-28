@@ -36,7 +36,14 @@ const visibleColumns = computed(() => {
                 <tbody>
                     <tr v-for="{ index, data } in list" :key="index">
                         <td v-for="column of visibleColumns" :key="columnHash(index, column)">
-                            <div class="slds-truncate" :title="data[column.identifier]">{{ data[column.identifier] }}</div>
+                            <div class="slds-truncate" :title="data[column.identifier]">
+                                <template v-if="column.type === 'text'">
+                                    {{ data[column.identifier] }}
+                                </template>
+                                <template v-else-if="column.type === 'date'">
+                                    {{ column.dateFormatter?.call(null, data[column.identifier]) }}
+                                </template>
+                            </div>
                         </td>
                     </tr>
                 </tbody>

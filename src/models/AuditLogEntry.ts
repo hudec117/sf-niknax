@@ -1,7 +1,7 @@
 export default interface AuditLogEntry {
     Date: string;
-    User: boolean;
-    'Source Namespace Prefix': boolean;
+    User: string;
+    'Source Namespace Prefix': string;
     Action: string;
     Section: string;
     'Delegate User': string;
