@@ -82,7 +82,7 @@ Features
 
 ## Video
 
-[![Salesforce Niknax YouTube](https://img.youtube.com/vi/XXYy9Lf_ACQ/0.jpg)](https://www.youtube.com/watch?v=XXYy9Lf_ACQ)
+[![Salesforce Niknax YouTube](https://img.youtube.com/vi/g4xzWorTsy8/0.jpg)](https://www.youtube.com/watch?v=g4xzWorTsy8)
 
 ## Q&A
 
@@ -99,6 +99,15 @@ Features
 **Q**: What does "Session expired or invalid"/"INVALID_SESSION_ID" mean?
 
 **A**: This is because your session has timed out and you've been logged out of Salesforce. Close all Salesforce Niknax windows, log back into Salesforce and try again.
+
+## Security
+
+This extension has been reviewed by the Chrome Web Store team and follows the [Chrome Web Store Program Policies](https://developer.chrome.com/docs/webstore/program-policies/).
+
+- This extension does not store or transfer data outside of the user's browser or Salesforce org.
+- All communication between the extension and Salesforce's REST and Tooling APIs is direct and secured using HTTPS.
+  - Verifiable using the "Network" tab in the Chrome developer tools.
+- Third-party dependencies are regularly checked for vulnerabilities/updates using `npm audit` and GitHub Dependabot.
 
 ## Support
 
