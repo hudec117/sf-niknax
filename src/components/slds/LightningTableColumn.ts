@@ -3,7 +3,9 @@ export default interface LightningTableColumn {
     identifier: string;
     label: string;
     visible: boolean;
-    sortable: boolean;
+
+    sortDirection?: 'asc' | 'desc';
+    onSortDirectionChanged?: (() => void);
 
     dateFormatter?: ((value: string) => string);
 }

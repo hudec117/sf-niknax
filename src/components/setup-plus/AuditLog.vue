@@ -25,45 +25,45 @@ const tableColumns = ref<Array<LightningTableColumn>>([
         identifier: 'Date',
         label: 'Date (GMT)',
         visible: true,
-        sortable: true,
+        sortDirection: 'desc',
+        onSortDirectionChanged: () => {
+            if (auditLogEntries.value) {
+                auditLogEntries.value = auditLogEntries.value.reverse();
+            }
+        },
         dateFormatter: (value) => {
-            return value.replace(',', '').replace(' GMT', '');
+            return value.replace(',', '').substring(0, 19);
         }
     },
     {
         type: 'text',
         identifier: 'User',
         label: 'User',
-        visible: true,
-        sortable: false,
+        visible: true
     },
     {
         type: 'text',
         identifier: 'Source Namespace Prefix',
         label: 'Source Namespace Prefix',
-        visible: false,
-        sortable: false,
+        visible: false
     },
     {
         type: 'text',
         identifier: 'Section',
         label: 'Section',
-        visible: true,
-        sortable: false,
+        visible: true
     },
     {
         type: 'text',
         identifier: 'Action',
         label: 'Action',
-        visible: true,
-        sortable: false,
+        visible: true
     },
     {
         type: 'text',
         identifier: 'Delegate User',
         label: 'Delegate User',
-        visible: false,
-        sortable: false,
+        visible: false
     }
 ]);
 
@@ -73,7 +73,6 @@ onMounted(() => {
     // Initialise Salesforce services
     restService = new SalesforceRESTService(props.context.serverHost, props.context.sessionId);
     miscService = new SalesforceMiscService(props.context.serverHost, props.context.sessionId);
-    // toolingService = new SalesforceToolingService(props.context.serverHost, props.context.sessionId);
 
     loadData();
 });
@@ -131,9 +130,9 @@ async function loadData() {
                         </div>
                     </fieldset>
                 </div>
-                <div class="slds-col">
+                <!-- <div class="slds-col">
                     <button class="slds-button slds-button_neutral slds-m-top_large slds-float_right">Filters</button>
-                </div>
+                </div> -->
             </div>
 
             <LightningTable v-if="auditLogEntries" :records="auditLogEntries" :columns="tableColumns" :height="600" />

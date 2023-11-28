@@ -20,6 +20,18 @@ function columnHash(recordIndex: number, column: LightningTableColumn): string {
 const visibleColumns = computed(() => {
     return props.columns.filter(column => column.visible);
 });
+
+function onColumnSortClick(column: LightningTableColumn) {
+    if (!column.sortDirection) {
+        return;
+    }
+
+    column.sortDirection = column.sortDirection === 'asc' ? 'desc' : 'asc';
+
+    if (column.onSortDirectionChanged) {
+        column.onSortDirectionChanged();
+    }
+}
 </script>
 
 <template>
@@ -30,14 +42,20 @@ const visibleColumns = computed(() => {
                     <tr class="slds-line-height_reset">
                         <template v-for="column of visibleColumns" :key="column.identifier">
                             <!-- Sortable header -->
-                            <th v-if="column.sortable" class="slds-border_bottom slds-border_top slds-is-sortable slds-is-sorted slds-is-sorted_desc slds-cell_action-mode" scope="col">
-                                <a class="slds-th__action slds-text-link_reset" href="#" role="button" tabindex="0">
+                            <th v-if="column.sortDirection" class="slds-border_bottom slds-border_top slds-is-sortable slds-is-sorted slds-is-sorted_desc slds-cell_action-mode" scope="col">
+                                <a class="slds-th__action slds-text-link_reset" href="#" role="button" tabindex="0" @click.prevent="onColumnSortClick(column)">
                                     <span class="slds-assistive-text">Sort by: </span>
                                     <div class="slds-grid slds-grid_vertical-align-center slds-has-flexi-truncate">
                                     <div class="slds-truncate" :title="column.label">{{ column.label }}</div>
-                                        <span class="slds-icon_container slds-icon-utility-arrowdown">
-                                            <svg class="slds-icon slds-icon-text-default slds-is-sortable__icon " aria-hidden="true">
+                                        <span v-if="column.sortDirection === 'desc'" class="slds-icon_container slds-icon-utility-arrowdown">
+                                            <svg class="slds-icon slds-icon-text-default slds-is-sortable__icon" aria-hidden="true">
                                                 <use xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#arrowdown"></use>
+                                            </svg>
+                                        </span>
+
+                                        <span v-else-if="column.sortDirection === 'asc'" class="slds-icon_container slds-icon-utility-arrowup">
+                                            <svg class="slds-icon slds-icon-text-default slds-is-sortable__icon" aria-hidden="true">
+                                                <use xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#arrowup"></use>
                                             </svg>
                                         </span>
                                     </div>
