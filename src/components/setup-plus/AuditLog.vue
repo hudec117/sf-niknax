@@ -25,7 +25,7 @@ const tableColumns = ref<Array<LightningTableColumn>>([
         identifier: 'Date',
         label: 'Date (GMT)',
         visible: true,
-        orderable: true,
+        sortable: true,
         dateFormatter: (value) => {
             return value.replace(',', '').replace(' GMT', '');
         }
@@ -35,35 +35,35 @@ const tableColumns = ref<Array<LightningTableColumn>>([
         identifier: 'User',
         label: 'User',
         visible: true,
-        orderable: false,
+        sortable: false,
     },
     {
         type: 'text',
         identifier: 'Source Namespace Prefix',
         label: 'Source Namespace Prefix',
         visible: false,
-        orderable: false,
+        sortable: false,
     },
     {
         type: 'text',
         identifier: 'Section',
         label: 'Section',
         visible: true,
-        orderable: false,
+        sortable: false,
     },
     {
         type: 'text',
         identifier: 'Action',
         label: 'Action',
         visible: true,
-        orderable: false,
+        sortable: false,
     },
     {
         type: 'text',
         identifier: 'Delegate User',
         label: 'Delegate User',
         visible: false,
-        orderable: false,
+        sortable: false,
     }
 ]);
 

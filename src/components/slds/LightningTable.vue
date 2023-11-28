@@ -28,9 +28,27 @@ const visibleColumns = computed(() => {
             <table class="slds-table slds-table_bordered slds-table_col-bordered slds-border_left slds-border_right">
                 <thead>
                     <tr class="slds-line-height_reset">
-                        <th v-for="column of visibleColumns" class="slds-border_bottom slds-border_top" scope="col" :key="column.identifier">
-                            <div class="slds-truncate" :title="column.label">{{ column.label }}</div>
-                        </th>
+                        <template v-for="column of visibleColumns" :key="column.identifier">
+                            <!-- Sortable header -->
+                            <th v-if="column.sortable" class="slds-border_bottom slds-border_top slds-is-sortable slds-is-sorted slds-is-sorted_desc slds-cell_action-mode" scope="col">
+                                <a class="slds-th__action slds-text-link_reset" href="#" role="button" tabindex="0">
+                                    <span class="slds-assistive-text">Sort by: </span>
+                                    <div class="slds-grid slds-grid_vertical-align-center slds-has-flexi-truncate">
+                                    <div class="slds-truncate" :title="column.label">{{ column.label }}</div>
+                                        <span class="slds-icon_container slds-icon-utility-arrowdown">
+                                            <svg class="slds-icon slds-icon-text-default slds-is-sortable__icon " aria-hidden="true">
+                                                <use xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#arrowdown"></use>
+                                            </svg>
+                                        </span>
+                                    </div>
+                                </a>
+                            </th>
+
+                            <!-- Standard header -->
+                            <th v-else class="slds-border_bottom slds-border_top" scope="col">
+                                <div class="slds-truncate" :title="column.label">{{ column.label }}</div>
+                            </th>
+                        </template>
                     </tr>
                 </thead>
                 <tbody>
@@ -65,12 +83,17 @@ const visibleColumns = computed(() => {
     border-top: 0;
 }
 
-.slds-table th {
+.slds-table thead th {
     /* To make the header sticky */
     position: sticky;
     top: 0;
 
     /* To bring them forward and prevent the weird transparency effect */
     z-index: 1;
+}
+
+/* Required to fix sortable headers affecting padding of non-sorted headers */
+.slds-table thead th.slds-is-sortable {
+    padding: 0;
 }
 </style>

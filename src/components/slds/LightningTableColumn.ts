@@ -3,7 +3,7 @@ export default interface LightningTableColumn {
     identifier: string;
     label: string;
     visible: boolean;
-    orderable: boolean;
+    sortable: boolean;
 
     dateFormatter?: ((value: string) => string);
 }
