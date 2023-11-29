@@ -95,8 +95,8 @@ function onItemUnselected() {
                                    ref="searchCombobox"
                                    autoComplete="off"
                                    role="combobox"
-                                   v-debounce:500ms.trim="onSearch"
-                                   v-model="text"
+                                   v-debounce:500ms="onSearch"
+                                   v-model.trim="text"
                                   :placeholder="placeholder" />
                             <span class="slds-icon_container slds-icon-utility-search slds-input__icon slds-input__icon_right">
                                 <svg class="slds-icon slds-icon slds-icon_x-small slds-icon-text-default">
