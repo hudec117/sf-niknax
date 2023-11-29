@@ -32,12 +32,12 @@ export class Result<T = any> {
 
 export class ItemCloneResult {
     item: string;
-    type: string;
+    typeLabel: string;
     error?: string;
 
-    constructor(item: string, type: string, error?: string) {
+    constructor(item: string, typeLabel: string, error?: string) {
         this.item = item;
-        this.type = type;
+        this.typeLabel = typeLabel;
         this.error = error;
     }
 }

@@ -143,36 +143,64 @@ export default class SalesforceUserService extends SalesforceRESTService {
     }
 
     async clonePermissionSetAssignments(fromUserId: string, toUserId: string): Promise<Result<Array<ItemCloneResult>>> {
-        const permissionSetAssignmentQueryResult = await this.query<PermissionSetAssignment>(`SELECT AssigneeId, PermissionSetId FROM PermissionSetAssignment WHERE AssigneeId = '${fromUserId}' AND PermissionSet.IsOwnedByProfile = false`);
+        const permissionSetAssignmentQueryResult = await this.query<PermissionSetAssignment>(`SELECT AssigneeId, PermissionSet.Label, PermissionSetId FROM PermissionSetAssignment WHERE AssigneeId = '${fromUserId}' AND PermissionSet.IsOwnedByProfile = false`);
         if (!permissionSetAssignmentQueryResult.success) {
             return Result.fail(permissionSetAssignmentQueryResult.error);
         }
 
+        const cloneResults = new Array<ItemCloneResult>();
         for (const permissionSetAssignment of permissionSetAssignmentQueryResult.guardedData) {
+            const cloneResult = new ItemCloneResult(permissionSetAssignment.PermissionSet!.Label, 'Permission Set');
+
+            // Create the new permission set assignment.
             permissionSetAssignment.AssigneeId = toUserId;
+            delete permissionSetAssignment.PermissionSet;
             const clonePermissionSetAssignmentResult = await this.create('PermissionSetAssignment', permissionSetAssignment);
+
+            // Create the clone result
             if (!clonePermissionSetAssignmentResult.success) {
-                // TODO: handle
+                cloneResult.error = clonePermissionSetAssignmentResult.error;
             }
+            cloneResults.push(cloneResult);
         }
 
-        return Result.success();
+        return Result.success(cloneResults);
     }
 
     async cloneGroupMemberships(fromUserId: string, toUserId: string, groupType: string): Promise<Result<Array<ItemCloneResult>>> {
-        const groupMembershipsQueryResult = await this.query<GroupMember>(`SELECT Id, GroupId, UserOrGroupId FROM GroupMember WHERE UserOrGroupId = '${fromUserId}' AND Group.Type = '${groupType}'`);
+        const groupMembershipsQueryResult = await this.query<GroupMember>(`SELECT Group.Name, GroupId, UserOrGroupId FROM GroupMember WHERE UserOrGroupId = '${fromUserId}' AND Group.Type = '${groupType}'`);
         if (!groupMembershipsQueryResult.success) {
             return Result.fail(groupMembershipsQueryResult.error);
         }
 
+        const cloneResults = new Array<ItemCloneResult>();
         for (const groupMember of groupMembershipsQueryResult.guardedData) {
+            const groupTypeLabel = this.getCloneTypeLabelForGroup(groupType);
+            const cloneResult = new ItemCloneResult(groupMember.Group!.Name, groupTypeLabel);
+
+            // Create the new group
             groupMember.UserOrGroupId = toUserId;
+            delete groupMember.Group;
             const cloneGroupResult = await this.create('GroupMember', groupMember);
+
+            // Create the clone result
             if (!cloneGroupResult.success) {
-                // TODO: handle
+                cloneResult.error = cloneGroupResult.error;
             }
+            cloneResults.push(cloneResult);
         }
 
-        return Result.success();
+        return Result.success(cloneResults);
+    }
+
+    private getCloneTypeLabelForGroup(groupType: string): string {
+        switch (groupType) {
+            case 'Regular':
+                return 'Public Group';
+            case 'Queue':
+                return 'Queue';
+            default:
+                return groupType;
+        }
     }
 }

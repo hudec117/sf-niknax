@@ -241,7 +241,7 @@ async function onCloneClick() {
 async function switchToCloneMode(cloneTargetUserId: string) {
     const queryResult = await userService.query<User>(`SELECT Id, Username, ProfileId, UserRoleId FROM User WHERE Id = '${cloneTargetUserId}'`);
     if (!queryResult.success) {
-        cloneButtonError.value = queryResult.error;
+        cloneButtonError.value = `Failed to query the clone target User because: ${queryResult.error}`;
         return;
     }
     cloneTargetUser.value = queryResult.guardedData[0];
@@ -285,10 +285,11 @@ async function onCloneAndCloseClick() {
         overridenFieldValues.set('CommunityNickname', form.value.nickname);
         overridenFieldValues.set('ProfileId', form.value.profileId);
         overridenFieldValues.set('UserRoleId', form.value.roleId);
+        overridenFieldValues.set('IsActive', form.value.activateUser);
 
         const cloneUserResult = await userService.cloneUser(cloneTargetUser.value.Id, overridenFieldValues);
         if (!cloneUserResult.success) {
-            primaryButtonError.value = `Failed to clone the user. ${cloneUserResult.error}`;
+            primaryButtonError.value = `Failed to clone the user because: ${cloneUserResult.error}`;
             return;
         }
 
@@ -301,7 +302,7 @@ async function onCloneAndCloseClick() {
             if (!resetPasswordResult.success) {
                 cloneOverlay.value.type = 'warning';
                 cloneOverlay.value.passwordResetSuccessful = false;
-                cloneOverlay.value.passwordResetError = `Failed to reset the password. ${resetPasswordResult.error}`;
+                cloneOverlay.value.passwordResetError = `Failed to reset the password because: ${resetPasswordResult.error}`;
 
                 allSuccessful = false;
             }
@@ -313,6 +314,8 @@ async function onCloneAndCloseClick() {
                 // TODO: handle
                 allSuccessful = false;
             }
+
+            console.log(clonePermSetAssignmentsResult.data);
         }
 
         if (form.value.clonePublicGroupMemberships) {
@@ -321,6 +324,8 @@ async function onCloneAndCloseClick() {
                 // TODO: handle
                 allSuccessful = false;
             }
+
+console.log(cloneGroupMembershipsResult.data);
         }
 
         if (form.value.cloneQueueMemberships) {
@@ -329,11 +334,13 @@ async function onCloneAndCloseClick() {
                 // TODO: handle
                 allSuccessful = false;
             }
+
+console.log(cloneQueueMembershipsResult.data);
         }
 
         // Only auto-close the window if the entire cloning process is successful.
         if (allSuccessful) {
-            setTimeout(closeWindow, 3000);
+            // setTimeout(closeWindow, 3000);
         }
 
         // Show the overlay
@@ -351,7 +358,7 @@ async function onCreateAndCloseClick() {
     try {
         const getOrgResult = await userService.getOrganisation();
         if (!getOrgResult.success) {
-            // TODO: handle
+            primaryButtonError.value = `Failed to get the current organisation ID because ${getOrgResult.error}`;
             return;
         }
 
@@ -373,7 +380,7 @@ async function onCreateAndCloseClick() {
             EmailEncodingKey: 'UTF-8'
         });
         if (!userCreateResult.success) {
-            primaryButtonError.value = `Failed to create the user. ${userCreateResult.error}`;
+            primaryButtonError.value = `Failed to create the user because: ${userCreateResult.error}`;
             return;
         }
 
@@ -386,7 +393,7 @@ async function onCreateAndCloseClick() {
             if (!resetPasswordResult.success) {
                 createOverlay.value.type = 'warning';
                 createOverlay.value.passwordResetSuccessful = false;
-                createOverlay.value.passwordResetError = `Failed to reset the password. ${resetPasswordResult.error}`;
+                createOverlay.value.passwordResetError = `Failed to reset the password because: ${resetPasswordResult.error}`;
 
                 allSuccessful = false;
             }
@@ -668,6 +675,16 @@ async function closeWindow() {
                             <label class="slds-checkbox__label" for="queue-memberships-checkbox">
                                 <span class="slds-checkbox_faux"></span>
                                 <span class="slds-form-element__label">Queue Memberships</span>
+                            </label>
+                        </div>
+
+                        <div class="slds-checkbox">
+                            <input type="checkbox"
+                                   id="activate-user-checkbox"
+                                   v-model="form.activateUser" />
+                            <label class="slds-checkbox__label" for="activate-user-checkbox">
+                                <span class="slds-checkbox_faux"></span>
+                                <span class="slds-form-element__label">Activate User</span>
                             </label>
                         </div>
                     </div>

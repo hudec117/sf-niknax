@@ -1,8 +1,8 @@
-import type UserLicense from './UserLicense';
+import type PermissionSet from './PermissionSet';
 
 export default interface PermissionSetAssignment {
     AssigneeId: string;
-    PermissionSetId: string;
 
-    License: UserLicense;
+    PermissionSetId: string;
+    PermissionSet?: PermissionSet;
 }
