@@ -18,6 +18,7 @@ let restService: SalesforceRESTService;
 let miscService: SalesforceMiscService;
 
 const loading = ref(true);
+const loadError = ref('');
 const auditLogEntries = ref<Array<AuditLogEntry> | undefined>();
 const tableColumns = ref<Array<LightningTableColumn>>([
     {
@@ -103,8 +104,6 @@ const canClearFilters = computed(() => {
 });
 
 onMounted(() => {
-    document.title = 'Salesforce Niknax: Quick Create User';
-
     // Initialise Salesforce services
     restService = new SalesforceRESTService(props.context.serverHost, props.context.sessionId);
     miscService = new SalesforceMiscService(props.context.serverHost, props.context.sessionId);
@@ -116,19 +115,19 @@ async function loadData() {
     try {
         const getOrgResult = await restService.getOrganisation();
         if (!getOrgResult.success) {
-            // TODO: handle
+            loadError.value = `Failed to get the current organisation ID because: ${getOrgResult.error}`;
             return;
         }
 
         const getAuditLogResult = await miscService.getAuditLog(getOrgResult.guardedData.Id);
         if (!getAuditLogResult.success) {
-            // TODO: handle
+            loadError.value = `Failed to get or process the audit log CSV because: ${getAuditLogResult.error}`;
             return;
         }
 
         auditLogEntries.value = getAuditLogResult.data;
     } catch (error) {
-        // primaryButtonError.value = `Something went wrong in the loadData function: ${(error as Error).message}`;
+        loadError.value = `Something went wrong in the loadData function: ${(error as Error).message}`;
     } finally {
         loading.value = false;
     }
@@ -154,7 +153,12 @@ function onClearFiltersClick() {
                 </div>
             </header>
         </div>
-        <div class="slds-card__body slds-card__body_inner">
+
+        <div v-if="loadError" class="slds-card__body slds-card__body_inner">
+            <p class="slds-text-color_error">{{ loadError }}</p>
+        </div>
+
+        <div v-else class="slds-card__body slds-card__body_inner">
             <div class="slds-grid slds-m-bottom_medium">
                 <div class="slds-col">
                     <fieldset class="slds-form-element">
