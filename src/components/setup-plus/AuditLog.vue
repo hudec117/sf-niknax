@@ -98,6 +98,10 @@ const filteredEntries = computed(() => {
     return entries;
 });
 
+const canClearFilters = computed(() => {
+    return tableColumns.value.filter(column => column.filter && column.filter.length > 0).length > 0;
+});
+
 onMounted(() => {
     document.title = 'Salesforce Niknax: Quick Create User';
 
@@ -127,6 +131,12 @@ async function loadData() {
         // primaryButtonError.value = `Something went wrong in the loadData function: ${(error as Error).message}`;
     } finally {
         loading.value = false;
+    }
+}
+
+function onClearFiltersClick() {
+    for (const column of tableColumns.value) {
+        column.filter = undefined;
     }
 }
 </script>
@@ -162,7 +172,11 @@ async function loadData() {
                     </fieldset>
                 </div>
                 <div class="slds-col">
-                    <button class="slds-button slds-button_neutral slds-m-top_large slds-float_right">Clear Filters</button>
+                    <button class="slds-button slds-button_neutral slds-m-top_large slds-float_right"
+                           @click="onClearFiltersClick"
+                           :disabled="!canClearFilters">
+                        Clear Filters
+                    </button>
                 </div>
             </div>
 

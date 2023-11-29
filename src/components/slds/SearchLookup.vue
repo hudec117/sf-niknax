@@ -37,7 +37,7 @@ async function onSearch() {
     loading.value = false;
     empty.value = false;
 
-    const searchText = text.value.trim();
+    const searchText = text.value;
     if (searchText.length === 0) {
         return;
     }
@@ -95,7 +95,7 @@ function onItemUnselected() {
                                    ref="searchCombobox"
                                    autoComplete="off"
                                    role="combobox"
-                                   v-debounce:500ms="onSearch"
+                                   v-debounce:500ms.trim="onSearch"
                                    v-model="text"
                                   :placeholder="placeholder" />
                             <span class="slds-icon_container slds-icon-utility-search slds-input__icon slds-input__icon_right">

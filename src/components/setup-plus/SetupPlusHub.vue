@@ -1,39 +1,16 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { onMounted } from 'vue';
 
 import Context from '@/models/Context';
-import SalesforceToolingService from '@/services/SalesforceToolingService';
-import SalesforceUserService from '@/services/SalesforceUserService';
 import AuditLog from './AuditLog.vue';
 
-const props = defineProps<{
+defineProps<{
     context: Context
 }>();
 
-let userService: SalesforceUserService;
-let toolingService: SalesforceToolingService;
-
-const loading = ref(true);
-
 onMounted(() => {
     document.title = 'Salesforce Niknax: Setup+';
-
-    // Initialise Salesforce services
-    userService = new SalesforceUserService(props.context.serverHost, props.context.sessionId);
-    toolingService = new SalesforceToolingService(props.context.serverHost, props.context.sessionId);
-
-    loadData();
 });
-
-async function loadData() {
-    try {
-        // 
-    } catch (error) {
-        // TODO: handle
-    } finally {
-        loading.value = false;
-    }
-}
 </script>
 
 <template>

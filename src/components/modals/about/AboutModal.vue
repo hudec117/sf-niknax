@@ -45,16 +45,10 @@ defineExpose<{
                     </h1>
                 </div>
                 <div class="slds-modal__content slds-p-around_medium">
-                    <div class="slds-section slds-is-open slds-m-bottom_large">
-                        <h3 class="slds-section__title slds-theme_shade">
-                            <span class="slds-truncate slds-p-horizontal_small">Support</span>
-                        </h3>
-                        <div class="slds-section__content">
-                            <ul class="slds-list_dotted">
-                                <li class="slds-item">Found a bug? Create an Issue on the <a href="https://github.com/hudec117/sf-niknax/issues" class="external-link" target="_blank">sf-niknax GitHub repository</a></li>
-                            </ul>
-                        </div>
-                    </div>
+                    <ul class="slds-list_dotted slds-m-bottom_medium">
+                        <li class="slds-item">Found a bug? Create an Issue on <a href="https://github.com/hudec117/sf-niknax/issues" class="external-link" target="_blank">GitHub</a></li>
+                        <li class="slds-item">Looking for the author? Connect on <a href="https://www.linkedin.com/in/aurel-hudec-abb95b108" class="external-link" target="_blank">LinkedIn</a></li>
+                    </ul>
 
                     <div class="slds-section slds-is-open">
                         <h3 class="slds-section__title slds-theme_shade">
@@ -115,6 +109,32 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
+
+
+==================
+== @vueuse/core ==
+==================
+MIT License
+
+Copyright (c) 2019-PRESENT Anthony Fu
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 
 
 ==================

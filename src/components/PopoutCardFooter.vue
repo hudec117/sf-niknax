@@ -16,10 +16,10 @@ function onAboutClick() {
             <div class="slds-col">
                 <span class="slds-float_left">Made with &#10084;&#65039; on <a href="https://github.com/hudec117/sf-niknax" class="external-link" target="_blank">GitHub</a></span>
             </div>
-            <div class="slds-col slds-col_bump-right slds-size_1-of-8">
+            <div class="slds-grow_none slds-col_bump-right slds-m-right_large">
                 <span>v1.1.0</span>
             </div>
-            <div class="slds-col slds-size_1-of-8">
+            <div class="slds-grow_none">
                 <a href="#" @click="onAboutClick">About</a>
             </div>
         </div>

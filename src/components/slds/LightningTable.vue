@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, watch } from 'vue';
 import { toRef, useVirtualList } from '@vueuse/core';
 import type LightningTableColumn from './LightningTableColumn';
 
@@ -16,9 +16,15 @@ const visibleColumns = computed(() => {
 // Need to make a copy of the records prop into a ref otherwise, filtering on the
 // records outside of the table does not reflect when using the virtual list.
 const recordsMirror = toRef(props, 'records');
-const { list, containerProps, wrapperProps } = useVirtualList(recordsMirror, {
+const { list, containerProps, wrapperProps, scrollTo } = useVirtualList(recordsMirror, {
     itemHeight: 28.5
 });
+
+// Whenever the records are updated as a result of a filter, we
+// need to scroll to the first element otherwise a blank screen is shown.
+watch(() => props.records, () => {
+    scrollTo(0);
+})
 
 function getColumnHash(recordIndex: number, column: LightningTableColumn): string {
     return `${recordIndex}-${column.identifier}`;
