@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 
 import PopoutCardFooter from '../PopoutCardFooter.vue';
 import Context from '@/models/Context';
@@ -23,7 +23,7 @@ const tableColumns = ref<Array<LightningTableColumn>>([
     {
         type: 'date',
         identifier: 'Date',
-        label: 'Date (GMT)',
+        label: 'Date',
         visible: true,
         sortDirection: 'desc',
         onSortDirectionChanged: () => {
@@ -32,7 +32,7 @@ const tableColumns = ref<Array<LightningTableColumn>>([
             }
         },
         dateFormatter: (value) => {
-            return value.replace(',', '').substring(0, 19);
+            return value.replace(',', '');
         }
     },
     {
@@ -66,6 +66,37 @@ const tableColumns = ref<Array<LightningTableColumn>>([
         visible: false
     }
 ]);
+
+const filteredEntries = computed(() => {
+    let entries = auditLogEntries.value;
+
+    if (auditLogEntries.value) {
+        const filteredColumns = tableColumns.value.filter(column => column.filter && column.filter.length > 0);
+        if (filteredColumns.length > 0) {
+            entries = [];
+
+            for (const auditLogEntry of auditLogEntries.value) {
+                // We only want to keep the entry if all the filtered columns match
+                const searchableAuditLogEntry = auditLogEntry as unknown as { [key: string]: string };
+
+                let columnFilterMatches = 0;
+                for (const filteredColumn of filteredColumns) {
+                    const searchValue = searchableAuditLogEntry[filteredColumn.identifier].toLowerCase();
+
+                    if (searchValue.includes(filteredColumn.filter!.toLowerCase())) {
+                        columnFilterMatches++;
+                    }
+                }
+
+                if (filteredColumns.length === columnFilterMatches) {
+                    entries.push(auditLogEntry);
+                }
+            }
+        }
+    }
+
+    return entries;
+});
 
 onMounted(() => {
     document.title = 'Salesforce Niknax: Quick Create User';
@@ -130,12 +161,12 @@ async function loadData() {
                         </div>
                     </fieldset>
                 </div>
-                <!-- <div class="slds-col">
-                    <button class="slds-button slds-button_neutral slds-m-top_large slds-float_right">Filters</button>
-                </div> -->
+                <div class="slds-col">
+                    <button class="slds-button slds-button_neutral slds-m-top_large slds-float_right">Clear Filters</button>
+                </div>
             </div>
 
-            <LightningTable v-if="auditLogEntries" :records="auditLogEntries" :columns="tableColumns" :height="600" />
+            <LightningTable v-if="filteredEntries" :records="filteredEntries" :columns="tableColumns" :height="600" />
         </div>
 
         <PopoutCardFooter />

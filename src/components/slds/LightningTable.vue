@@ -69,10 +69,12 @@ function onColumnSortClick(column: LightningTableColumn) {
                             </th>
                         </template>
                     </tr>
+
+                    <!-- Filters header row -->
                     <tr>
                         <template v-for="column of visibleColumns" :key="column.identifier">
                             <th class="slds-border_bottom">
-                                <input type="text" placeholder="Filter" class="slds-input" />
+                                <input type="text" placeholder="Filter" class="slds-input" v-model.trim="column.filter" />
                             </th>
                         </template>
                     </tr>
@@ -101,10 +103,12 @@ function onColumnSortClick(column: LightningTableColumn) {
     border-top: none;
 }
 
-.slds-table tr {
+/* Virtual table requires fixed row height  */
+.slds-table tbody tr {
     height: 28.5px;
 }
 
+/* Remove the top border from the first normal row */
 .slds-table tr:first-child td {
     border-top: 0;
 }
@@ -116,6 +120,11 @@ function onColumnSortClick(column: LightningTableColumn) {
 
     /* To bring them forward and prevent the weird transparency effect */
     z-index: 1;
+}
+
+/* The inputs in the "th" inherit bold text */
+.slds-table thead .slds-input {
+    font-weight: initial;
 }
 
 /* Required to fix sortable headers affecting padding of non-sorted headers */

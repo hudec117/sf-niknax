@@ -7,7 +7,7 @@ export default interface LightningTableColumn {
     filter?: string;
 
     sortDirection?: 'asc' | 'desc';
-    onSortDirectionChanged?: (() => void);
+    onSortDirectionChanged?: () => void;
 
-    dateFormatter?: ((value: string) => string);
+    dateFormatter?: (value: string) => string;
 }
