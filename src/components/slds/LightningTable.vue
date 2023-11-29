@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { useVirtualList } from '@vueuse/core';
+import { toRef, useVirtualList } from '@vueuse/core';
 import type LightningTableColumn from './LightningTableColumn';
 
 const props = defineProps<{
@@ -9,17 +9,20 @@ const props = defineProps<{
     height: number
 }>();
 
-const { list, containerProps, wrapperProps } = useVirtualList(props.records, {
-    itemHeight: 28.5
-});
-
-function columnHash(recordIndex: number, column: LightningTableColumn): string {
-    return `${recordIndex}-${column.identifier}`;
-}
-
 const visibleColumns = computed(() => {
     return props.columns.filter(column => column.visible);
 });
+
+// Need to make a copy of the records prop into a ref otherwise, filtering on the
+// records outside of the table does not reflect when using the virtual list.
+const recordsMirror = toRef(props, 'records');
+const { list, containerProps, wrapperProps } = useVirtualList(recordsMirror, {
+    itemHeight: 28.5
+});
+
+function getColumnHash(recordIndex: number, column: LightningTableColumn): string {
+    return `${recordIndex}-${column.identifier}`;
+}
 
 function onColumnSortClick(column: LightningTableColumn) {
     if (!column.sortDirection) {
@@ -81,7 +84,7 @@ function onColumnSortClick(column: LightningTableColumn) {
                 </thead>
                 <tbody>
                     <tr v-for="{ index, data } in list" :key="index">
-                        <td v-for="column of visibleColumns" :key="columnHash(index, column)">
+                        <td v-for="column of visibleColumns" :key="getColumnHash(index, column)">
                             <div class="slds-truncate" :title="data[column.identifier]">
                                 <template v-if="column.type === 'text'">
                                     {{ data[column.identifier] }}

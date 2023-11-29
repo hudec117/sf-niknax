@@ -53,11 +53,14 @@ async function loadData() {
                     Audit Log
                 </div>
                 <div class="tool-button-disabled slds-p-around_medium">
+                    More coming soon!
+                </div>
+                <!-- <div class="tool-button-disabled slds-p-around_medium">
                     Debug Logs/User Trace
                 </div>
                 <div class="tool-button-disabled slds-p-around_medium">
                     Bulk Freeze/Unfreeze Users
-                </div>
+                </div> -->
             </article>
         </div>
         <div class="slds-col slds-size_5-of-6">
