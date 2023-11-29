@@ -42,11 +42,12 @@ function onColumnSortClick(column: LightningTableColumn) {
                     <tr class="slds-line-height_reset">
                         <template v-for="column of visibleColumns" :key="column.identifier">
                             <!-- Sortable header -->
-                            <th v-if="column.sortDirection" class="slds-border_bottom slds-border_top slds-is-sortable slds-is-sorted slds-is-sorted_desc slds-cell_action-mode" scope="col">
+                            <th v-if="column.sortDirection" class="slds-border_top slds-is-sortable slds-is-sorted" scope="col">
                                 <a class="slds-th__action slds-text-link_reset" href="#" role="button" tabindex="0" @click.prevent="onColumnSortClick(column)">
                                     <span class="slds-assistive-text">Sort by: </span>
                                     <div class="slds-grid slds-grid_vertical-align-center slds-has-flexi-truncate">
-                                    <div class="slds-truncate" :title="column.label">{{ column.label }}</div>
+                                        <div class="slds-truncate" :title="column.label">{{ column.label }}</div>
+
                                         <span v-if="column.sortDirection === 'desc'" class="slds-icon_container slds-icon-utility-arrowdown">
                                             <svg class="slds-icon slds-icon-text-default slds-is-sortable__icon" aria-hidden="true">
                                                 <use xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#arrowdown"></use>
@@ -63,8 +64,15 @@ function onColumnSortClick(column: LightningTableColumn) {
                             </th>
 
                             <!-- Standard header -->
-                            <th v-else class="slds-border_bottom slds-border_top" scope="col">
+                            <th v-else class="slds-border_top" scope="col">
                                 <div class="slds-truncate" :title="column.label">{{ column.label }}</div>
+                            </th>
+                        </template>
+                    </tr>
+                    <tr>
+                        <template v-for="column of visibleColumns" :key="column.identifier">
+                            <th class="slds-border_bottom">
+                                <input type="text" placeholder="Filter" class="slds-input" />
                             </th>
                         </template>
                     </tr>
@@ -101,7 +109,7 @@ function onColumnSortClick(column: LightningTableColumn) {
     border-top: 0;
 }
 
-.slds-table thead th {
+.slds-table thead {
     /* To make the header sticky */
     position: sticky;
     top: 0;

@@ -4,6 +4,8 @@ export default interface LightningTableColumn {
     label: string;
     visible: boolean;
 
+    filter?: string;
+
     sortDirection?: 'asc' | 'desc';
     onSortDirectionChanged?: (() => void);
 
