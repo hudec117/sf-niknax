@@ -89,17 +89,23 @@ function onColumnSortClick(column: LightningTableColumn) {
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="{ index, data } in list" :key="index">
-                        <td v-for="column of visibleColumns" :key="getColumnHash(index, column)">
-                            <div class="slds-truncate" :title="data[column.identifier]">
-                                <template v-if="column.type === 'text'">
-                                    {{ data[column.identifier] }}
-                                </template>
-                                <template v-else-if="column.type === 'date'">
-                                    {{ column.dateFormatter?.call(null, data[column.identifier]) }}
-                                </template>
-                            </div>
-                        </td>
+                    <template v-if="list.length > 0">
+                        <tr v-for="{ index, data } in list" :key="index">
+                            <td v-for="column of visibleColumns" :key="getColumnHash(index, column)">
+                                <div class="slds-truncate" :title="data[column.identifier]">
+                                    <template v-if="column.type === 'text'">
+                                        {{ data[column.identifier] }}
+                                    </template>
+                                    <template v-else-if="column.type === 'date'">
+                                        {{ column.dateFormatter?.call(null, data[column.identifier]) }}
+                                    </template>
+                                </div>
+                            </td>
+                        </tr>
+                    </template>
+
+                    <tr v-else>
+                        <td :colspan="visibleColumns.length">No rows, check your filters.</td>
                     </tr>
                 </tbody>
             </table>
