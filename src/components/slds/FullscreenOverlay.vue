@@ -7,7 +7,7 @@ const props = defineProps<{
 }>();
 
 const overlayClasses = computed(() => {
-    let classes = 'overlay slds-align_absolute-center';
+    let classes = 'overlay slds-align_absolute-center slds-var-p-around_small';
 
     switch (props.type) {
         case 'success':
@@ -29,7 +29,7 @@ const overlayClasses = computed(() => {
     <Transition>
         <div :class="overlayClasses" v-if="props.visible">
             <div class="overlay-content">
-                <span class="slds-icon_container slds-m-bottom_x-small">
+                <span class="slds-icon_container">
                     <svg class="slds-icon overlay-check-icon">
                         <use v-if="type === 'success'" xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#success"></use>
                         <use v-else-if="type === 'warning'" xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#warning"></use>
@@ -37,11 +37,15 @@ const overlayClasses = computed(() => {
                     </svg>
                 </span>
 
-                <div class="slds-text-heading_medium slds-m-bottom_x-small">
+                <div class="overlay-title slds-text-heading_medium slds-m-top_medium">
                     <slot name="title"></slot>
                 </div>
-                <div class="slds-text-heading_small">
+                <div class="overlay-subtitle slds-text-heading_small slds-m-top_medium">
                     <slot name="subtitle"></slot>
+                </div>
+
+                <div class="slds-m-top_medium">
+                    <slot name="body"></slot>
                 </div>
             </div>
         </div>
@@ -72,6 +76,9 @@ const overlayClasses = computed(() => {
 
 .overlay-content {
     text-align: center;
+}
+
+.overlay-title, .overlay-subtitle {
     color: white;
 }
 

@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue';
 
 import PopoutCardFooter from './PopoutCardFooter.vue';
 import FullscreenOverlay from '@/components/slds/FullscreenOverlay.vue';
+import LightningTableLite from '@/components/slds/LightningTableLite.vue';
 import QuickCreateUserSettingsModal from '@/components/modals/quick-create-user-settings/QuickCreateUserSettingsModal.vue';
 import UserSelectModal from '@/components/modals/user-select/UserSelectModal.vue';
 import SalesforceToolingService from '@/services/SalesforceToolingService';
@@ -16,6 +17,8 @@ import type Organisation from '@/models/Organisation';
 import UserQuickCreateSettings from '@/models/UserQuickCreateSettings';
 import LightningSpinner from './slds/LightningSpinner.vue';
 import ErrorPopover from './slds/ErrorPopover.vue';
+import { ItemCloneResult } from '@/services/Results';
+import type LightningTableColumn from './slds/LightningTableColumn';
 
 const SETTINGS_KEY = 'quick-create-user-settings';
 
@@ -49,7 +52,27 @@ const cloneOverlay = ref({
     type: 'success',
     passwordResetSuccessful: true,
     passwordResetError: '',
-    cloneOperationResults: [],
+    cloneItemResults: new Array<ItemCloneResult>(),
+    cloneItemResultsTableColumns: [
+        {
+            type: 'text',
+            identifier: 'item',
+            label: 'Item',
+            visible: true
+        },
+        {
+            type: 'text',
+            identifier: 'typeLabel',
+            label: 'Type',
+            visible: true
+        },
+        {
+            type: 'text',
+            identifier: 'error',
+            label: 'Error',
+            visible: true
+        }
+    ] as Array<LightningTableColumn>
 });
 const showUsernameTooltip = ref(false);
 const showProfileTooltip = ref(false);
@@ -247,7 +270,7 @@ async function switchToCloneMode(cloneTargetUserId: string) {
     cloneTargetUser.value = queryResult.guardedData[0];
 
     // Resize window to accomodate visible checkboxes, change the title and mode.
-    resizeTo(627, 701);
+    resizeTo(690, 724);
     document.title = `Salesforce Niknax: Clone ${cloneTargetUser.value.Username}`;
     mode.value = 'clone';
     primaryButtonText.value = 'Clone & Close';
@@ -313,9 +336,11 @@ async function onCloneAndCloseClick() {
             if (!clonePermSetAssignmentsResult.success) {
                 // TODO: handle
                 allSuccessful = false;
+            } else if (!clonePermSetAssignmentsResult.data) {
+                // TODO: handle
+            } else {
+                cloneOverlay.value.cloneItemResults = cloneOverlay.value.cloneItemResults.concat(clonePermSetAssignmentsResult.data);
             }
-
-            console.log(clonePermSetAssignmentsResult.data);
         }
 
         if (form.value.clonePublicGroupMemberships) {
@@ -323,9 +348,11 @@ async function onCloneAndCloseClick() {
             if (!cloneGroupMembershipsResult.success) {
                 // TODO: handle
                 allSuccessful = false;
+            } else if (!cloneGroupMembershipsResult.data) {
+                // TODO: handle
+            } else {
+                cloneOverlay.value.cloneItemResults = cloneOverlay.value.cloneItemResults.concat(cloneGroupMembershipsResult.data);
             }
-
-console.log(cloneGroupMembershipsResult.data);
         }
 
         if (form.value.cloneQueueMemberships) {
@@ -333,9 +360,11 @@ console.log(cloneGroupMembershipsResult.data);
             if (!cloneQueueMembershipsResult.success) {
                 // TODO: handle
                 allSuccessful = false;
+            } else if (!cloneQueueMembershipsResult.data) {
+                // TODO: handle
+            } else {
+                cloneOverlay.value.cloneItemResults = cloneOverlay.value.cloneItemResults.concat(cloneQueueMembershipsResult.data);
             }
-
-console.log(cloneQueueMembershipsResult.data);
         }
 
         // Only auto-close the window if the entire cloning process is successful.
@@ -717,7 +746,7 @@ async function closeWindow() {
         <template v-slot:title>
             <span class="overlay-user-link" @click="onOpenUser" title="Open User detail page in a new tab.">User</span>
             <template v-if="createOverlay.passwordResetSuccessful">
-                created!
+                created and notified!
             </template>
             <template v-else>
                 created but...
@@ -734,11 +763,26 @@ async function closeWindow() {
         <template v-slot:title>
             <span class="overlay-user-link" @click="onOpenUser" title="Open User detail page in a new tab.">User</span>
             <template v-if="cloneOverlay.passwordResetSuccessful">
-                cloned!
+                cloned and notified!
             </template>
             <template v-else>
-                created but...
+                cloned but...
             </template>
+        </template>
+
+        <template v-slot:subtitle>
+            {{ cloneOverlay.passwordResetError }}
+        </template>
+
+        <template v-slot:body>
+            <article class="slds-card">
+                <div class="slds-card__header">
+                    <h2 class="slds-card__header-title">Clone Results</h2>
+                </div>
+                <div class="slds-card__body slds-card__body_inner">
+                    <LightningTableLite :records="cloneOverlay.cloneItemResults" :columns="cloneOverlay.cloneItemResultsTableColumns" />
+                </div>
+            </article>
         </template>
     </FullscreenOverlay>
 </template>
