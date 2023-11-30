@@ -68,8 +68,8 @@ const cloneOverlay = ref({
         },
         {
             type: 'text',
-            identifier: 'error',
-            label: 'Error',
+            identifier: 'outcome',
+            label: 'Outcome',
             visible: true
         }
     ] as Array<LightningTableColumn>
@@ -368,9 +368,9 @@ async function onCloneAndCloseClick() {
         }
 
         // Only auto-close the window if the entire cloning process is successful.
-        if (allSuccessful) {
+        // if (allSuccessful) {
             // setTimeout(closeWindow, 3000);
-        }
+        // }
 
         // Show the overlay
         cloneOverlay.value.visible = true;

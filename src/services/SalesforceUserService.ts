@@ -159,7 +159,7 @@ export default class SalesforceUserService extends SalesforceRESTService {
 
             // Create the clone result
             if (!clonePermissionSetAssignmentResult.success) {
-                cloneResult.error = clonePermissionSetAssignmentResult.error;
+                cloneResult.outcome = clonePermissionSetAssignmentResult.error ?? 'Unknown error';
             }
             cloneResults.push(cloneResult);
         }
@@ -185,7 +185,7 @@ export default class SalesforceUserService extends SalesforceRESTService {
 
             // Create the clone result
             if (!cloneGroupResult.success) {
-                cloneResult.error = cloneGroupResult.error;
+                cloneResult.outcome = cloneGroupResult.error ?? 'Unknown error';
             }
             cloneResults.push(cloneResult);
         }
