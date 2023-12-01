@@ -1,5 +1,5 @@
 import { Result } from './Results';
-import type AuditLogEntry from '@/models/AuditLogEntry';
+import type AuditTrailEntry from '@/models/AuditTrailEntry';
 import Papa from 'papaparse';
 
 export default class SalesforceRESTService {
@@ -11,7 +11,7 @@ export default class SalesforceRESTService {
         this.sessionId = sessionId;
     }
 
-    async getAuditLog(orgId: string): Promise<Result<Array<AuditLogEntry>>> {
+    async getAuditTrail(orgId: string): Promise<Result<Array<AuditTrailEntry>>> {
         // First load the Audit Trail page
         const pageRequestUrl = `${this.serverBaseUrl}/setup/org/orgsetupaudit.jsp?setupid=SecurityEvents`;
         const pageResponse = await fetch(pageRequestUrl, {
@@ -46,6 +46,6 @@ export default class SalesforceRESTService {
             skipEmptyLines: true
         });
 
-        return Result.success(parseResult.data as Array<AuditLogEntry>);
+        return Result.success(parseResult.data as Array<AuditTrailEntry>);
     }
 }

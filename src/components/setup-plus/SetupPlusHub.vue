@@ -2,7 +2,7 @@
 import { onMounted } from 'vue';
 
 import Context from '@/models/Context';
-import AuditLog from './AuditLog.vue';
+import AuditTrail from './AuditTrail.vue';
 
 defineProps<{
     context: Context
@@ -27,7 +27,7 @@ onMounted(() => {
                     </header>
                 </div>
                 <div class="tool-button tool-button-selected slds-p-around_medium">
-                    Audit Log
+                    Audit Trail
                 </div>
                 <div class="tool-button-disabled slds-p-around_medium">
                     More coming soon!
@@ -41,7 +41,7 @@ onMounted(() => {
             </article>
         </div>
         <div class="slds-col slds-size_5-of-6">
-            <AuditLog :context="context" />
+            <AuditTrail :context="context" />
         </div>
     </div>
 </template>

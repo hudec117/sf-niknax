@@ -8,7 +8,7 @@ import LightningSpinner from '../slds/LightningSpinner.vue';
 import SalesforceMiscService from '@/services/SalesforceMiscService';
 import LightningTable from '../slds/LightningTable.vue';
 import type LightningTableColumn from '../slds/LightningTableColumn';
-import type AuditLogEntry from '@/models/AuditLogEntry';
+import type AuditTrailEntry from '@/models/AuditTrailEntry';
 
 const props = defineProps<{
     context: Context
@@ -19,19 +19,13 @@ let miscService: SalesforceMiscService;
 
 const loading = ref(true);
 const loadError = ref('');
-const auditLogEntries = ref<Array<AuditLogEntry> | undefined>();
+const auditTrailEntries = ref<Array<AuditTrailEntry> | undefined>();
 const tableColumns = ref<Array<LightningTableColumn>>([
     {
         type: 'date',
         identifier: 'Date',
         label: 'Date',
         visible: true,
-        sortDirection: 'desc',
-        onSortDirectionChanged: () => {
-            if (auditLogEntries.value) {
-                auditLogEntries.value = auditLogEntries.value.reverse();
-            }
-        },
         dateFormatter: (value) => {
             return value.replace(',', '');
         }
@@ -69,20 +63,20 @@ const tableColumns = ref<Array<LightningTableColumn>>([
 ]);
 
 const filteredEntries = computed(() => {
-    let entries = auditLogEntries.value;
+    let entries = auditTrailEntries.value;
 
-    if (auditLogEntries.value) {
+    if (auditTrailEntries.value) {
         const filteredColumns = tableColumns.value.filter(column => column.filter && column.filter.length > 0);
         if (filteredColumns.length > 0) {
             entries = [];
 
-            for (const auditLogEntry of auditLogEntries.value) {
+            for (const auditTrailEntry of auditTrailEntries.value) {
                 // We only want to keep the entry if all the filtered columns match
-                const searchableAuditLogEntry = auditLogEntry as unknown as { [key: string]: string };
+                const searchableAuditTrailEntry = auditTrailEntry as unknown as { [key: string]: string };
 
                 let columnFilterMatches = 0;
                 for (const filteredColumn of filteredColumns) {
-                    const searchValue = searchableAuditLogEntry[filteredColumn.identifier].toLowerCase();
+                    const searchValue = searchableAuditTrailEntry[filteredColumn.identifier].toLowerCase();
 
                     if (searchValue.includes(filteredColumn.filter!.toLowerCase())) {
                         columnFilterMatches++;
@@ -90,7 +84,7 @@ const filteredEntries = computed(() => {
                 }
 
                 if (filteredColumns.length === columnFilterMatches) {
-                    entries.push(auditLogEntry);
+                    entries.push(auditTrailEntry);
                 }
             }
         }
@@ -119,13 +113,13 @@ async function loadData() {
             return;
         }
 
-        const getAuditLogResult = await miscService.getAuditLog(getOrgResult.guardedData.Id);
-        if (!getAuditLogResult.success) {
-            loadError.value = `Failed to get or process the audit log CSV because: ${getAuditLogResult.error}`;
+        const getAuditTrailResult = await miscService.getAuditTrail(getOrgResult.guardedData.Id);
+        if (!getAuditTrailResult.success) {
+            loadError.value = `Failed to get or process the Audit Trail CSV because: ${getAuditTrailResult.error}`;
             return;
         }
 
-        auditLogEntries.value = getAuditLogResult.data;
+        auditTrailEntries.value = getAuditTrailResult.data;
     } catch (error) {
         loadError.value = `Something went wrong in the loadData function: ${(error as Error).message}`;
     } finally {
@@ -147,9 +141,7 @@ function onClearFiltersClick() {
         <div class="slds-card__header slds-grid">
             <header class="slds-media slds-media_center slds-has-flexi-truncate">
                 <div class="slds-media__body">
-                    <h2 class="slds-card__header-title">
-                        Audit Log
-                    </h2>
+                    <h2 class="slds-card__header-title">Audit Trail</h2>
                 </div>
             </header>
         </div>
@@ -184,7 +176,11 @@ function onClearFiltersClick() {
                 </div>
             </div>
 
-            <LightningTable v-if="filteredEntries" :records="filteredEntries" :columns="tableColumns" :height="600" />
+            <LightningTable v-if="filteredEntries"
+                           :records="filteredEntries"
+                           :columns="tableColumns"
+                           :height="600"
+                            last-row-text="The Audit Trail only tracks changes made in the last 6 months." />
         </div>
 
         <PopoutCardFooter />

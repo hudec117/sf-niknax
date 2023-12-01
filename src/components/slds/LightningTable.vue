@@ -6,7 +6,8 @@ import type LightningTableColumn from './LightningTableColumn';
 const props = defineProps<{
     records: Array<any>,
     columns: Array<LightningTableColumn>,
-    height: number
+    height: number,
+    lastRowText?: string
 }>();
 
 const visibleColumns = computed(() => {
@@ -29,18 +30,6 @@ watch(() => props.records, () => {
 function getColumnHash(recordIndex: number, column: LightningTableColumn): string {
     return `${recordIndex}-${column.identifier}`;
 }
-
-function onColumnSortClick(column: LightningTableColumn) {
-    if (!column.sortDirection) {
-        return;
-    }
-
-    column.sortDirection = column.sortDirection === 'asc' ? 'desc' : 'asc';
-
-    if (column.onSortDirectionChanged) {
-        column.onSortDirectionChanged();
-    }
-}
 </script>
 
 <template>
@@ -48,32 +37,9 @@ function onColumnSortClick(column: LightningTableColumn) {
         <div v-bind="wrapperProps">
             <table class="slds-table slds-table_bordered slds-table_col-bordered slds-border_left slds-border_right">
                 <thead>
-                    <tr class="slds-line-height_reset">
+                    <tr>
                         <template v-for="column of visibleColumns" :key="column.identifier">
-                            <!-- Sortable header -->
-                            <th v-if="column.sortDirection" class="slds-border_top slds-is-sortable slds-is-sorted" scope="col">
-                                <a class="slds-th__action slds-text-link_reset" href="#" role="button" tabindex="0" @click.prevent="onColumnSortClick(column)">
-                                    <span class="slds-assistive-text">Sort by: </span>
-                                    <div class="slds-grid slds-grid_vertical-align-center slds-has-flexi-truncate">
-                                        <div class="slds-truncate" :title="column.label">{{ column.label }}</div>
-
-                                        <span v-if="column.sortDirection === 'desc'" class="slds-icon_container slds-icon-utility-arrowdown">
-                                            <svg class="slds-icon slds-icon-text-default slds-is-sortable__icon" aria-hidden="true">
-                                                <use xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#arrowdown"></use>
-                                            </svg>
-                                        </span>
-
-                                        <span v-else-if="column.sortDirection === 'asc'" class="slds-icon_container slds-icon-utility-arrowup">
-                                            <svg class="slds-icon slds-icon-text-default slds-is-sortable__icon" aria-hidden="true">
-                                                <use xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#arrowup"></use>
-                                            </svg>
-                                        </span>
-                                    </div>
-                                </a>
-                            </th>
-
-                            <!-- Standard header -->
-                            <th v-else class="slds-border_top" scope="col">
+                            <th scope="col">
                                 <div class="slds-truncate" :title="column.label">{{ column.label }}</div>
                             </th>
                         </template>
@@ -101,6 +67,9 @@ function onColumnSortClick(column: LightningTableColumn) {
                                     </template>
                                 </div>
                             </td>
+                        </tr>
+                        <tr v-if="lastRowText">
+                            <td :colspan="visibleColumns.length">{{ lastRowText }}</td>
                         </tr>
                     </template>
 
@@ -140,10 +109,5 @@ function onColumnSortClick(column: LightningTableColumn) {
 /* The inputs in the "th" inherit bold text */
 .slds-table thead .slds-input {
     font-weight: initial;
-}
-
-/* Required to fix sortable headers affecting padding of non-sorted headers */
-.slds-table thead th.slds-is-sortable {
-    padding: 0;
 }
 </style>

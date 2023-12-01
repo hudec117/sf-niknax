@@ -44,7 +44,7 @@ function getColumnHash(recordIndex: number, column: LightningTableColumn): strin
             </template>
 
             <tr v-else>
-                <td :colspan="visibleColumns.length">No rows, check your filters.</td>
+                <td :colspan="visibleColumns.length">No rows</td>
             </tr>
         </tbody>
     </table>
