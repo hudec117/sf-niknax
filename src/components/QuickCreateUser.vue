@@ -17,8 +17,9 @@ import type Organisation from '@/models/Organisation';
 import UserQuickCreateSettings from '@/models/UserQuickCreateSettings';
 import LightningSpinner from './slds/LightningSpinner.vue';
 import ErrorPopover from './slds/ErrorPopover.vue';
-import { ItemCloneResult } from '@/services/Results';
 import type LightningTableColumn from './slds/LightningTableColumn';
+import type UserActionResult from '@/models/UserActionResult';
+import type { ItemCloneResult } from '@/services/Results';
 
 const SETTINGS_KEY = 'quick-create-user-settings';
 
@@ -41,29 +42,15 @@ const primaryButtonError = ref<string | undefined>();
 const cloneButtonError = ref<string | undefined>();
 const loading = ref(true);
 const working = ref(false);
-const createOverlay = ref({
+const overlay = ref({
     visible: false,
     type: 'success',
-    afterUserLinkText: 'created!',
-    subtitle: ''
-});
-const cloneOverlay = ref({
-    visible: false,
-    type: 'success',
-    afterUserLinkText: 'cloned!',
-    subtitle: '',
-    cloneItemResults: new Array<ItemCloneResult>(),
-    cloneItemResultsTableColumns: [
+    actionResults: new Array<UserActionResult>(),
+    actionResultsTableColumns: [
         {
             type: 'text',
             identifier: 'item',
-            label: 'Item',
-            visible: true
-        },
-        {
-            type: 'text',
-            identifier: 'typeLabel',
-            label: 'Type',
+            label: 'Action',
             visible: true
         },
         {
@@ -342,26 +329,19 @@ async function onCloneAndCloseClick() {
         }
 
         createdUserId = cloneUserResult.guardedData.Id;
+        overlay.value.actionResults.push({
+            item: 'Clone User',
+            outcome: 'Success'
+        });
 
-        // Attempt to reset the password
-        if (form.value.resetPassword) {
-            const resetPasswordResult = await toolingService.executeAnonymous(`System.resetPassword('${createdUserId}', true);`);
-            if (!resetPasswordResult.success) {
-                cloneOverlay.value.type = 'warning';
-                cloneOverlay.value.subtitle = `Failed to reset the password because: ${resetPasswordResult.error}`;
-
-                cloneOverlay.value.afterUserLinkText = 'cloned but...';
-            } else {
-                cloneOverlay.value.afterUserLinkText = 'cloned and notified!';
-            }
-        }
+        await tryResetPasswordAfterCreate();
 
         if (form.value.clonePermissionSetAssignments) {
             const clonePermSetAssignmentsResult = await userService.clonePermissionSetAssignments(cloneTargetUser.value.Id, createdUserId);
             if (!clonePermSetAssignmentsResult.success || !clonePermSetAssignmentsResult.data) {
                 // TODO: handle
             } else {
-                cloneOverlay.value.cloneItemResults = cloneOverlay.value.cloneItemResults.concat(clonePermSetAssignmentsResult.data);
+                addItemCloneResultsToOverlay(clonePermSetAssignmentsResult.data);
             }
         }
 
@@ -370,7 +350,7 @@ async function onCloneAndCloseClick() {
             if (!cloneGroupMembershipsResult.success || !cloneGroupMembershipsResult.data) {
                 // TODO: handle
             } else {
-                cloneOverlay.value.cloneItemResults = cloneOverlay.value.cloneItemResults.concat(cloneGroupMembershipsResult.data);
+                addItemCloneResultsToOverlay(cloneGroupMembershipsResult.data);
             }
         }
 
@@ -379,15 +359,14 @@ async function onCloneAndCloseClick() {
             if (!cloneQueueMembershipsResult.success || !cloneQueueMembershipsResult.data) {
                 // TODO: handle
             } else {
-                cloneOverlay.value.cloneItemResults = cloneOverlay.value.cloneItemResults.concat(cloneQueueMembershipsResult.data);
+                addItemCloneResultsToOverlay(cloneQueueMembershipsResult.data);
             }
         }
 
         // Show the overlay
-        cloneOverlay.value.visible = true;
+        overlay.value.visible = true;
     } finally {
         working.value = false;
-        primaryButtonText.value = 'Clone & Close';
     }
 }
 
@@ -425,31 +404,48 @@ async function onCreateAndCloseClick() {
         }
 
         createdUserId = userCreateResult.guardedData;
+        overlay.value.actionResults.push({
+            item: 'Create User',
+            outcome: 'Success'
+        });
 
-        // Attempt to reset the password
-        let allSuccessful = true;
-        if (form.value.resetPassword) {
-            const resetPasswordResult = await toolingService.executeAnonymous(`System.resetPassword('${createdUserId}', true);`);
-            if (!resetPasswordResult.success) {
-                createOverlay.value.type = 'warning';
-                createOverlay.value.subtitle = `Failed to reset the password because: ${resetPasswordResult.error}`;
+        tryResetPasswordAfterCreate();
 
-                allSuccessful = false;
-                createOverlay.value.afterUserLinkText = 'created but...';
-            } else {
-                createOverlay.value.afterUserLinkText = 'created and notified!';
-            }
-        }
-
-        // Only auto-close the window if the entire process (including password reset if chosen) is successful.
-        if (allSuccessful) {
-            setTimeout(closeWindow, 3000);
-        }
-
-        createOverlay.value.visible = true;
+        overlay.value.visible = true;
     } finally {
         working.value = false;
     }
+}
+
+async function tryResetPasswordAfterCreate(): Promise<void> {
+    if (form.value.resetPassword) {
+        const resetPasswordResult = await toolingService.executeAnonymous(`System.resetPassword('${createdUserId}', true);`);
+        if (!resetPasswordResult.success) {
+            overlay.value.type = 'warning';
+
+            // allSuccessful = false;
+            overlay.value.actionResults.push({
+                item: 'Reset Password',
+                outcome: `Failed because: ${resetPasswordResult.error}`
+            });
+        } else {
+            overlay.value.actionResults.push({
+                item: 'Reset Password',
+                outcome: 'Success'
+            });
+        }
+    }
+}
+
+function addItemCloneResultsToOverlay(itemCloneResults: Array<ItemCloneResult>) {
+    overlay.value.actionResults = overlay.value.actionResults.concat(
+        itemCloneResults.map(itemCloneResult => {
+            return {
+                item: `Clone ${itemCloneResult.typeLabel} '${itemCloneResult.item}'`,
+                outcome: itemCloneResult.outcome
+            } as UserActionResult;
+        })
+    );
 }
 
 async function onOpenUser() {
@@ -757,35 +753,19 @@ async function closeWindow() {
     <QuickCreateUserSettingsModal ref="settingsModal" />
     <UserSelectModal ref="userSelectModal" immediate-select />
 
-    <!-- User Create overlay -->
-    <FullscreenOverlay :visible="createOverlay.visible" :type="createOverlay.type">
+    <FullscreenOverlay :visible="overlay.visible" :type="overlay.type">
         <template v-slot:title>
-            <span class="overlay-user-link" @click="onOpenUser" title="Open User detail page in a new tab.">User</span> {{ createOverlay.afterUserLinkText }}
+            <span class="overlay-user-link" @click="onOpenUser" title="Open User detail page in a new tab.">Open User</span>
         </template>
 
-        <template v-slot:subtitle>
-            {{ createOverlay.subtitle }}
-        </template>
-    </FullscreenOverlay>
-
-    <!-- Clone overlay -->
-    <FullscreenOverlay :visible="cloneOverlay.visible" :type="cloneOverlay.type">
-        <template v-slot:title>
-            <span class="overlay-user-link" @click="onOpenUser" title="Open User detail page in a new tab.">User</span> {{ cloneOverlay.afterUserLinkText }}
-        </template>
-
-        <template v-slot:subtitle>
-            {{ cloneOverlay.subtitle }}
-        </template>
-
-        <template v-if="cloneOverlay.cloneItemResults.length > 0" v-slot:body>
+        <template v-if="overlay.actionResults.length > 0" v-slot:body>
             <article class="slds-card">
-                <div class="slds-card__header">
-                    <h2 class="slds-card__header-title">Item Clone Results</h2>
-                </div>
+                <!-- <div class="slds-card__header">
+                    <h2 class="slds-card__header-title">Results</h2>
+                </div> -->
                 <div class="slds-card__body slds-card__body_inner">
-                    <LightningTableLite :records="cloneOverlay.cloneItemResults"
-                                        :columns="cloneOverlay.cloneItemResultsTableColumns" />
+                    <LightningTableLite :records="overlay.actionResults"
+                                        :columns="overlay.actionResultsTableColumns" />
                 </div>
             </article>
         </template>

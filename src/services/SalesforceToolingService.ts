@@ -25,14 +25,18 @@ export default class SalesforceToolingService {
         const urlEncodedCode = encodeURIComponent(code);
         const requestUrl = new URL(`${this.EXECUTE_ANONYMOUS_ENDPOINT}?anonymousBody=${urlEncodedCode}`, this.serverBaseUrl);
 
-        const response = await this.authFetch(requestUrl);
-        const responseBody = await response.json();
+        try {
+            const response = await this.authFetch(requestUrl);
+            const responseBody = await response.json();
 
-        const successfullyExecuted = response.ok && !responseBody.exceptionMessage && !responseBody.compileProblem;
-        if (successfullyExecuted) {
-            return Result.success();
-        } else {
-            return Result.fail(responseBody.exceptionMessage || responseBody.compileProblem);
+            const successfullyExecuted = response.ok && !responseBody.exceptionMessage && !responseBody.compileProblem;
+            if (successfullyExecuted) {
+                return Result.success();
+            } else {
+                return Result.fail(responseBody.exceptionMessage || responseBody.compileProblem);
+            }
+        } catch (error) {
+            return Result.fail((error as Error).message);
         }
     }
 }
