@@ -7,20 +7,22 @@
 Browser extension for various QoL improvements in Salesforce, with emphasis on familiar design and excellent UX.
 
 Features
- - 2-click user creation from anywhere in Salesforce
- - Public Group membership editing from the user detail page
- - Fast Queue membership editing from the user detail page
+ - Fast Public Group membership editing
+ - Fast Queue membership editing
+ - Fast 2-click User creation
+ - Fast User Cloning
+ - Searchable Audit Trail
  - Sleek & familiar SLDS design
 
 Roadmap
- - 🔄 User Cloning
  - 🔄 Bulk Freeze/Unfreeze Users
- - 🔄 Deployment progress bar
+ - 🔄 Global deployment progress bar
  - 🔄 Enhanced debug logs view
  - 🔄 Enhanced API event log viewer
  - 🔄 Edge support
 
 (Not an official Salesforce® product)
+
 
 ## Download
 
@@ -31,6 +33,19 @@ This extension is compatible with: Chrome 88 or later.
 ![Chrome Web Store](https://storage.googleapis.com/chrome-gcs-uploader.appspot.com/image/WlD8wC6g8khYWPJUsQceQkhXSlv1/mPGKYBIR2uCP0ApchDXE.png)
 
 </a>
+
+
+## Contents
+
+- [Quick Create User](#quick-create-user)
+  - [User Cloning](#user-cloning)
+- [Public Group/Queue Membership Editing](#public-groupqueue-membership-editing)
+- [Setup+ Audit Trail](#setup-audit-trail)
+- [Video](#video)
+- [Q\&A](#qa)
+- [Security](#security)
+- [Support](#support)
+
 
 ## Quick Create User
 
@@ -57,8 +72,24 @@ Features
 <br />
 
 <p>
-    <img src="branding/store/quick-create-user.png" height="460">
+    <img src="branding/store/screenshots/quick-create-user.png" height="460">
 </p>
+
+### User Cloning
+
+**Use case**: USE CASE
+
+DESCRIPTION
+
+Features
+ - LIST OF FEATURES
+
+<br />
+
+<p>
+    <img src="branding/store/screenshots/clone-user.png" height="460">
+</p>
+
 
 ## Public Group/Queue Membership Editing
 
@@ -77,12 +108,30 @@ Features
 <br />
 
 <p>
-    <img src="branding/store/memberships-group.png" height="460">
+    <img src="branding/store/screenshots/memberships-group.png" height="460">
 </p>
+
+
+## Audit Trail
+
+**Use case**: USE CASE
+
+DESCRIPTION
+
+Features
+ - LIST OF FEATURES
+
+<br />
+
+<p>
+    <img src="branding/store/screenshots/audit-trail.png" height="460">
+</p>
+
 
 ## Video
 
 [![Salesforce Niknax YouTube](https://img.youtube.com/vi/g4xzWorTsy8/0.jpg)](https://www.youtube.com/watch?v=g4xzWorTsy8)
+
 
 ## Q&A
 
@@ -100,6 +149,7 @@ Features
 
 **A**: This is because your session has timed out and you've been logged out of Salesforce. Close all Salesforce Niknax windows, log back into Salesforce and try again.
 
+
 ## Security
 
 This extension has been reviewed by the Chrome Web Store team and follows the [Chrome Web Store Program Policies](https://developer.chrome.com/docs/webstore/program-policies/).
@@ -108,6 +158,7 @@ This extension has been reviewed by the Chrome Web Store team and follows the [C
 - All communication between the extension and Salesforce's REST and Tooling APIs is direct and secured using HTTPS.
   - Verifiable using the "Network" tab in the Chrome developer tools.
 - Third-party dependencies are regularly checked for vulnerabilities/updates using `npm audit` and GitHub Dependabot.
+
 
 ## Support
 

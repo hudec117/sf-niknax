@@ -41,17 +41,15 @@ export default class SalesforceUserService extends SalesforceRESTService {
         return alias + lastName.substring(0, 4).toLowerCase();
     }
 
-    generateUsername(usernamePrefix?: string, domainPrefix?: string): string {
+    generateUsername(usernamePrefix?: string, domain?: string): string {
         let username = this.generateRandomString(5, false, true, true);
         if (usernamePrefix) {
             username = `${usernamePrefix}.${username}`;
         }
 
-        let domain = this.generateRandomString(5, false, true, false);
-        if (domainPrefix) {
-            domain = `${domainPrefix}.${domain}`;
-        } else {
-            domain += '.com';
+        if (!domain) {
+            domain = this.generateRandomString(5, false, true, false);
+            domain = '.com';
         }
 
         return `${username}@${domain}`;
