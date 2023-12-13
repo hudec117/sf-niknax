@@ -11,7 +11,7 @@ Features
  - Fast Queue membership editing
  - Fast 2-click User creation
  - Fast User Cloning
- - Searchable Audit Trail
+ - Filterable Audit Trail
  - Sleek & familiar SLDS design
 
 Roadmap
@@ -40,7 +40,7 @@ This extension is compatible with: Chrome 88 or later.
 - [Quick Create User](#quick-create-user)
   - [User Cloning](#user-cloning)
 - [Public Group/Queue Membership Editing](#public-groupqueue-membership-editing)
-- [Setup+ Audit Trail](#setup-audit-trail)
+- [Audit Trail](#audit-trail)
 - [Video](#video)
 - [Q\&A](#qa)
 - [Security](#security)
@@ -77,17 +77,24 @@ Features
 
 ### User Cloning
 
-**Use case**: USE CASE
+**Use case**: cloning a user including permission sets, public groups etc
 
-DESCRIPTION
+User cloning is built into the Quick Create User tool to allow you to clone a User record including permission set assignments, public group/queue memberships and standard and custom fields.
+
+Accessible via the "Clone a User..." button in Quick Create User or by the "Clone" button on top of the User detail page.
 
 Features
- - LIST OF FEATURES
+ - (all from Quick Create User)
+ - Cloning Permission Set assignments
+ - Cloning Public Group memberships
+ - Cloning Queue memberships
+ - Choice to activate/deactive user
 
 <br />
 
 <p>
     <img src="branding/store/screenshots/clone-user.png" height="460">
+    <img src="branding/other/user-clone-button.png">
 </p>
 
 
@@ -114,12 +121,15 @@ Features
 
 ## Audit Trail
 
-**Use case**: USE CASE
+**Use case**: viewing and filtering the Audit Trail without having to download a CSV
 
-DESCRIPTION
+In Setup+, you can find an Audit Trail tool that downloads and displays the Audit Trail for the current environment.
 
 Features
- - LIST OF FEATURES
+ - Multi-column filtering
+    - Non-case-sensitive contains
+ - Hiding columns
+ - High performance table
 
 <br />
 
