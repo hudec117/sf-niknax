@@ -1,4 +1,7 @@
-export default interface User {
+import type Record from './Record';
+import type Profile from './Profile';
+
+export default interface User extends Record {
     Id: string;
     FirstName?: string;
     LastName: string;
@@ -8,7 +11,9 @@ export default interface User {
     CommunityNickname: string;
     LocaleSidKey: string;
     TimeZoneSidKey: string;
-    ProfileID: string;
+    ProfileId: string;
+    UserRoleId?: string;
     LanguageLocaleKey: string;
     EmailEncodingKey: string;
+    Profile: Profile;
 }

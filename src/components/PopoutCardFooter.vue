@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 
-import LicensesModal from './modals/licenses/LicensesModal.vue';
+import AboutModal from './modals/about/AboutModal.vue';
 
-const licensesModal = ref<InstanceType<typeof LicensesModal> | null>(null);
+const aboutModal = ref<InstanceType<typeof AboutModal> | null>(null);
 
-function onLicensesClick() {
-    licensesModal.value?.show();
+function onAboutClick() {
+    aboutModal.value?.show();
 }
 </script>
 
@@ -16,14 +16,14 @@ function onLicensesClick() {
             <div class="slds-col">
                 <span class="slds-float_left">Made with &#10084;&#65039; on <a href="https://github.com/hudec117/sf-niknax" class="external-link" target="_blank">GitHub</a></span>
             </div>
-            <div class="slds-col slds-col_bump-right slds-size_1-of-8">
-                <span>v1.0.0</span>
+            <div class="slds-grow_none slds-col_bump-right slds-m-right_large">
+                <span>v1.1.0</span>
             </div>
-            <div class="slds-col slds-size_1-of-8">
-                <a href="#" @click="onLicensesClick">Licenses</a>
+            <div class="slds-grow_none">
+                <a href="#" @click="onAboutClick">About</a>
             </div>
         </div>
     </footer>
 
-    <LicensesModal ref="licensesModal" />
+    <AboutModal ref="aboutModal" />
 </template>

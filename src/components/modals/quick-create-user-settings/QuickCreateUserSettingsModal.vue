@@ -83,7 +83,7 @@ defineExpose<{
                                     </svg>
                                 </button>
                                 <div class="slds-popover slds-popover_tooltip slds-nubbin_bottom-left popover-help" role="tooltip" v-show="showUsernameDomainTooltip">
-                                    <div class="slds-popover__body">Text to place after the @ symbol when generating the username.</div>
+                                    <div class="slds-popover__body">Text to place after the @ symbol when generating the username. Should contain a top-level domain.</div>
                                 </div>
                             </div>
                             <div class="slds-form-element__control">
