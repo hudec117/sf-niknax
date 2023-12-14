@@ -507,10 +507,16 @@ async function closeWindow() {
                     </button>
 
                     <!-- Primary button popover -->
-                    <ErrorPopover :message="primaryButtonError" :right="51" :top="55" @close="primaryButtonError = undefined" />
+                    <ErrorPopover :message="primaryButtonError"
+                                  :right="51"
+                                  :top="55"
+                                  @close="primaryButtonError = undefined" />
 
                     <!-- Clone button popover -->
-                    <ErrorPopover :message="cloneButtonError" :right="175" :top="55" @close="cloneButtonError = undefined" />
+                    <ErrorPopover :message="cloneButtonError"
+                                  :right="175"
+                                  :top="55"
+                                  @close="cloneButtonError = undefined" />
                 </div>
             </header>
         </div>

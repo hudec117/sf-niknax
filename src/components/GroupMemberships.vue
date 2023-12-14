@@ -30,7 +30,7 @@ const assignedGroups = ref<Array<Group>>([]);
 let originalAssignedGroups: Array<Group>;
 
 const title = ref('');
-const primaryButtonError = ref('');
+const primaryButtonError = ref<string | undefined>();
 const showAPINames = ref(false);
 const loading = ref(true);
 const working = ref(false);
@@ -317,7 +317,10 @@ async function unassignGroups(groups: Array<Group>): Promise<boolean> {
                     </button>
 
                     <!-- Error popover -->
-                    <ErrorPopover :message="primaryButtonError" :right="44" :top="55" />
+                    <ErrorPopover :message="primaryButtonError"
+                                  :right="44"
+                                  :top="55"
+                                  @close="primaryButtonError = undefined" />
                 </div>
             </header>
         </div>
