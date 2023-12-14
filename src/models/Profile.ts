@@ -1,13 +1,8 @@
-export default class Profile {
-    id: string;
-    name: string;
-    userLicenseId: string;
-    userLicenseName: string;
+import type UserLicense from './UserLicense';
 
-    constructor(id: string, name: string, userLicenseId: string, userLicenseName: string) {
-        this.id = id;
-        this.name = name;
-        this.userLicenseId = userLicenseId;
-        this.userLicenseName = userLicenseName;
-    }
+export default interface Profile {
+    Id: string;
+    Name: string;
+    UserLicenseId: string;
+    UserLicense: UserLicense;
 }

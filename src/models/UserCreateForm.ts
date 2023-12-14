@@ -1,4 +1,4 @@
-export default class UserCreateForm {
+export default class UserCreateCloneForm {
     firstName = '';
     lastName = '';
     alias = '';
@@ -8,6 +8,11 @@ export default class UserCreateForm {
     federationIdentifier = '';
     profileId = '';
     roleId = '';
+
+    clonePermissionSetAssignments = true;
+    clonePublicGroupMemberships = true;
+    cloneQueueMemberships = true;
+    activateUser = true;
 
     resetPassword = true;
 }

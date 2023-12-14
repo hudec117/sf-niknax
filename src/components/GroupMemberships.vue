@@ -1,14 +1,16 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 
-import SalesforceRESTService from '@/services/salesforce-rest-service';
+import SalesforceRESTService from '@/services/SalesforceRESTService';
 import DuelingPicklist from './slds/DuelingPicklist.vue';
 import UserSelectModal from './modals/user-select/UserSelectModal.vue';
 import PopoutCardFooter from './PopoutCardFooter.vue';
-import Group from '@/models/Group';
-import GroupMember from '@/models/GroupMember';
-import Context from '@/models/context';
+import type Group from '@/models/Group';
+import type GroupMember from '@/models/GroupMember';
 import DuelingPicklistItem from './slds/DuelingPicklistItem';
+import type Context from '@/models/Context';
+import LightningSpinner from './slds/LightningSpinner.vue';
+import ErrorPopover from './slds/ErrorPopover.vue';
 
 const props = defineProps<{
     context: Context,
@@ -28,10 +30,10 @@ const assignedGroups = ref<Array<Group>>([]);
 let originalAssignedGroups: Array<Group>;
 
 const title = ref('');
-const error = ref('');
+const primaryButtonError = ref<string | undefined>();
 const showAPINames = ref(false);
 const loading = ref(true);
-const saving = ref(false);
+const working = ref(false);
 
 const groupTypeLabel = computed(() => {
     if (props.type === 'Regular') {
@@ -45,19 +47,22 @@ const groupTypeLabel = computed(() => {
 
 const leftListItems = computed(() => {
     return availableGroups.value.map((group) => {
-        const displayName = showAPINames.value ? group.developerName : group.name;
-        return new DuelingPicklistItem(group.id, displayName);
+        const displayName = showAPINames.value ? group.DeveloperName : group.Name;
+        return new DuelingPicklistItem(group.Id, displayName);
     });
 });
 
 const rightListItems = computed(() => {
     return assignedGroups.value.map((group) => {
-        const displayName = showAPINames.value ? group.developerName : group.name;
-        return new DuelingPicklistItem(group.id, displayName);
+        const displayName = showAPINames.value ? group.DeveloperName : group.Name;
+        return new DuelingPicklistItem(group.Id, displayName);
     });
 });
 
 onMounted(() => {
+    title.value = `${groupTypeLabel.value} Memberships`;
+    document.title = `Salesforce Niknax: ${title.value}`;
+
     // Initialise Salesforce service
     restService = new SalesforceRESTService(props.context.serverHost, props.context.sessionId);
 
@@ -65,59 +70,56 @@ onMounted(() => {
 });
 
 async function loadData() {
-    title.value = `${groupTypeLabel.value} Memberships`;
-    document.title = `Salesforce Niknax: ${title.value}`;
-
-    // Get all groups
-    const allGroupsQueryResult = await restService.query(`SELECT Id, Name, DeveloperName FROM Group WHERE Type = '${props.type}'`);
-    if (!allGroupsQueryResult.success) {
-        error.value = `Initial query for all Group records failed because ${allGroupsQueryResult.error}`;
-        return;
-    }
-    const allGroups = (allGroupsQueryResult.data as Array<any>).map((record) => {
-        return new Group(record.Id, record.Name, record.DeveloperName);
-    });
-
-    // Group memberships
-    const groupMembersQueryResult = await restService.query(`SELECT Id, GroupId, UserOrGroupId FROM GroupMember WHERE UserOrGroupId = '${props.context.userId}'`);
-    if (!groupMembersQueryResult.success) {
-        error.value = `Initial query for GroupMember records failed because ${groupMembersQueryResult.error}`;
-        return;
-    }
-    userGroupMembers = (groupMembersQueryResult.data as Array<any>).map((record) => {
-        return new GroupMember(record.GroupId, record.UserOrGroupId, record.Id);
-    });
-
-    // Assigned groups
-    originalAssignedGroups = allGroups.filter(group => {
-        for (const groupMember of userGroupMembers) {
-            if (groupMember.groupId === group.id) {
-                return true;
-            }
+    try {
+        // Get all groups
+        const allGroupsQueryResult = await restService.query<Group>(`SELECT Id, Name, DeveloperName FROM Group WHERE Type = '${props.type}'`);
+        if (!allGroupsQueryResult.success) {
+            primaryButtonError.value = `Initial query for all Group records failed because: ${allGroupsQueryResult.error}`;
+            return;
         }
+        const allGroups = allGroupsQueryResult.guardedData;
 
-        return false;
-    });
-    assignedGroups.value = originalAssignedGroups.map(group => ({...group}));
-
-    // Available groups
-    originalAvailableGroups = allGroups.filter(group => {
-        for (const assignedGroup of assignedGroups.value) {
-            if (assignedGroup.id === group.id) {
-                return false;
-            }
+        // Group memberships
+        const groupMembersQueryResult = await restService.query<GroupMember>(`SELECT Id, GroupId, UserOrGroupId FROM GroupMember WHERE UserOrGroupId = '${props.context.userId}'`);
+        if (!groupMembersQueryResult.success) {
+            primaryButtonError.value = `Initial query for GroupMember records failed because: ${groupMembersQueryResult.error}`;
+            return;
         }
+        userGroupMembers = groupMembersQueryResult.guardedData;
 
-        return true;
-    });
-    availableGroups.value = originalAvailableGroups.map(group => ({...group}));
+        // Assigned groups
+        originalAssignedGroups = allGroups.filter(group => {
+            for (const groupMember of userGroupMembers) {
+                if (groupMember.GroupId === group.Id) {
+                    return true;
+                }
+            }
 
-    loading.value = false;
+            return false;
+        });
+        assignedGroups.value = originalAssignedGroups.map(group => ({...group}));
+
+        // Available groups
+        originalAvailableGroups = allGroups.filter(group => {
+            for (const assignedGroup of assignedGroups.value) {
+                if (assignedGroup.Id === group.Id) {
+                    return false;
+                }
+            }
+
+            return true;
+        });
+        availableGroups.value = originalAvailableGroups.map(group => ({...group}));
+    } catch (error) {
+        primaryButtonError.value = `Something went wrong in the loadData function: ${(error as Error).message}`;
+    } finally {
+        loading.value = false;
+    }
 }
 
 function onAssignGroups(items: Array<DuelingPicklistItem>) {
     for (const item of items) {
-        const group = availableGroups.value.filter(group => group.id === item.value)[0];
+        const group = availableGroups.value.filter(group => group.Id === item.value)[0];
 
         // Remove from available groups
         const groupIndex = availableGroups.value.indexOf(group);
@@ -130,7 +132,7 @@ function onAssignGroups(items: Array<DuelingPicklistItem>) {
 
 function onUnassignGroups(items: Array<DuelingPicklistItem>) {
     for (const item of items) {
-        const group = assignedGroups.value.filter(group => group.id === item.value)[0];
+        const group = assignedGroups.value.filter(group => group.Id === item.value)[0];
 
         // Remove from assigned groups
         const groupIndex = assignedGroups.value.indexOf(group);
@@ -144,16 +146,13 @@ function onUnassignGroups(items: Array<DuelingPicklistItem>) {
 async function onMatchUserClick() {
     const userId = await userSelectModal.value?.show(props.context);
     if (userId) {
-        const cloneUserGroupMembershipsQueryResult = await restService.query(`SELECT Id, GroupId, UserOrGroupId FROM GroupMember WHERE UserOrGroupId = '${userId}' AND Group.Type = '${props.type}'`);
+        const cloneUserGroupMembershipsQueryResult = await restService.query<GroupMember>(`SELECT Id, GroupId, UserOrGroupId FROM GroupMember WHERE UserOrGroupId = '${userId}' AND Group.Type = '${props.type}'`);
         if (!cloneUserGroupMembershipsQueryResult.success) {
-            error.value = `Query to retrieve match user's GroupMember records failed because ${cloneUserGroupMembershipsQueryResult.error}`
+            primaryButtonError.value = `Query to retrieve match user's GroupMember records failed because: ${cloneUserGroupMembershipsQueryResult.error}`
             return;
         }
 
-        const matchUserGroupMembers = (cloneUserGroupMembershipsQueryResult.data as Array<any>).map((record) => {
-            return new GroupMember(record.GroupId, record.UserOrGroupId, record.Id);
-        });
-
+        const matchUserGroupMembers = cloneUserGroupMembershipsQueryResult.guardedData;
         if (matchUserGroupMembers.length === 0) {
             // TODO: handle if match user has no groups
             return;
@@ -167,12 +166,12 @@ async function onMatchUserClick() {
 
         // Assign the ones from the query
         for (const groupMember of matchUserGroupMembers) {
-            const groupFinds = availableGroups.value.filter(group => group.id === groupMember.groupId);
+            const groupFinds = availableGroups.value.filter(group => group.Id === groupMember.GroupId);
             if (groupFinds.length < 1) {
-                error.value = `Available groups does not contain the match user's group "${groupMember.groupId}".`;
+                primaryButtonError.value = `Available groups does not contain the match user's group "${groupMember.GroupId}".`;
                 return;
             } else if (groupFinds.length > 1) {
-                error.value = `Available groups contains too many groups matching "${groupMember.groupId}".`;
+                primaryButtonError.value = `Available groups contains too many groups matching "${groupMember.GroupId}".`;
                 return;
             }
 
@@ -189,8 +188,8 @@ async function onMatchUserClick() {
 }
 
 async function onSaveAndCloseClick() {
-    saving.value = true;
-    error.value = '';
+    working.value = true;
+    primaryButtonError.value = '';
 
     try {
         let success = true;
@@ -198,7 +197,7 @@ async function onSaveAndCloseClick() {
         // Create a list of groups that have been newly assigned
         const newlyAssignedGroups = assignedGroups.value.filter(group => {
             for (const originalAssignedGroup of originalAssignedGroups) {
-                if (originalAssignedGroup.id === group.id) {
+                if (originalAssignedGroup.Id === group.Id) {
                     return false;
                 }
             }
@@ -212,7 +211,7 @@ async function onSaveAndCloseClick() {
         // Create a list of groups that have been newly unassigned
         const newlyUnassignedGroups = availableGroups.value.filter(group => {
             for (const originalAvailableGroup of originalAvailableGroups) {
-                if (originalAvailableGroup.id === group.id) {
+                if (originalAvailableGroup.Id === group.Id) {
                     return false;
                 }
             }
@@ -232,23 +231,28 @@ async function onSaveAndCloseClick() {
             await chrome.windows.remove(currentPopup.id!);
         }
     } finally {
-        saving.value = false;
+        working.value = false;
     }
 }
 
 async function assignGroups(groups: Array<Group>): Promise<boolean> {
     const assignToUserId = props.context.userId;
     if (!assignToUserId) {
-        error.value = 'Missing User ID in the context.';
+        primaryButtonError.value = 'Missing User ID in the context.';
         return false;
     }
 
-    const groupMembersToCreate = groups.map(group => new GroupMember(group.id, assignToUserId));
+    const groupMembersToCreate = groups.map(group => {
+        return {
+            GroupId: group.Id,
+            UserOrGroupId: assignToUserId
+        } as GroupMember;
+    });
 
     for (const groupMember of groupMembersToCreate) {
         const result = await restService.create('GroupMember', groupMember);
         if (!result.success) {
-            error.value = `Failed to assign (create) user to group "${groupMember.groupId}" because ${result.error}`;
+            primaryButtonError.value = `Failed to assign (create) user to group "${groupMember.GroupId}" because: ${result.error}`;
             return false;
         }
     }
@@ -257,12 +261,12 @@ async function assignGroups(groups: Array<Group>): Promise<boolean> {
 }
 
 async function unassignGroups(groups: Array<Group>): Promise<boolean> {
-    const groupMembersToDelete = groups.map(group => userGroupMembers.filter(groupMember => group.id == groupMember.groupId)[0]);
+    const groupMembersToDelete = groups.map(group => userGroupMembers.filter(groupMember => group.Id == groupMember.GroupId)[0]);
 
     for (const groupMember of groupMembersToDelete) {
-        const result = await restService.delete('GroupMember', groupMember.id!);
+        const result = await restService.delete('GroupMember', groupMember.Id!);
         if (!result.success) {
-            error.value = `Failed to unassign (delete) user from group "${groupMember.groupId}" because ${result.error}`;
+            primaryButtonError.value = `Failed to unassign (delete) user from group "${groupMember.GroupId}" because: ${result.error}`;
             return false;
         }
     }
@@ -273,6 +277,8 @@ async function unassignGroups(groups: Array<Group>): Promise<boolean> {
 
 <template>
     <article class="slds-card">
+        <LightningSpinner :visible="loading || working" />
+
         <div class="slds-card__header slds-grid">
             <header class="slds-media slds-media_center slds-has-flexi-truncate">
                 <div class="slds-media__figure">
@@ -291,8 +297,7 @@ async function unassignGroups(groups: Array<Group>): Promise<boolean> {
                     <!-- Toggle API names button -->
                     <button class="slds-button slds-button_icon slds-button_icon-border-filled align-card-action-button"
                             title="Toggle API Names"
-                           @click="showAPINames = !showAPINames"
-                           :disabled="loading || saving">
+                           @click="showAPINames = !showAPINames">
                         <svg class="slds-button__icon">
                             <use xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#preview"></use>
                         </svg>
@@ -301,43 +306,21 @@ async function unassignGroups(groups: Array<Group>): Promise<boolean> {
                     <!-- Match User button -->
                     <button class="slds-button slds-button_neutral"
                             title="Match another user's group memberships"
-                           @click="onMatchUserClick"
-                           :disabled="loading || saving">
+                           @click="onMatchUserClick">
                         Match a User
                     </button>
 
                     <!-- Save & Close button -->
                     <button class="slds-button slds-button_brand"
-                           @click="onSaveAndCloseClick"
-                           :disabled="loading || saving">
-                        {{ saving ? 'Saving...' : 'Save & Close' }}
+                           @click="onSaveAndCloseClick">
+                        Save & Close
                     </button>
 
                     <!-- Error popover -->
-                    <section id="save-popover" class="slds-popover slds-popover_error slds-nubbin_top-right slds-is-absolute" role="dialog" v-if="error">
-                        <button class="slds-button slds-button_icon slds-button_icon-small slds-float_right slds-popover__close slds-button_icon-inverse slds-m-top_x-small slds-m-right_small" title="Close" @click="error = ''">
-                            <svg class="slds-button__icon">
-                                <use xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#close"></use>
-                            </svg>
-                        </button>
-                        <header class="slds-popover__header">
-                            <div class="slds-media slds-media_center slds-has-flexi-truncate ">
-                                <div class="slds-media__figure">
-                                    <span class="slds-icon_container slds-icon-utility-error">
-                                        <svg class="slds-icon slds-icon_x-small">
-                                            <use xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#error"></use>
-                                        </svg>
-                                    </span>
-                                </div>
-                                <div class="slds-media__body">
-                                    <h2 class="slds-truncate slds-text-heading_medium">We hit a snag</h2>
-                                </div>
-                            </div>
-                        </header>
-                        <div class="slds-popover__body">
-                            <p>{{ error }}</p>
-                        </div>
-                    </section>
+                    <ErrorPopover :message="primaryButtonError"
+                                  :right="44"
+                                  :top="55"
+                                  @close="primaryButtonError = undefined" />
                 </div>
             </header>
         </div>
@@ -346,19 +329,11 @@ async function unassignGroups(groups: Array<Group>): Promise<boolean> {
                              :right-list-label="`Assigned ${groupTypeLabel}s`"
                             :left-list="leftListItems"
                             :right-list="rightListItems"
-                            :disabled="loading || saving"
                             @move-left="onUnassignGroups"
                             @move-right="onAssignGroups" />
         </div>
         <PopoutCardFooter />
     </article>
 
-    <UserSelectModal ref="userSelectModal" />
+    <UserSelectModal ref="userSelectModal" immediate-select />
 </template>
-
-<style scoped>
-#save-popover {
-    left: 266px;
-    top: 54px;
-}
-</style>
