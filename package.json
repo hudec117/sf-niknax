@@ -12,7 +12,7 @@
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore"
   },
   "dependencies": {
-    "@salesforce-ux/design-system": "^2.22.0",
+    "@salesforce-ux/design-system": "^2.22.2",
     "@vueuse/core": "^10.6.1",
     "email-validator": "^2.0.4",
     "papaparse": "^5.4.1",
