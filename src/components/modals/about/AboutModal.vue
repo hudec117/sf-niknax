@@ -32,23 +32,33 @@ defineExpose<{
 
 <template>
     <template v-if="visible">
-        <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open slds-modal_small">
+        <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open">
             <div class="slds-modal__container">
-                <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" @click="onCloseClick">
+                <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" title="Close (Esc)" @click="onCloseClick">
                     <svg class="slds-button__icon slds-button__icon_large">
                         <use xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#close"></use>
                     </svg>
                 </button>
                 <div class="slds-modal__header">
-                    <h1 class="slds-text-heading_medium">Third-Party Licenses</h1>
+                    <h1 class="slds-modal__title slds-hyphenate">
+                        About Salesforce Niknax
+                    </h1>
                 </div>
                 <div class="slds-modal__content slds-p-around_medium">
-                    <div class="slds-form-element">
-                        <div class="slds-form-element__control">
-                            <textarea class="slds-textarea" readonly>
-=========================
+                    <ul class="slds-list_dotted slds-m-bottom_medium">
+                        <li class="slds-item">Found a bug? Create an Issue on <a href="https://github.com/hudec117/sf-niknax/issues" class="external-link" target="_blank">GitHub</a></li>
+                        <li class="slds-item">Looking for the author? Connect on <a href="https://www.linkedin.com/in/aurel-hudec-abb95b108" class="external-link" target="_blank">LinkedIn</a></li>
+                    </ul>
+
+                    <div class="slds-section slds-is-open">
+                        <h3 class="slds-section__title slds-theme_shade">
+                            <span class="slds-truncate slds-p-horizontal_small">Third-Party Licenses</span>
+                        </h3>
+                        <div class="slds-section__content">
+                            <textarea class="slds-textarea slds-text-font_monospace" disabled>
+==================================
 == @salesforce-ux/design-system ==
-=========================
+==================================
 Copyright (c) 2015-present, Salesforce.com, Inc.
 All rights reserved.
 
@@ -75,9 +85,9 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-=======
+=========
 == vue ==
-=======
+=========
 The MIT License (MIT)
 
 Copyright (c) 2018-present, Yuxi (Evan) You
@@ -101,9 +111,35 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
 
-==============
+==================
+== @vueuse/core ==
+==================
+MIT License
+
+Copyright (c) 2019-PRESENT Anthony Fu
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+
+==================
 == vue-debounce ==
-==============
+==================
 MIT License
 
 Copyright (c) 2018 Dustin Hershman
@@ -124,19 +160,44 @@ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.</textarea>
+SOFTWARE.
+
+
+===============
+== papaparse ==
+===============
+The MIT License (MIT)
+
+Copyright (c) 2015 Matthew Holt
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</textarea>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </section>
+            </section>
         <div class="slds-backdrop slds-backdrop_open" role="presentation"></div>
     </template>
 </template>
 
 <style scoped>
 textarea {
-    height: 200px;
+    height: 150px;
     resize: none;
 }
 </style>

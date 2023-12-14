@@ -8,7 +8,6 @@ const props = defineProps<{
     leftListLabel: String
     rightList: Array<DuelingPicklistItem>
     rightListLabel: String
-    disabled: boolean
 }>();
 
 const emit = defineEmits<{
@@ -151,7 +150,7 @@ function includesInsensitive(value1: string, value2: string) {
                     <!-- Select all -->
                     <button class="slds-button slds-button_neutral slds-m-around_none slds-custom-select-all-button"
                            @click="onLeftSelectAllClick"
-                           :disabled="props.disabled || leftFilteredItems.length === 0">
+                           :disabled="leftFilteredItems.length === 0">
                         Select All
                     </button>
                 </div>
@@ -213,7 +212,7 @@ function includesInsensitive(value1: string, value2: string) {
                     <!-- Select all -->
                     <button class="slds-button slds-button_neutral slds-m-around_none slds-custom-select-all-button"
                            @click="onRightSelectAllClick"
-                           :disabled="props.disabled || rightFilteredItems.length === 0">
+                           :disabled="rightFilteredItems.length === 0">
                         Select All
                     </button>
                 </div>

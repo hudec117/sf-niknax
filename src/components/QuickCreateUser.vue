@@ -3,14 +3,23 @@ import { computed, onMounted, ref } from 'vue';
 
 import PopoutCardFooter from './PopoutCardFooter.vue';
 import FullscreenOverlay from '@/components/slds/FullscreenOverlay.vue';
-import SalesforceToolingService from '@/services/salesforce-tooling-service';
-import Context from '@/models/context';
+import LightningTableLite from '@/components/slds/LightningTableLite.vue';
 import QuickCreateUserSettingsModal from '@/components/modals/quick-create-user-settings/QuickCreateUserSettingsModal.vue';
-import UserCreateForm from '@/models/UserCreateForm';
-import SalesforceUserService from '@/services/salesforce-user-service';
-import Profile from '@/models/Profile';
-import Role from '@/models/Role';
+import UserSelectModal from '@/components/modals/user-select/UserSelectModal.vue';
+import SalesforceToolingService from '@/services/SalesforceToolingService';
+import Context from '@/models/Context';
+import UserCreateCloneForm from '@/models/UserCreateForm';
+import SalesforceUserService from '@/services/SalesforceUserService';
+import type Profile from '@/models/Profile';
+import type UserRole from '@/models/UserRole';
+import type User from '@/models/User';
+import type Organisation from '@/models/Organisation';
 import UserQuickCreateSettings from '@/models/UserQuickCreateSettings';
+import LightningSpinner from './slds/LightningSpinner.vue';
+import ErrorPopover from './slds/ErrorPopover.vue';
+import type LightningTableColumn from './slds/LightningTableColumn';
+import type UserActionResult from '@/models/UserActionResult';
+import type { ItemCloneResult } from '@/services/Results';
 
 const SETTINGS_KEY = 'quick-create-user-settings';
 
@@ -19,29 +28,44 @@ const props = defineProps<{
 }>();
 
 const settingsModal = ref<InstanceType<typeof QuickCreateUserSettingsModal> | null>(null);
+const userSelectModal = ref<InstanceType<typeof UserSelectModal> | null>(null);
 
 let userService: SalesforceUserService;
 let toolingService: SalesforceToolingService;
 let createdUserId = '';
 
-const title = ref('');
-const createAndCloseError = ref('');
+const mode = ref<'create' | 'clone'>('create');
+const form = ref(new UserCreateCloneForm());
 
-const form = ref(new UserCreateForm());
-
+const primaryButtonText = ref('Create & Close');
+const primaryButtonError = ref<string | undefined>();
+const cloneButtonError = ref<string | undefined>();
 const loading = ref(true);
-const creating = ref(false);
+const working = ref(false);
 const overlay = ref({
     visible: false,
     type: 'success',
-    passwordResetSuccessful: true,
-    passwordResetError: ''
+    actionResults: new Array<UserActionResult>(),
+    actionResultsTableColumns: [
+        {
+            type: 'text',
+            identifier: 'item',
+            label: 'Action',
+            visible: true
+        },
+        {
+            type: 'text',
+            identifier: 'outcome',
+            label: 'Outcome',
+            visible: true
+        }
+    ] as Array<LightningTableColumn>
 });
 const showUsernameTooltip = ref(false);
+const showProfileTooltip = ref(false);
 const showRoleTooltip = ref(false);
-
 const isValidEmail = ref(false);
-
+const cloneTargetUser = ref<User | undefined>();
 const settings = ref(new UserQuickCreateSettings());
 
 const profiles = ref({
@@ -51,10 +75,9 @@ const profiles = ref({
 });
 const roles = ref({
     loading: true,
-    items: new Array<Role>(),
+    items: new Array<UserRole>(),
     error: ''
 });
-
 
 const isValidForm = computed(() => {
     return userService.isValidEmail(form.value.email)
@@ -66,6 +89,8 @@ const isValidForm = computed(() => {
 });
 
 onMounted(() => {
+    document.title = 'Salesforce Niknax: Quick Create User';
+
     // Initialise Salesforce services
     userService = new SalesforceUserService(props.context.serverHost, props.context.sessionId);
     toolingService = new SalesforceToolingService(props.context.serverHost, props.context.sessionId);
@@ -74,30 +99,36 @@ onMounted(() => {
 });
 
 async function loadData() {
-    title.value = `Quick Create User`;
-    document.title = `Salesforce Niknax: ${title.value}`;
-
-    // Load settings
-    const settingsResult = await chrome.storage.local.get([SETTINGS_KEY]);
-    if (SETTINGS_KEY in settingsResult) {
-        settings.value = settingsResult[SETTINGS_KEY] as UserQuickCreateSettings;
-    }
-
-    form.value.resetPassword = settings.value.resetPasswordDefault;
-
-    // Attempt to load email from clipboard
-    if (settings.value.grabEmailFromClipboard) {
-        const clipboardText = (await navigator.clipboard.readText()).trim();
-        if (userService.isValidEmail(clipboardText)) {
-            form.value.email = clipboardText;
-            onEmailEntered();
+    try {
+        // Load settings
+        const settingsResult = await chrome.storage.local.get([SETTINGS_KEY]);
+        if (SETTINGS_KEY in settingsResult) {
+            settings.value = settingsResult[SETTINGS_KEY] as UserQuickCreateSettings;
         }
+
+        form.value.resetPassword = settings.value.resetPasswordDefault;
+
+        // Attempt to load email from clipboard
+        if (settings.value.grabEmailFromClipboard) {
+            const clipboardText = (await navigator.clipboard.readText()).trim();
+            if (userService.isValidEmail(clipboardText)) {
+                form.value.email = clipboardText;
+                onEmailEntered();
+            }
+        }
+
+        // Load profiles/roles
+        await Promise.all([loadProfiles(), loadRoles()]);
+
+        // If the user ID is in the context, switch to clone mode immediately.
+        if (props.context.userId) {
+            switchToCloneMode(props.context.userId);
+        }
+    } catch (error) {
+        primaryButtonError.value = `Something went wrong in the loadData function: ${(error as Error).message}`;
+    } finally {
+        loading.value = false;
     }
-
-    // Load profiles/roles
-    await Promise.all([loadProfiles(), loadRoles()]);
-
-    loading.value = false;
 }
 
 async function loadProfiles() {
@@ -105,20 +136,20 @@ async function loadProfiles() {
     profiles.value.loading = true;
 
     try {
-        const result = await userService.query('SELECT Id, Name, UserLicenseId, UserLicense.Name FROM Profile');
+        const result = await userService.query<Profile>('SELECT Id, Name, UserLicenseId, UserLicense.Name FROM Profile');
         if (!result.success) {
             profiles.value.error = result.error as string;
             return;
         }
 
-        profiles.value.items = (result.data as Array<any>).map(record => new Profile(record.Id, record.Name, record.UserLicenseId, record.UserLicense.Name));
+        profiles.value.items = result.guardedData;
 
         // Attempt to find the default profile as defined in the settings, falling back to System Administrator if not found.
-        const matchedDefaultProfiles = profiles.value.items.filter(profile => profile.name === settings.value.defaultProfile);
+        const matchedDefaultProfiles = profiles.value.items.filter(profile => profile.Name === settings.value.defaultProfile);
         if (matchedDefaultProfiles.length > 0) {
-            form.value.profileId = matchedDefaultProfiles[0].id;
+            form.value.profileId = matchedDefaultProfiles[0].Id;
         } else {
-            form.value.profileId = profiles.value.items.filter(profile => profile.name === 'System Administrator')[0].id;
+            form.value.profileId = profiles.value.items.filter(profile => profile.Name === 'System Administrator')[0].Id;
         }
     } finally {
         profiles.value.loading = false;
@@ -130,18 +161,18 @@ async function loadRoles() {
     roles.value.loading = true;
 
     try {
-        const result = await userService.query('SELECT Id, Name, DeveloperName FROM UserRole');
+        const result = await userService.query<UserRole>('SELECT Id, Name, DeveloperName FROM UserRole');
         if (!result.success) {
             roles.value.error = result.error as string;
             return;
         }
 
-        roles.value.items = (result.data as Array<any>).map(record => new Role(record.Id, record.Name, record.DeveloperName));
+        roles.value.items = result.guardedData;
 
         // Attempt to find the default role as defined in the settings, falling back to None if not found.
-        const matchedDefaultRoles = roles.value.items.filter(role => role.developerName === settings.value.defaultRole);
+        const matchedDefaultRoles = roles.value.items.filter(role => role.DeveloperName === settings.value.defaultRole);
         if (matchedDefaultRoles.length > 0) {
-            form.value.roleId = matchedDefaultRoles[0].id;
+            form.value.roleId = matchedDefaultRoles[0].Id;
         } else {
             form.value.roleId = '';
         }
@@ -150,24 +181,25 @@ async function loadRoles() {
     }
 }
 
-async function onEmailEntered() {
+function onEmailEntered() {
     if (!(isValidEmail.value = userService.isValidEmail(form.value.email))) {
         return;
     }
 
     const emailUsername = form.value.email.substring(0, form.value.email.indexOf('@'));
 
-    const nameComponents = emailUsername.split('.');
-    if (settings.value.extractFirstLastNameFromEmail && nameComponents.length > 1) {
-        let firstName = nameComponents[0];
-        let lastName = nameComponents[nameComponents.length - 1];
-
+    const fullNameRegexResult = /^(\w+)\.(\w+)/.exec(emailUsername);
+    if (fullNameRegexResult) {
+        // Get and format first name
+        let firstName = fullNameRegexResult[1];
         firstName = firstName[0].toUpperCase() + firstName.slice(1);
-        lastName = lastName[0].toUpperCase() + lastName.slice(1);
-
         if (!form.value.firstName) {
             form.value.firstName = firstName;
         }
+
+        // Get and format last name
+        let lastName = fullNameRegexResult[2];
+        lastName = lastName[0].toUpperCase() + lastName.slice(1);
         if (!form.value.lastName) {
             form.value.lastName = lastName;
         }
@@ -190,6 +222,25 @@ async function onEmailEntered() {
     }
 }
 
+function onClonePermissionSetAssignmentsChanged() {
+    if (form.value.clonePermissionSetAssignments) {
+        form.value.activateUser = true;
+    }
+}
+
+function onActivateUserChanged() {
+    if (!form.value.activateUser) {
+        form.value.resetPassword = false;
+        form.value.clonePermissionSetAssignments = false;
+    }
+}
+
+function onResetPasswordChanged() {
+    if (form.value.resetPassword) {
+        form.value.activateUser = true;
+    }
+}
+
 async function onSettingsClick() {
     const newSettings = await settingsModal.value?.show(settings.value);
     if (newSettings) {
@@ -201,12 +252,136 @@ async function onSettingsClick() {
     }
 }
 
-async function onCreateAndCloseClick() {
-    creating.value = true;
-    createAndCloseError.value = '';
+async function onCloneClick() {
+    const cloneTargetUserId = await userSelectModal.value?.show(props.context);
+    if (!cloneTargetUserId) {
+        return;
+    }
+
+    loading.value = true;
 
     try {
-        const org = await userService.getOrganisation();
+        switchToCloneMode(cloneTargetUserId);
+    } finally {
+        loading.value = false;
+    }
+}
+
+async function switchToCloneMode(cloneTargetUserId: string) {
+    const userQueryResult = await userService.query<User>(`SELECT Id, Username, ProfileId, UserRoleId FROM User WHERE Id = '${cloneTargetUserId}'`);
+    if (!userQueryResult.success) {
+        cloneButtonError.value = `Failed to query the clone target User because: ${userQueryResult.error}`;
+        return;
+    }
+    cloneTargetUser.value = userQueryResult.guardedData[0];
+
+    // TODO: Check if the user has any permission set assignments
+
+    // TODO: Check if the user has any public group memberships
+
+    // TODO: Check if the user has any queue memberships
+
+    // Resize window to accomodate visible checkboxes, change the title and mode.
+    resizeTo(690, 724);
+    document.title = `Salesforce Niknax: Clone ${cloneTargetUser.value.Username}`;
+    mode.value = 'clone';
+    primaryButtonText.value = 'Clone & Close';
+
+    // Populate the Profile/Role picklists
+    form.value.profileId = cloneTargetUser.value.ProfileId;
+    form.value.roleId = cloneTargetUser.value.UserRoleId ?? '';
+}
+
+async function onPrimaryButtonClick() {
+    if (mode.value === 'create') {
+        onCreateAndCloseClick();
+    } else if (mode.value === 'clone') {
+        onCloneAndCloseClick();
+    }
+}
+
+async function onCloneAndCloseClick() {
+    working.value = true;
+    primaryButtonError.value = '';
+
+    if (!cloneTargetUser.value) {
+        // Note: should never happen
+        primaryButtonError.value = '"cloneTargetUser" is not set, please report this on GitHub.';
+        return;
+    }
+
+    try {
+        const overridenFieldValues = new Map<string, unknown>();
+        overridenFieldValues.set('FirstName', form.value.firstName);
+        overridenFieldValues.set('LastName', form.value.lastName);
+        overridenFieldValues.set('Email', form.value.email);
+        overridenFieldValues.set('Alias', form.value.alias);
+        overridenFieldValues.set('Username', form.value.username);
+        overridenFieldValues.set('CommunityNickname', form.value.nickname);
+        overridenFieldValues.set('ProfileId', form.value.profileId);
+        overridenFieldValues.set('UserRoleId', form.value.roleId);
+        overridenFieldValues.set('IsActive', form.value.activateUser);
+
+        const cloneUserResult = await userService.cloneUser(cloneTargetUser.value.Id, overridenFieldValues);
+        if (!cloneUserResult.success) {
+            primaryButtonError.value = `Failed to clone the user because: ${cloneUserResult.error}`;
+            return;
+        }
+
+        createdUserId = cloneUserResult.guardedData.Id;
+        overlay.value.actionResults.push({
+            item: 'Clone User',
+            outcome: 'Success'
+        });
+
+        await tryResetPasswordAfterCreate();
+
+        if (form.value.clonePermissionSetAssignments) {
+            const clonePermSetAssignmentsResult = await userService.clonePermissionSetAssignments(cloneTargetUser.value.Id, createdUserId);
+            if (!clonePermSetAssignmentsResult.success || !clonePermSetAssignmentsResult.data) {
+                // TODO: handle
+            } else {
+                addItemCloneResultsToOverlay(clonePermSetAssignmentsResult.data);
+            }
+        }
+
+        if (form.value.clonePublicGroupMemberships) {
+            const cloneGroupMembershipsResult = await userService.cloneGroupMemberships(cloneTargetUser.value.Id, createdUserId, 'Regular');
+            if (!cloneGroupMembershipsResult.success || !cloneGroupMembershipsResult.data) {
+                // TODO: handle
+            } else {
+                addItemCloneResultsToOverlay(cloneGroupMembershipsResult.data);
+            }
+        }
+
+        if (form.value.cloneQueueMemberships) {
+            const cloneQueueMembershipsResult = await userService.cloneGroupMemberships(cloneTargetUser.value.Id, createdUserId, 'Queue');
+            if (!cloneQueueMembershipsResult.success || !cloneQueueMembershipsResult.data) {
+                // TODO: handle
+            } else {
+                addItemCloneResultsToOverlay(cloneQueueMembershipsResult.data);
+            }
+        }
+
+        // Show the overlay
+        overlay.value.visible = true;
+    } finally {
+        working.value = false;
+    }
+}
+
+async function onCreateAndCloseClick() {
+    working.value = true;
+    primaryButtonError.value = '';
+
+    try {
+        const getOrgResult = await userService.getOrganisation();
+        if (!getOrgResult.success) {
+            primaryButtonError.value = `Failed to get the current organisation ID because: ${getOrgResult.error}`;
+            return;
+        }
+
+        const org = getOrgResult.data as Organisation;
 
         // Create the user
         const userCreateResult = await userService.create('User', {
@@ -216,43 +391,61 @@ async function onCreateAndCloseClick() {
             Alias: form.value.alias,
             Username: form.value.username,
             CommunityNickname: form.value.nickname,
-            LocaleSidKey: org.defaultLocaleSidKey,
-            TimeZoneSidKey: org.timeZoneSidKey,
+            LocaleSidKey: org.DefaultLocaleSidKey,
+            TimeZoneSidKey: org.TimeZoneSidKey,
             ProfileId: form.value.profileId,
             UserRoleId: form.value.roleId,
-            LanguageLocaleKey: org.languageLocaleKey,
+            LanguageLocaleKey: org.LanguageLocaleKey,
             EmailEncodingKey: 'UTF-8'
         });
         if (!userCreateResult.success) {
-            createAndCloseError.value = `Failed to create the user. ${userCreateResult.error}`;
+            primaryButtonError.value = `Failed to create the user because: ${userCreateResult.error}`;
             return;
         }
 
-        createdUserId = userCreateResult.data.id;
+        createdUserId = userCreateResult.guardedData;
+        overlay.value.actionResults.push({
+            item: 'Create User',
+            outcome: 'Success'
+        });
 
-        // Attempt to reset the password
-        let allSuccessful = true;
-        if (form.value.resetPassword) {
-            const resetPasswordResult = await toolingService.executeAnonymous(`System.resetPassword('${createdUserId}', true);`);
-            if (!resetPasswordResult.success) {
-                overlay.value.type = 'warning';
-                overlay.value.passwordResetSuccessful = false;
-                overlay.value.passwordResetError = `Failed to reset the password. ${resetPasswordResult.error}`;
+        tryResetPasswordAfterCreate();
 
-                allSuccessful = false;
-            }
-        }
-
-        // Only auto-cloes the window if the user creation and password reset (if chosen) has succedded.
-        if (allSuccessful) {
-            setTimeout(closeWindow, 3000);
-        }
-
-        // Show the overlay
         overlay.value.visible = true;
     } finally {
-        creating.value = false;
+        working.value = false;
     }
+}
+
+async function tryResetPasswordAfterCreate(): Promise<void> {
+    if (form.value.resetPassword) {
+        const resetPasswordResult = await toolingService.executeAnonymous(`System.resetPassword('${createdUserId}', true);`);
+        if (!resetPasswordResult.success) {
+            overlay.value.type = 'warning';
+
+            // allSuccessful = false;
+            overlay.value.actionResults.push({
+                item: 'Reset Password',
+                outcome: `Failed because: ${resetPasswordResult.error}`
+            });
+        } else {
+            overlay.value.actionResults.push({
+                item: 'Reset Password',
+                outcome: 'Success'
+            });
+        }
+    }
+}
+
+function addItemCloneResultsToOverlay(itemCloneResults: Array<ItemCloneResult>) {
+    overlay.value.actionResults = overlay.value.actionResults.concat(
+        itemCloneResults.map(itemCloneResult => {
+            return {
+                item: `Clone ${itemCloneResult.typeLabel} '${itemCloneResult.item}'`,
+                outcome: itemCloneResult.outcome
+            } as UserActionResult;
+        })
+    );
 }
 
 async function onOpenUser() {
@@ -272,65 +465,55 @@ async function closeWindow() {
 
 <template>
     <article class="slds-card">
+        <LightningSpinner :visible="loading || working" />
+
         <div class="slds-card__header slds-grid">
-                <header class="slds-media slds-media_center slds-has-flexi-truncate">
-                    <div class="slds-media__figure">
-                        <span class="slds-icon_container slds-icon-standard-user">
-                            <svg class="slds-icon slds-icon_small">
-                                <use xlink:href="slds/assets/icons/standard-sprite/svg/symbols.svg#user"></use>
-                            </svg>
-                        </span>
-                    </div>
-                    <div class="slds-media__body">
-                        <h2 class="slds-card__header-title">
-                            <span>{{ title }}</span>
-                        </h2>
-                    </div>
-                    <div class="slds-no-flex">
-                        <!-- Setting button -->
-                        <button class="slds-button slds-button_icon slds-button_icon-border-filled align-card-action-button"
-                                title="Settings"
-                               @click="onSettingsClick">
-                            <svg class="slds-button__icon">
-                                <use xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#settings"></use>
-                            </svg>
-                        </button>
+            <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                <div class="slds-media__figure">
+                    <span class="slds-icon_container slds-icon-standard-user">
+                        <svg class="slds-icon slds-icon_small">
+                            <use xlink:href="slds/assets/icons/standard-sprite/svg/symbols.svg#user"></use>
+                        </svg>
+                    </span>
+                </div>
+                <div class="slds-media__body">
+                    <h2 class="slds-card__header-title">
+                        <template v-if="mode === 'create'">Quick Create User</template>
+                        <span v-else-if="mode === 'clone'" class="slds-truncate slds-m-right_x-small">Clone {{ cloneTargetUser?.Username }}</span>
+                    </h2>
+                </div>
+                <div class="slds-no-flex">
+                    <!-- Setting button -->
+                    <button class="slds-button slds-button_icon slds-button_icon-border-filled align-card-action-button"
+                            title="Settings"
+                            @click="onSettingsClick">
+                        <svg class="slds-button__icon">
+                            <use xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#settings"></use>
+                        </svg>
+                    </button>
 
-                        <!-- Create & Close button -->
-                        <button class="slds-button slds-button_brand"
-                               @click="onCreateAndCloseClick"
-                               :disabled="loading || creating || !isValidForm">
-                            {{ creating ? 'Creating...' : 'Create & Close' }}
-                        </button>
+                    <!-- Clone a User button -->
+                    <button class="slds-button slds-button_neutral"
+                           @click="onCloneClick"
+                           :disabled="loading || working">
+                        Clone a User...
+                    </button>
 
-                        <!-- Error popover -->
-                        <section id="create-popover" class="slds-popover slds-popover_error slds-nubbin_top-right slds-is-absolute" role="dialog" v-if="createAndCloseError">
-                            <button class="slds-button slds-button_icon slds-button_icon-small slds-float_right slds-popover__close slds-button_icon-inverse slds-m-top_x-small slds-m-right_small" title="Close" @click="createAndCloseError = ''">
-                                <svg class="slds-button__icon">
-                                    <use xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#close"></use>
-                                </svg>
-                            </button>
-                            <header class="slds-popover__header">
-                                <div class="slds-media slds-media_center slds-has-flexi-truncate ">
-                                    <div class="slds-media__figure">
-                                        <span class="slds-icon_container slds-icon-utility-error">
-                                            <svg class="slds-icon slds-icon_x-small">
-                                                <use xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#error"></use>
-                                            </svg>
-                                        </span>
-                                    </div>
-                                    <div class="slds-media__body">
-                                        <h2 class="slds-truncate slds-text-heading_medium">We hit a snag</h2>
-                                    </div>
-                                </div>
-                            </header>
-                            <div class="slds-popover__body">
-                                <p>{{ createAndCloseError }}</p>
-                            </div>
-                        </section>
-                    </div>
-                </header>
-            </div>
+                    <!-- Create/Clone & Close (aka primary) button -->
+                    <button class="slds-button slds-button_brand"
+                           @click="onPrimaryButtonClick"
+                           :disabled="loading || working || !isValidForm">
+                        {{ primaryButtonText }}
+                    </button>
+
+                    <!-- Primary button popover -->
+                    <ErrorPopover :message="primaryButtonError" :right="51" :top="55" @close="primaryButtonError = undefined" />
+
+                    <!-- Clone button popover -->
+                    <ErrorPopover :message="cloneButtonError" :right="175" :top="55" @close="cloneButtonError = undefined" />
+                </div>
+            </header>
+        </div>
         <div class="slds-card__body slds-card__body_inner">
             <p class="slds-m-bottom_x-small">Enter an email address and the rest of the form will auto-populate.</p>
 
@@ -347,7 +530,7 @@ async function closeWindow() {
                                id="email-input"
                                class="slds-input"
                                v-model.trim="form.email"
-                               @input="onEmailEntered"
+                              @input="onEmailEntered"
                                autofocus
                                required />
                     </div>
@@ -359,7 +542,10 @@ async function closeWindow() {
                         <div class="slds-form-element slds-form-element_horizontal slds-is-editing">
                             <label class="slds-form-element__label" for="first-name-input">First Name</label>
                             <div class="slds-form-element__control">
-                                <input type="text" id="first-name-input" class="slds-input" v-model.trim="form.firstName" />
+                                <input type="text"
+                                       id="first-name-input"
+                                       class="slds-input"
+                                       v-model.trim="form.firstName" />
                             </div>
                         </div>
                     </div>
@@ -370,7 +556,10 @@ async function closeWindow() {
                                 Last Name
                             </label>
                             <div class="slds-form-element__control">
-                                <input type="text" id="last-name-input" class="slds-input" v-model.trim="form.lastName" required />
+                                <input type="text"
+                                       id="last-name-input"
+                                       class="slds-input"
+                                       v-model.trim="form.lastName" />
                             </div>
                         </div>
                     </div>
@@ -384,15 +573,25 @@ async function closeWindow() {
                                 <abbr class="slds-required" title="required">* </abbr>
                                 Profile
                             </label>
+                            <div class="slds-form-element__icon">
+                                <button class="slds-button slds-button_icon" @mouseenter="showProfileTooltip = true" @mouseleave="showProfileTooltip = false">
+                                    <svg class="slds-button__icon">
+                                        <use xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#info"></use>
+                                    </svg>
+                                </button>
+                                <div class="slds-popover slds-popover_tooltip slds-nubbin_bottom-left popover-help" role="tooltip" v-show="showProfileTooltip">
+                                    <div class="slds-popover__body">The license is shown in brackets.</div>
+                                </div>
+                            </div>
                             <div class="slds-form-element__control">
                                 <div class="slds-select_container">
                                 <select id="profile-input" class="slds-select" :disabled="profiles.loading || profiles.error.length > 0" v-model="form.profileId">
                                     <option v-if="profiles.loading" value="loading">Loading...</option>
 
                                     <option v-for="profile of profiles.items"
-                                           :key="profile.id"
-                                           :value="profile.id">
-                                           {{ profile.name }}
+                                           :key="profile.Id"
+                                           :value="profile.Id">
+                                           {{ profile.Name }} ({{ profile.UserLicense.Name }})
                                     </option>
                                 </select>
                                 </div>
@@ -420,9 +619,9 @@ async function closeWindow() {
 
                                     <option v-else value="">None</option>
                                     <option v-for="role of roles.items"
-                                           :key="role.id"
-                                           :value="role.id">
-                                           {{ role.name }} ({{ role.developerName }})
+                                           :key="role.Id"
+                                           :value="role.Id">
+                                           {{ role.Name }} ({{ role.DeveloperName }})
                                     </option>
                                 </select>
                                 </div>
@@ -439,7 +638,10 @@ async function closeWindow() {
                         Alias
                     </label>
                     <div class="slds-form-element__control">
-                        <input type="text" id="alias-input" class="slds-input" v-model.trim="form.alias" required />
+                        <input type="text"
+                               id="alias-input"
+                               class="slds-input"
+                               v-model.trim="form.alias" />
                     </div>
                 </div>
 
@@ -460,7 +662,10 @@ async function closeWindow() {
                         </div>
                     </div>
                     <div class="slds-form-element__control">
-                        <input type="text" id="username-input" class="slds-input" v-model.trim="form.username" required />
+                        <input type="text"
+                               id="username-input"
+                               class="slds-input"
+                               v-model.trim="form.username" />
                     </div>
                 </div>
 
@@ -471,14 +676,67 @@ async function closeWindow() {
                         Nickname
                     </label>
                     <div class="slds-form-element__control">
-                        <input type="text" id="nickname-input" class="slds-input" v-model.trim="form.nickname" required />
+                        <input type="text"
+                               id="nickname-input"
+                               class="slds-input"
+                               v-model.trim="form.nickname" />
                     </div>
                 </div>
 
-                <fieldset class="slds-form-element">
+                <fieldset class="slds-form-element slds-form-element_stacked" v-if="mode === 'clone'">
+                    <legend class="slds-form-element__legend slds-form-element__label">Cloning Options</legend>
                     <div class="slds-form-element__control">
                         <div class="slds-checkbox">
-                            <input type="checkbox" name="advanced-group" id="generate-password-checkbox" v-model="form.resetPassword" />
+                            <input type="checkbox"
+                                   id="permission-set-assignments-checkbox"
+                                   v-model="form.clonePermissionSetAssignments"
+                                  @change="onClonePermissionSetAssignmentsChanged" />
+                            <label class="slds-checkbox__label" for="permission-set-assignments-checkbox">
+                                <span class="slds-checkbox_faux"></span>
+                                <span class="slds-form-element__label">Permission Set Assignments</span>
+                            </label>
+                        </div>
+
+                        <div class="slds-checkbox">
+                            <input type="checkbox"
+                                   id="public-group-memberships-checkbox"
+                                   v-model="form.clonePublicGroupMemberships" />
+                            <label class="slds-checkbox__label" for="public-group-memberships-checkbox">
+                                <span class="slds-checkbox_faux"></span>
+                                <span class="slds-form-element__label">Public Group Memberships</span>
+                            </label>
+                        </div>
+
+                        <div class="slds-checkbox">
+                            <input type="checkbox"
+                                   id="queue-memberships-checkbox"
+                                   v-model="form.cloneQueueMemberships" />
+                            <label class="slds-checkbox__label" for="queue-memberships-checkbox">
+                                <span class="slds-checkbox_faux"></span>
+                                <span class="slds-form-element__label">Queue Memberships</span>
+                            </label>
+                        </div>
+
+                        <div class="slds-checkbox">
+                            <input type="checkbox"
+                                   id="activate-user-checkbox"
+                                   v-model="form.activateUser"
+                                  @change="onActivateUserChanged" />
+                            <label class="slds-checkbox__label" for="activate-user-checkbox">
+                                <span class="slds-checkbox_faux"></span>
+                                <span class="slds-form-element__label">Activate User</span>
+                            </label>
+                        </div>
+                    </div>
+                </fieldset>
+
+                <fieldset class="slds-form-element slds-form-element_stacked">
+                    <div class="slds-form-element__control">
+                        <div class="slds-checkbox">
+                            <input type="checkbox"
+                                   id="generate-password-checkbox"
+                                   v-model="form.resetPassword"
+                                  @change="onResetPasswordChanged" />
                             <label class="slds-checkbox__label" for="generate-password-checkbox">
                                 <span class="slds-checkbox_faux"></span>
                                 <span class="slds-form-element__label">Reset password and notify user immediately</span>
@@ -493,38 +751,28 @@ async function closeWindow() {
     </article>
 
     <QuickCreateUserSettingsModal ref="settingsModal" />
+    <UserSelectModal ref="userSelectModal" immediate-select />
 
     <FullscreenOverlay :visible="overlay.visible" :type="overlay.type">
-        <span class="slds-icon_container slds-m-bottom_x-small">
-            <svg class="slds-icon overlay-check-icon">
-                <use v-if="overlay.type === 'success'" xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#success"></use>
-                <use v-else-if="overlay.type === 'warning'" xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#warning"></use>
-            </svg>
-        </span>
+        <template v-slot:title>
+            <span class="overlay-user-link" @click="onOpenUser" title="Open User detail page in a new tab.">Open User</span>
+        </template>
 
-        <div class="slds-text-heading_medium slds-m-bottom_x-small">
-            <span class="overlay-user-link" @click="onOpenUser" title="Open User detail page in a new tab.">User</span>
-            <template v-if="overlay.passwordResetSuccessful">
-                created!
-            </template>
-            <template v-else>
-                created but...
-            </template>
-        </div>
-        <div class="slds-text-heading_small" v-if="!overlay.passwordResetSuccessful">{{ overlay.passwordResetError }}</div>
+        <template v-if="overlay.actionResults.length > 0" v-slot:body>
+            <article class="slds-card">
+                <!-- <div class="slds-card__header">
+                    <h2 class="slds-card__header-title">Results</h2>
+                </div> -->
+                <div class="slds-card__body slds-card__body_inner">
+                    <LightningTableLite :records="overlay.actionResults"
+                                        :columns="overlay.actionResultsTableColumns" />
+                </div>
+            </article>
+        </template>
     </FullscreenOverlay>
 </template>
 
 <style scoped>
-#create-popover {
-    left: 200px;
-    top: 55px;
-}
-
-.overlay-check-icon {
-    fill: white;
-}
-
 .overlay-user-link {
     text-decoration: underline;
     cursor: pointer;
