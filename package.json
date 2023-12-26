@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@salesforce-ux/design-system": "^2.22.2",
-    "@vueuse/core": "^10.6.1",
+    "@vueuse/core": "^10.7.0",
     "email-validator": "^2.0.4",
     "papaparse": "^5.4.1",
     "vue": "^3.3.8",
