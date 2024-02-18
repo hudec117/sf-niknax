@@ -25,7 +25,7 @@ onMounted(() => {
         return;
     }
 
-    const loadedUserId = params.get('user') ?? undefined;
+    const loadedRecordId = params.get('record') ?? undefined;
 
     const loadedOriginalTabId = params.get('tab');
     if (!loadedOriginalTabId) {
@@ -45,7 +45,7 @@ onMounted(() => {
             return;
         }
 
-        context.value = new Context(loadedServerHost, parseInt(loadedOriginalTabId), session.id, loadedUserId);
+        context.value = new Context(loadedServerHost, parseInt(loadedOriginalTabId), session.id, loadedRecordId);
 
         if (loadedPage === 'edit-public-group-memberships') {
             groupType.value = 'Regular';

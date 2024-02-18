@@ -17,18 +17,18 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         // Only the session ID against the ".my.salesforce.com" domain is valid for API requests.
         const serverHost = serverUrl.hostname.replace('.lightning.force.com', '.my.salesforce.com');
 
-        // Get user record ID from URL
+        // Try to get the record ID from the URL
         const path = serverUrl.pathname.substring(1);
-        const userId = /[a-zA-Z0-9]{18}|[a-zA-Z0-9]{15}/.exec(path) ?? undefined;
+        const recordId = /[a-zA-Z0-9]{18}|[a-zA-Z0-9]{15}/.exec(path) ?? undefined;
 
         let queryOptions = { active: true, lastFocusedWindow: true };
-        chrome.tabs.query(queryOptions, ([userTab]) => {
+        chrome.tabs.query(queryOptions, ([currentTab]) => {
             // Construct page URL with server host
             let niknaxUrl = chrome.runtime.getURL(SF_NIKNAX_PAGE);
-            niknaxUrl += `?host=${serverHost}&tab=${userTab.id}&page=${request.page}`;
+            niknaxUrl += `?host=${serverHost}&tab=${currentTab.id}&page=${request.page}`;
 
-            if (userId) {
-                niknaxUrl += `&user=${userId}`;
+            if (recordId) {
+                niknaxUrl += `&record=${recordId}`;
             }
 
             // Note: width/height here must always be larger than the resizeTo dimensions

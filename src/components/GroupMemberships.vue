@@ -80,7 +80,7 @@ async function loadData() {
         const allGroups = allGroupsQueryResult.guardedData;
 
         // Group memberships
-        const groupMembersQueryResult = await restService.query<GroupMember>(`SELECT Id, GroupId, UserOrGroupId FROM GroupMember WHERE UserOrGroupId = '${props.context.userId}'`);
+        const groupMembersQueryResult = await restService.query<GroupMember>(`SELECT Id, GroupId, UserOrGroupId FROM GroupMember WHERE UserOrGroupId = '${props.context.recordId}'`);
         if (!groupMembersQueryResult.success) {
             primaryButtonError.value = `Initial query for GroupMember records failed because: ${groupMembersQueryResult.error}`;
             return;
@@ -236,7 +236,7 @@ async function onSaveAndCloseClick() {
 }
 
 async function assignGroups(groups: Array<Group>): Promise<boolean> {
-    const assignToUserId = props.context.userId;
+    const assignToUserId = props.context.recordId;
     if (!assignToUserId) {
         primaryButtonError.value = 'Missing User ID in the context.';
         return false;

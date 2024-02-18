@@ -121,8 +121,8 @@ async function loadData() {
         await Promise.all([loadProfiles(), loadRoles()]);
 
         // If the user ID is in the context, switch to clone mode immediately.
-        if (props.context.userId) {
-            switchToCloneMode(props.context.userId);
+        if (props.context.recordId) {
+            switchToCloneMode(props.context.recordId);
         }
     } catch (error) {
         primaryButtonError.value = `Something went wrong in the loadData function: ${(error as Error).message}`;
@@ -271,6 +271,11 @@ async function switchToCloneMode(cloneTargetUserId: string) {
     const userQueryResult = await userService.query<User>(`SELECT Id, Username, ProfileId, UserRoleId FROM User WHERE Id = '${cloneTargetUserId}'`);
     if (!userQueryResult.success) {
         cloneButtonError.value = `Failed to query the clone target User because: ${userQueryResult.error}`;
+        return;
+    }
+    if (userQueryResult.guardedData.length === 0) {
+        // This scenario (most likely) implies that the ID we tried to query using is not a User sObject ID and therefore we should stop trying
+        // to switch into clone mode.
         return;
     }
     cloneTargetUser.value = userQueryResult.guardedData[0];
