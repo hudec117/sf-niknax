@@ -1,4 +1,4 @@
-export default class SearchLookupItem {
+export default class LightningListItem {
     value: string;
     label: string;
     sublabel?: string;

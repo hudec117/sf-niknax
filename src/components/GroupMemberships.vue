@@ -2,12 +2,12 @@
 import { computed, onMounted, ref } from 'vue';
 
 import SalesforceRESTService from '@/services/SalesforceRESTService';
-import DuelingPicklist from './slds/DuelingPicklist.vue';
+import LightningDuelingPicklist from './slds/LightningDuelingPicklist.vue';
 import UserSelectModal from './modals/user-select/UserSelectModal.vue';
 import PopoutCardFooter from './PopoutCardFooter.vue';
 import type Group from '@/models/Group';
 import type GroupMember from '@/models/GroupMember';
-import DuelingPicklistItem from './slds/DuelingPicklistItem';
+import LightningDuelingPicklistItem from './slds/LightningDuelingPicklistItem';
 import type Context from '@/models/Context';
 import LightningSpinner from './slds/LightningSpinner.vue';
 import ErrorPopover from './slds/ErrorPopover.vue';
@@ -48,14 +48,14 @@ const groupTypeLabel = computed(() => {
 const leftListItems = computed(() => {
     return availableGroups.value.map((group) => {
         const displayName = showAPINames.value ? group.DeveloperName : group.Name;
-        return new DuelingPicklistItem(group.Id, displayName);
+        return new LightningDuelingPicklistItem(group.Id, displayName);
     });
 });
 
 const rightListItems = computed(() => {
     return assignedGroups.value.map((group) => {
         const displayName = showAPINames.value ? group.DeveloperName : group.Name;
-        return new DuelingPicklistItem(group.Id, displayName);
+        return new LightningDuelingPicklistItem(group.Id, displayName);
     });
 });
 
@@ -117,7 +117,7 @@ async function loadData() {
     }
 }
 
-function onAssignGroups(items: Array<DuelingPicklistItem>) {
+function onAssignGroups(items: Array<LightningDuelingPicklistItem>) {
     for (const item of items) {
         const group = availableGroups.value.filter(group => group.Id === item.value)[0];
 
@@ -130,7 +130,7 @@ function onAssignGroups(items: Array<DuelingPicklistItem>) {
     }
 }
 
-function onUnassignGroups(items: Array<DuelingPicklistItem>) {
+function onUnassignGroups(items: Array<LightningDuelingPicklistItem>) {
     for (const item of items) {
         const group = assignedGroups.value.filter(group => group.Id === item.value)[0];
 
@@ -325,12 +325,12 @@ async function unassignGroups(groups: Array<Group>): Promise<boolean> {
             </header>
         </div>
         <div class="slds-card__body slds-card__body_inner">
-            <DuelingPicklist :left-list-label="`Available ${groupTypeLabel}s`"
-                             :right-list-label="`Assigned ${groupTypeLabel}s`"
-                            :left-list="leftListItems"
-                            :right-list="rightListItems"
-                            @move-left="onUnassignGroups"
-                            @move-right="onAssignGroups" />
+            <LightningDuelingPicklist :left-list-label="`Available ${groupTypeLabel}s`"
+                                      :right-list-label="`Assigned ${groupTypeLabel}s`"
+                                      :left-list="leftListItems"
+                                      :right-list="rightListItems"
+                                      @move-left="onUnassignGroups"
+                                      @move-right="onAssignGroups" />
         </div>
         <PopoutCardFooter />
     </article>

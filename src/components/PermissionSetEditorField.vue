@@ -2,10 +2,13 @@
 import { onMounted, ref } from 'vue';
 
 import PopoutCardFooter from './PopoutCardFooter.vue';
-import SalesforceToolingService from '@/services/SalesforceToolingService';
+import SalesforceRESTService from '@/services/SalesforceRESTService';
 import Context from '@/models/Context';
 import LightningSpinner from './slds/LightningSpinner.vue';
 import ErrorPopover from './slds/ErrorPopover.vue';
+import type PermissionSet from '@/models/PermissionSet';
+import LightningListItem from './slds/LightningListItem';
+import LightningCombobox from './slds/LightningCombobox.vue';
 
 // Note: record to help with dev: https://ahpersonal-dev-ed.lightning.force.com/lightning/setup/ObjectManager/Case/FieldsAndRelationships/00N4J0000031WEL/view
 
@@ -13,24 +16,26 @@ const props = defineProps<{
     context: Context
 }>();
 
-let toolingService: SalesforceToolingService;
+let restService: SalesforceRESTService;
 
 const saveButtonError = ref<string | undefined>();
 const loading = ref(true);
 const working = ref(false);
 
+const permissionSetListItems = ref<Array<LightningListItem>>([]);
+
 onMounted(() => {
     document.title = 'Salesforce Niknax: Set Field-Level Security for ...';
 
     // Initialise Salesforce services
-    toolingService = new SalesforceToolingService(props.context.serverHost, props.context.sessionId);
+    restService = new SalesforceRESTService(props.context.serverHost, props.context.sessionId);
 
     loadData();
 });
 
 async function loadData() {
     try {
-        
+        await loadPermissionSets();
     } catch (error) {
         saveButtonError.value = `Something went wrong in the loadData function: ${(error as Error).message}`;
     } finally {
@@ -38,15 +43,35 @@ async function loadData() {
     }
 }
 
+async function loadPermissionSets() {
+    const result = await restService.query<PermissionSet>('SELECT Id, Label, Name FROM PermissionSet WHERE IsOwnedByProfile = false AND NamespacePrefix = \'\'');
+    if (!result.success) {
+        // TODO: handle
+        return;
+    }
+
+    permissionSetListItems.value = result.guardedData.map(permissionSet => {
+        return new LightningListItem(
+            permissionSet.Id,
+            permissionSet.Label,
+            permissionSet.Name
+        );
+    });
+}
+
+function onPermissionSetItemSelected(item: LightningListItem) {
+    
+}
+
 async function onSaveClick() {
     working.value = true;
     saveButtonError.value = '';
 
-    try {
+    // try {
         
-    } finally {
-        working.value = false;
-    }
+    // } finally {
+    //     working.value = false;
+    // }
 }
 
 // async function closeWindow() {
@@ -90,6 +115,12 @@ async function onSaveClick() {
             </header>
         </div>
         <div class="slds-card__body slds-card__body_inner">
+            <LightningCombobox placeholder="Search and select Permission Sets to add"
+                               empty-list-label="No records found"
+                              :items="permissionSetListItems"
+                              @selected="onPermissionSetItemSelected"
+                               class="slds-m-bottom_medium" />
+
             <table class="slds-table slds-table_bordered slds-table_col-bordered slds-border_left slds-border_right">
                 <thead>
                     <tr class="slds-line-height_reset">

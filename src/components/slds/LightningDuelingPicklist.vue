@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, ref, type Ref } from 'vue';
+import { includesInsensitive } from '@/helper';
 
-import DuelingPicklistItem from './DuelingPicklistItem';
+import DuelingPicklistItem from './LightningDuelingPicklistItem';
 
 const props = defineProps<{
     leftList: Array<DuelingPicklistItem>
@@ -97,10 +98,6 @@ function onMoveLeftClick() {
     emit('moveLeft', selectedItems);
 
     rightSelected.value.clear();
-}
-
-function includesInsensitive(value1: string, value2: string) {
-    return value1.toLowerCase().includes(value2.toLowerCase());
 }
 </script>
 

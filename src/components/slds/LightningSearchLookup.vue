@@ -1,27 +1,28 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 
-import SearchLookupItem from './SearchLookupItem';
+import LightningListItem from './LightningListItem';
 
 const props = defineProps<{
+    autofocus?: boolean,
     label?: string,
     placeholder?: string,
     emptyListLabel?: string,
     errorLabel?: string,
     helpLabel?: string,
-    doSearch: (value: string) => Promise<Array<SearchLookupItem>>
+    doSearch: (value: string) => Promise<Array<LightningListItem>>
 }>();
 
 const emit = defineEmits<{
-    selected: [item: SearchLookupItem]
+    selected: [item: LightningListItem]
     unselected: [],
 }>();
 
 const text = ref('');
 const empty = ref(false);
 const loading = ref(false);
-const items = ref<Array<SearchLookupItem>>([]);
-const selectedItem = ref<SearchLookupItem | undefined>();
+const items = ref<Array<LightningListItem>>([]);
+const selectedItem = ref<LightningListItem | undefined>();
 const searchCombobox = ref<HTMLInputElement>();
 
 const dropdownOpen = computed(() => {
@@ -29,7 +30,9 @@ const dropdownOpen = computed(() => {
 });
 
 onMounted(() => {
-    searchCombobox.value?.focus();
+    if (props.autofocus === true) {
+        searchCombobox.value?.focus();
+    }
 });
 
 async function onSearch() {
@@ -49,7 +52,7 @@ async function onSearch() {
     empty.value = items.value.length === 0;
 }
 
-function onItemSelected(item: SearchLookupItem) {
+function onItemSelected(item: LightningListItem) {
     text.value = '';
     items.value = [];
     selectedItem.value = item;
