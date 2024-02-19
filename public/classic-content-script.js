@@ -9,14 +9,19 @@ window.onload = function () {
         return;
     }
 
-    const isOnUserDetailPage = pageTypeElements[0].innerText === 'User';
-    const isOnUserListPage = pageTypeElements[0].innerText === 'All Users';
+    const pageTypeText = pageTypeElements[0].innerText;
+
+    const isOnUserDetailPage = pageTypeText === 'User';
+    const isOnUserListPage = pageTypeText === 'All Users';
+    const isOnCustomFieldPage = pageTypeText.includes('Custom Field');
     if (isOnUserDetailPage) {
         injectEditPublicGroupMembershipsButton();
         injectEditQueueMembershipsButton();
         injectCloneUserButton();
     } else if (isOnUserListPage) {
         // injectFreezeUsersButton();
+    } else if (isOnCustomFieldPage) {
+        injectPermissionSetEditFieldButton();
     }
 
     function injectEditPublicGroupMembershipsButton() {
@@ -93,6 +98,30 @@ window.onload = function () {
 
         const topButtonRow = document.getElementById('topButtonRow');
         topButtonRow.appendChild(cloneUserButton);
+    }
+
+    function injectPermissionSetEditFieldButton() {
+        const permissionSetEditFieldButton = document.createElement('input');
+        permissionSetEditFieldButton.value = 'Set Field-Level Security (Permission Sets)';
+        permissionSetEditFieldButton.title = `Salesforce Niknax: ${permissionSetEditFieldButton.value}`;
+        permissionSetEditFieldButton.className = 'btn';
+        permissionSetEditFieldButton.type = 'button';
+        permissionSetEditFieldButton.style = 'margin-left: 5px; border: 1px solid #2574a9;';
+        permissionSetEditFieldButton.addEventListener('click', () => {
+            chrome.runtime.sendMessage({ operation: 'open-sf-niknax', page: 'permission-set-edit-field' });
+        });
+
+        const setFLSButtons = document.getElementsByName('fieldAccessEdit');
+        if (setFLSButtons.length > 1) {
+            console.error('sf-niknax: failed to inject the Permission Set Edit Field button, more than one "fieldAccessEdit" named button found.');
+            return;
+        }
+
+        const profileSetFLSButton = setFLSButtons[0];
+        profileSetFLSButton.value += ' (Profiles)';
+        profileSetFLSButton.title += ' (Profiles)';
+
+        profileSetFLSButton.parentNode.insertBefore(permissionSetEditFieldButton, profileSetFLSButton.nextSibling);
     }
 
     // function injectFreezeUsersButton() {

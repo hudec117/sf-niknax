@@ -2,12 +2,14 @@
 import { onMounted, ref } from 'vue';
 
 import GroupMemberships from './GroupMemberships.vue';
+import PermissionSetEditorField from './PermissionSetEditorField.vue';
 import QuickCreateUser from './QuickCreateUser.vue';
 import SetupPlusHub from './setup-plus/SetupPlusHub.vue';
 
 import Context from '@/models/Context';
 
 const displayEditGroupMemberships = ref(false);
+const displayPermissionSetEditField = ref(false);
 const displayQuickCreateUser = ref(false);
 const displaySetupPlusHub = ref(false);
 
@@ -53,6 +55,8 @@ onMounted(() => {
         } else if (loadedPage === 'edit-queue-memberships') {
             groupType.value = 'Queue';
             displayEditGroupMemberships.value = true;
+        } if (loadedPage === 'permission-set-edit-field') {
+            displayPermissionSetEditField.value = true;
         } if (loadedPage === 'quick-create-user') {
             displayQuickCreateUser.value = true;
         } else if (loadedPage === 'setup-plus') {
@@ -65,6 +69,7 @@ onMounted(() => {
 <template>
     <div class="slds-grid slds-var-p-around_small">
         <GroupMemberships v-if="displayEditGroupMemberships" :type="groupType" :context="context!" />
+        <PermissionSetEditorField v-else-if="displayPermissionSetEditField" :context="context!" />
         <QuickCreateUser v-else-if="displayQuickCreateUser" :context="context!" />
         <SetupPlusHub v-else-if="displaySetupPlusHub" :context="context!" />
 
