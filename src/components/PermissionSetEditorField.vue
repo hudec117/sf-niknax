@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue';
 
 import PopoutCardFooter from './PopoutCardFooter.vue';
 import SalesforceRESTService from '@/services/SalesforceRESTService';
+import SalesforceMetadataService from '@/services/SalesforceMetadataService';
 import Context from '@/models/Context';
 import LightningSpinner from './slds/LightningSpinner.vue';
 import ErrorPopover from './slds/ErrorPopover.vue';
@@ -18,6 +19,7 @@ const props = defineProps<{
 }>();
 
 let restService: SalesforceRESTService;
+let metadataService: SalesforceMetadataService;
 
 const saveButtonError = ref<string | undefined>();
 const loading = ref(true);
@@ -52,6 +54,7 @@ onMounted(() => {
 
     // Initialise Salesforce services
     restService = new SalesforceRESTService(props.context.serverHost, props.context.sessionId);
+    metadataService = new SalesforceMetadataService(props.context.serverHost, props.context.sessionId);
 
     loadData();
 });
@@ -76,7 +79,7 @@ async function loadPermissionSets() {
     availablePermissionSets.value = result.guardedData;
 }
 
-function onPermissionSetItemSelected(item: LightningListItem) {
+async function onPermissionSetItemSelected(item: LightningListItem) {
     if (item.value === 'all') {
         // TODO: handle
         return;
@@ -84,11 +87,21 @@ function onPermissionSetItemSelected(item: LightningListItem) {
 
     const permissionSetForEntry = availablePermissionSets.value.filter(permissionSet => item.value == permissionSet.Id)[0];
 
-    permissionSetFLSEntries.value.push({
+    const newFLSEntry = {
         permissionSet: permissionSetForEntry,
-        readAccess: false,
-        editAccess: true
-    });
+        loading: true
+    };
+
+    permissionSetFLSEntries.value.push(newFLSEntry);
+
+    // Read the metadata for the field
+    const readMdResult = await metadataService.readMetadata('PermissionSet', [permissionSetForEntry.Name]);
+    if (!readMdResult.success) {
+        // TODO: handle
+        return;
+    }
+
+    newFLSEntry.loading = false;
 
     // Remove permission set from the available permission sets so it can't be readded to the entries.
     availablePermissionSets.value = availablePermissionSets.value.filter(permissionSet => permissionSet.Id !== permissionSetForEntry.Id);
@@ -113,7 +126,7 @@ async function onSaveClick() {
 
 <template>
     <article class="slds-card">
-        <LightningSpinner :visible="loading || working" />
+        <LightningSpinner v-if="loading || working" />
 
         <div class="slds-card__header slds-grid">
             <header class="slds-media slds-media_center slds-has-flexi-truncate">
@@ -191,10 +204,12 @@ async function onSaveClick() {
                             {{ permissionSetFLSEntry.permissionSet.Label }}
                         </td>
                         <td>
-                            <input type="checkbox" :value="permissionSetFLSEntry.readAccess" />
+                            <LightningSpinner v-if="permissionSetFLSEntry.loading" size="xx-small" />
+                            <input type="checkbox" v-else :value="permissionSetFLSEntry.readAccess" />
                         </td>
                         <td>
-                            <input type="checkbox" :value="permissionSetFLSEntry.editAccess" />
+                            <LightningSpinner v-if="permissionSetFLSEntry.loading" size="xx-small" />
+                            <input type="checkbox" v-else :value="permissionSetFLSEntry.editAccess" />
                         </td>
                     </tr>
                 </tbody>

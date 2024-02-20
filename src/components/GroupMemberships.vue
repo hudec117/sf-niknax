@@ -277,7 +277,7 @@ async function unassignGroups(groups: Array<Group>): Promise<boolean> {
 
 <template>
     <article class="slds-card">
-        <LightningSpinner :visible="loading || working" />
+        <LightningSpinner v-if="loading || working" />
 
         <div class="slds-card__header slds-grid">
             <header class="slds-media slds-media_center slds-has-flexi-truncate">

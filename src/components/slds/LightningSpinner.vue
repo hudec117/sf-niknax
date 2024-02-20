@@ -1,12 +1,14 @@
 <script setup lang="ts">
-defineProps<{
-    visible: boolean
-}>();
+withDefaults(defineProps<{
+    size?: string
+}>(), {
+    size: 'medium'
+});
 </script>
 
 <template>
-    <div v-if="visible" class="slds-spinner_container">
-        <div role="status" class="slds-spinner slds-spinner_medium">
+    <div class="slds-spinner_container">
+        <div role="status" :class="`slds-spinner slds-spinner_${size}`">
             <span class="slds-assistive-text">Loading</span>
             <div class="slds-spinner__dot-a"></div>
             <div class="slds-spinner__dot-b"></div>

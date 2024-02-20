@@ -136,7 +136,7 @@ function onClearFiltersClick() {
 
 <template>
     <article class="slds-card tool-card">
-        <LightningSpinner :visible="loading" />
+        <LightningSpinner v-if="loading" />
 
         <div class="slds-card__header slds-grid">
             <header class="slds-media slds-media_center slds-has-flexi-truncate">

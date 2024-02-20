@@ -1,7 +1,7 @@
 import { Result } from './Results';
 
 export default class SalesforceToolingService {
-    EXECUTE_ANONYMOUS_ENDPOINT = '/services/data/v58.0/tooling/executeAnonymous';
+    EXECUTE_ANONYMOUS_ENDPOINT = '/services/data/v60.0/tooling/executeAnonymous';
 
     serverBaseUrl: string;
     sessionId: string;

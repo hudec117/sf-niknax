@@ -4,8 +4,8 @@ import type Organisation from '@/models/Organisation';
 import type Field from '@/models/Field';
 
 export default class SalesforceRESTService {
-    QUERY_ENDPOINT = '/services/data/v58.0/query';
-    OBJECT_ENDPOINT = '/services/data/v58.0/sobjects';
+    QUERY_ENDPOINT = '/services/data/v60.0/query';
+    OBJECT_ENDPOINT = '/services/data/v60.0/sobjects';
 
     serverBaseUrl: string;
     sessionId: string;
@@ -16,7 +16,7 @@ export default class SalesforceRESTService {
     }
 
     // async isSessionExpired(): Promise<boolean> {
-    //   const requestUrl = new URL('/services/data/v58.0', this.serverBaseUrl);
+    //   const requestUrl = new URL('/services/data/v60.0', this.serverBaseUrl);
 
     //   const response = await this.authFetch(requestUrl);
 
