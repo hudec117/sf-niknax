@@ -95,6 +95,8 @@ async function onPermissionSetItemSelected(item: LightningListItem) {
     permissionSetFLSEntries.value.push(newFLSEntry);
 
     // Read the metadata for the field
+    // TODO: remove line below, only for TESTING
+    await metadataService.readPermissionSetFLS('Test_Perm_Set_15', 'Account.Fax');
     const readMdResult = await metadataService.readMetadata('PermissionSet', [permissionSetForEntry.Name]);
     if (!readMdResult.success) {
         // TODO: handle

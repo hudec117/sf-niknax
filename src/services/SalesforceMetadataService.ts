@@ -11,8 +11,38 @@ export default class SalesforceToolingService {
         this.sessionId = sessionId;
     }
 
-    async readMetadata(type: string, names: Array<string>, progressCallback?: (mdProg: number) => void): Promise<Result<Array<Element>>> {
-        let allRecordNodes = new Array<Element>();
+    async readPermissionSetFLS(permissionSetName: string, fieldName: string): Promise<Result> {
+        const readMetadataResult = await this.readMetadata('PermissionSet', [permissionSetName]);
+        if (!readMetadataResult.success) {
+            return readMetadataResult;
+        }
+
+        // TODO: if not found in the for-of loop, default to read: false and edit: false
+        // TODO: create data structure to return FLS
+
+        for (const element of readMetadataResult.guardedData) {
+            if (element.nodeName === 'fieldPermissions') {
+                const fieldElements = element.getElementsByTagName('field');
+                if (fieldElements.length !== 1) {
+                    return Result.fail(`Found ${fieldElements.length} 'field' elements in the 'fieldPermissions' metadata.`);
+                }
+
+                // Check if it's the field we're looking for
+                const foundFieldName = fieldElements[0].textContent;
+                if (foundFieldName === fieldName) {
+
+                    console.log(foundFieldName);
+
+                    return Result.success();
+                }
+            }
+        }
+
+        return Result.fail('boo');
+    }
+
+    async readMetadata(type: string, names: Array<string>): Promise<Result<Array<Element>>> {
+        let allChildNodes = new Array<Element>();
 
         // The Metadata API readMetadata() call only supports reading 10 pieces
         // of metadata at a time so we need to chunk it.
@@ -24,14 +54,8 @@ export default class SalesforceToolingService {
             nameBatches.push(newNameBatch);
         }
 
-        let metadataRead = 0;
-
         for (const nameBatch of nameBatches) {
             const message = this._constructReadMetadataMessage(type, nameBatch);
-
-            if (progressCallback) {
-                progressCallback(metadataRead);
-            }
 
             const requestUrl = new URL(this.METADATA_ENDPOINT, this.serverBaseUrl);
             const response = await fetch(requestUrl, {
@@ -51,15 +75,13 @@ export default class SalesforceToolingService {
                 return this._constructResultFromSoapFault(responseXml);
             }
 
-            const recordNodes = responseXml.querySelectorAll('Envelope Body readMetadataResponse result records');
-            const recordNodesArray = Array.from(recordNodes);
+            const recordsNodes = responseXml.querySelectorAll('Envelope Body readMetadataResponse result records');
+            const childNodesArray = Array.from(recordsNodes[0].children);
 
-            metadataRead += recordNodesArray.length
-
-            allRecordNodes = allRecordNodes.concat(recordNodesArray);
+            allChildNodes = allChildNodes.concat(childNodesArray);
         }
 
-        return Result.success(allRecordNodes);
+        return Result.success(allChildNodes);
     }
 
     private _constructReadMetadataMessage(type: string, names: Array<string>) {
