@@ -111,6 +111,7 @@ defineExpose<{
                 <div class="slds-modal__content slds-p-around_medium">
                     <LightningSearchLookup placeholder="Search by name, username or email"
                                            empty-list-label="No records found"
+                                           autofocus
                                           :error-label="error"
                                           :do-search="doSearch"
                                           @selected="onSearchSelected"

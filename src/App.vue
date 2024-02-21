@@ -29,4 +29,18 @@ a.external-link[target='_blank']::after {
   content: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAQElEQVR42qXKwQkAIAxDUUdxtO6/RBQkQZvSi8I/pL4BoGw/XPkh4XigPmsUgh0626AjRsgxHTkUThsG2T/sIlzdTsp52kSS1wAAAABJRU5ErkJggg==);
   margin: 0 3px 0 5px;
 }
+
+/* This sets "selected" background colour when there is only one selectable item in a listbox.
+   Used by:
+   components\slds\LightningCombobox.vue
+   components\slds\LightningSearchLookup.vue
+*/
+.slds-listbox > li.selectable-item:only-child > .slds-media {
+    background-color: #f3f3f3;
+}
+
+.slds-listbox > li.unselectable-item:only-child > .slds-media {
+    cursor: default;
+    background-color: unset;
+}
 </style>

@@ -24,7 +24,7 @@ export default class SalesforceToolingService {
             if (element.nodeName === 'fieldPermissions') {
                 const fieldElements = element.getElementsByTagName('field');
                 if (fieldElements.length !== 1) {
-                    return Result.fail(`Found ${fieldElements.length} 'field' elements in the 'fieldPermissions' metadata.`);
+                    return Result.fail(`Found ${fieldElements.length} 'field' elements in the 'fieldPermissions' metadata. Expected only one.`);
                 }
 
                 // Check if it's the field we're looking for

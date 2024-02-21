@@ -38,9 +38,15 @@ onMounted(() => {
     }
 });
 
-function onItemSelected(e: MouseEvent, item: LightningListItem) {
+function onEnterKey() {
+    if (filteredItems.value.length === 1) {
+        onItemSelected(filteredItems.value[0]);
+    }
+}
+
+function onItemSelected(item: LightningListItem) {
     emit('selected', item);
-    
+
     text.value = '';
     focused.value = false;
     mouseIsOverDropdown.value = false;
@@ -62,6 +68,7 @@ function onItemSelected(e: MouseEvent, item: LightningListItem) {
                                role="combobox"
                               @focus="focused = true"
                               @blur="focused = false"
+                              @keyup.enter="onEnterKey"
                                v-model.trim="text"
                               :placeholder="placeholder" />
 
@@ -75,7 +82,7 @@ function onItemSelected(e: MouseEvent, item: LightningListItem) {
                     <div class="slds-dropdown slds-dropdown_length-with-icon-5 slds-dropdown_fluid" tabindex="0" @mouseover="mouseIsOverDropdown = true" @mouseleave="mouseIsOverDropdown = false">
                         <ul class="slds-listbox slds-listbox_vertical" role="presentation">
                             <!-- Empty list item -->
-                            <li role="presentation" class="slds-listbox__item" v-if="filteredItems.length === 0">
+                            <li role="presentation" class="slds-listbox__item unselectable-item" v-if="filteredItems.length === 0">
                                 <div class="slds-media slds-listbox__option slds-listbox__option_plain slds-media_small" role="option">
                                     <span class="slds-media__body">
                                         <span class="slds-truncate">{{ props.emptyListLabel }}</span>
@@ -84,7 +91,7 @@ function onItemSelected(e: MouseEvent, item: LightningListItem) {
                             </li>
 
                             <!-- Normal list item -->
-                            <li role="presentation" class="slds-listbox__item" v-else v-for="item of filteredItems" :key="item.value" @click="(e) => onItemSelected(e, item)">
+                            <li role="presentation" class="slds-listbox__item selectable-item" v-else v-for="item of filteredItems" :key="item.value" @click="onItemSelected(item)">
                                 <div class="slds-media slds-listbox__option slds-listbox__option_entity slds-listbox__option_has-meta" role="option">
                                     <span class="slds-media__figure slds-listbox__option-icon">
                                         <span class="slds-icon_container slds-icon-standard-slider">
@@ -115,7 +122,7 @@ function onItemSelected(e: MouseEvent, item: LightningListItem) {
 </template>
 
 <style scoped>
-/* Note: without this, the SLDS Spinners would appear on top of the dropdown */
+/* Without this, the SLDS Spinners would appear on top of the dropdown */
 .slds-combobox {
     z-index: 10000;
 }

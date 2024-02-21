@@ -35,6 +35,12 @@ onMounted(() => {
     }
 });
 
+function onEnterKey() {
+    if (items.value.length === 1) {
+        onItemSelected(items.value[0]);
+    }
+}
+
 async function onSearch() {
     items.value = [];
     loading.value = false;
@@ -98,6 +104,7 @@ function onItemUnselected() {
                                    ref="searchCombobox"
                                    autoComplete="off"
                                    role="combobox"
+                                  @keyup.enter="onEnterKey"
                                    v-debounce:500ms="onSearch"
                                    v-model.trim="text"
                                   :placeholder="placeholder" />
@@ -112,7 +119,7 @@ function onItemUnselected() {
                     <div class="slds-dropdown slds-dropdown_length-with-icon-5 slds-dropdown_fluid" tabindex="0">
                         <ul class="slds-listbox slds-listbox_vertical" role="presentation">
                             <!-- Loading list item -->
-                            <li role="presentation" class="slds-listbox__item" v-if="loading">
+                            <li role="presentation" class="slds-listbox__item unselectable-item" v-if="loading">
                                 <div class="slds-align_absolute-center slds-p-top_medium">
                                     <div role="status" class="slds-spinner slds-spinner_x-small slds-spinner_inline">
                                         <div class="slds-spinner__dot-a"></div>
@@ -122,7 +129,7 @@ function onItemUnselected() {
                             </li>
 
                             <!-- Error list item -->
-                            <li role="presentation" class="slds-listbox__item" v-else-if="errorLabel">
+                            <li role="presentation" class="slds-listbox__item unselectable-item" v-else-if="errorLabel">
                                 <div class="slds-media slds-listbox__option slds-listbox__option_plain slds-media_small" role="option">
                                     <!-- <span class="slds-media__figure slds-listbox__option-icon"></span> -->
                                     <span class="slds-media__body">
@@ -132,7 +139,7 @@ function onItemUnselected() {
                             </li>
 
                             <!-- Empty list item -->
-                            <li role="presentation" class="slds-listbox__item" v-else-if="empty">
+                            <li role="presentation" class="slds-listbox__item unselectable-item" v-else-if="empty">
                                 <div class="slds-media slds-listbox__option slds-listbox__option_plain slds-media_small" role="option">
                                     <!-- <span class="slds-media__figure slds-listbox__option-icon"></span> -->
                                     <span class="slds-media__body">
@@ -142,7 +149,7 @@ function onItemUnselected() {
                             </li>
 
                             <!-- Normal list item -->
-                            <li role="presentation" class="slds-listbox__item" v-else v-for="item of items" :key="item.value" @click="onItemSelected(item)">
+                            <li role="presentation" class="slds-listbox__item selectable-item" v-else v-for="item of items" :key="item.value" @click="onItemSelected(item)">
                                 <div class="slds-media slds-listbox__option slds-listbox__option_entity slds-listbox__option_has-meta" role="option">
                                     <span class="slds-media__figure slds-listbox__option-icon">
                                         <span class="slds-icon_container slds-icon-standard-avatar">

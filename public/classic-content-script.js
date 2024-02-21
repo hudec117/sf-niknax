@@ -1,4 +1,4 @@
-window.onload = function () {
+window.addEventListener('load', function() {
     const isInPopupIFrame = document.location.pathname.includes('emptyHtmlDoc.html');
     if (isInPopupIFrame) {
         return;
@@ -150,4 +150,4 @@ window.onload = function () {
 
         return null;
     }
-}
+});
