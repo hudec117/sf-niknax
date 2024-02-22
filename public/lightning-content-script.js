@@ -1,6 +1,64 @@
 window.addEventListener('load', function() {
     const safeChromeRuntime = chrome.runtime;
 
+    function setupProfilePanelDetector() {
+        function handleMutation(mutationsList) {
+            for (const mutation of mutationsList) {
+                if (mutation.addedNodes.length > 0 && mutation.addedNodes[0].classList.contains('userProfilePanel')) {
+                    const userProfilePanel = mutation.addedNodes[0];
+
+                    onPanelOpened(userProfilePanel);
+                    return;
+                }
+            }
+        }
+
+        const uiContainerManagerObserver = new MutationObserver(handleMutation);
+
+        // TODO: refactor
+        const MAX_TRIES = 300;
+        const INTERVAL = 100;
+        let tries = 0;
+        const intervalTimer = setInterval(() => {
+            const uiContainerManagerDiv = document.querySelector('div.DESKTOP.uiContainerManager');
+            if (uiContainerManagerDiv) {
+                clearInterval(intervalTimer);
+                uiContainerManagerObserver.observe(
+                    uiContainerManagerDiv,
+                    { childList: true }
+                );
+            } else {
+                tries++;
+                if (tries >= MAX_TRIES) {
+                    clearInterval(intervalTimer);
+                    console.warn('sf-niknax: failed to inject');
+                }
+            }
+        }, INTERVAL);
+    }
+
+    function onPanelOpened(userProfilePanel) {
+        injectUserDetailAnchor(userProfilePanel);
+    }
+
+    function injectUserDetailAnchor(userProfilePanel) {
+        const linksWrapperElements = userProfilePanel.getElementsByClassName('profile-card-toplinks');
+        if (linksWrapperElements.length < 1) {
+            // TODO: handle
+            return;
+        }
+
+        const linksWrapper = linksWrapperElements[0];
+
+        const userDetailAnchor = document.createElement('a');
+        userDetailAnchor.textContent = 'User Detail';
+        userDetailAnchor.title = 'Salesforce Niknax: Open your User detail page';
+        userDetailAnchor.href = '#';
+        userDetailAnchor.className = 'profile-link-label';
+
+        linksWrapper.insertBefore(userDetailAnchor, linksWrapper.firstChild);
+    }
+
     function setupPageChangeDetector() {
         let previousPageUrl = window.location.href;
 
@@ -8,7 +66,8 @@ window.addEventListener('load', function() {
             const newPageUrl = window.location.href;
             if (newPageUrl !== previousPageUrl) {
                 previousPageUrl = newPageUrl;
-                onPageChanged(newPageUrl);
+
+                onPageChanged(window.location);
             }
         }
 
@@ -21,9 +80,9 @@ window.addEventListener('load', function() {
         );
     }
 
-    function onPageChanged(newUrl) {
+    function onPageChanged(newLocation) {
         // If on the Fields & Relationships page
-        if (newUrl.endsWith('FieldsAndRelationships/view')) {
+        if (newLocation.pathname.endsWith('/FieldsAndRelationships/view')) {
             injectEditPermissionSetObjectSettings();
         }
     }
@@ -50,7 +109,7 @@ window.addEventListener('load', function() {
             const setHistoryTrackingButton = buttons.iterateNext();
             if (setHistoryTrackingButton) {
                 clearInterval(intervalTimer);
-                
+
                 setHistoryTrackingButton.parentNode.appendChild(objectSettingsInPermissionSetButton);
             } else {
                 tries++;
@@ -62,6 +121,8 @@ window.addEventListener('load', function() {
         }, INTERVAL);
     }
 
+    // Execute on load
+    setupProfilePanelDetector();
     setupPageChangeDetector();
-    onPageChanged(window.location.href);
+    onPageChanged(window.location);
 });
