@@ -17,17 +17,17 @@ let restService: SalesforceRESTService;
 let resultResolve: (value: string | PromiseLike<string | null> | null) => void;
 
 const visible = ref(false);
-const error = ref('');
+const searchError = ref('');
 const selectedUserId = ref<string | undefined>();
 
 async function doSearch(value: string): Promise<Array<LightningListItem>> {
     const queryResult = await restService.query<User>(`SELECT Id, FirstName, LastName, Username, Email FROM User WHERE (Name LIKE '%${value}%' OR Username LIKE '%${value}%' OR Email LIKE '%${value}%') AND UserType != 'AutomatedProcess' AND UserType != 'CloudIntegrationUser'`);
     if (!queryResult.success) {
-        error.value = `Failed to query for users because ${queryResult.error}`;
+        searchError.value = `Something went wrong: ${queryResult.error}`;
         return [];
     }
 
-    error.value = '';
+    searchError.value = '';
 
     return queryResult.guardedData.map(user => {
         let fullName = user.LastName;
@@ -112,7 +112,7 @@ defineExpose<{
                     <LightningSearchLookup placeholder="Search by name, username or email"
                                            empty-list-label="No records found"
                                            autofocus
-                                          :error-label="error"
+                                          :error-label="searchError"
                                           :do-search="doSearch"
                                           @selected="onSearchSelected"
                                           @unselected="onSearchUnselected" />

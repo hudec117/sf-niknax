@@ -9,6 +9,7 @@ const props = defineProps<{
     label?: string,
     placeholder?: string,
     emptyListLabel?: string,
+    errorLabel?: string,
     helpLabel?: string,
     items: Array<LightningListItem>
 }>();
@@ -81,8 +82,17 @@ function onItemSelected(item: LightningListItem) {
 
                     <div class="slds-dropdown slds-dropdown_length-with-icon-5 slds-dropdown_fluid" tabindex="0" @mouseover="mouseIsOverDropdown = true" @mouseleave="mouseIsOverDropdown = false">
                         <ul class="slds-listbox slds-listbox_vertical" role="presentation">
+                            <!-- Error list item -->
+                            <li role="presentation" class="slds-listbox__item unselectable-item" v-if="errorLabel">
+                                <div class="slds-media slds-listbox__option slds-listbox__option_plain slds-media_small" role="option">
+                                    <span class="slds-media__body">
+                                        <span class="slds-truncate slds-text-color_error">{{ props.errorLabel }}</span>
+                                    </span>
+                                </div>
+                            </li>
+
                             <!-- Empty list item -->
-                            <li role="presentation" class="slds-listbox__item unselectable-item" v-if="filteredItems.length === 0">
+                            <li role="presentation" class="slds-listbox__item unselectable-item" v-else-if="filteredItems.length === 0">
                                 <div class="slds-media slds-listbox__option slds-listbox__option_plain slds-media_small" role="option">
                                     <span class="slds-media__body">
                                         <span class="slds-truncate">{{ props.emptyListLabel }}</span>

@@ -18,7 +18,7 @@ const emit = defineEmits<{
     unselected: [],
 }>();
 
-const text = ref('');
+const searchText = ref('');
 const empty = ref(false);
 const loading = ref(false);
 const items = ref<Array<LightningListItem>>([]);
@@ -46,20 +46,19 @@ async function onSearch() {
     loading.value = false;
     empty.value = false;
 
-    const searchText = text.value;
-    if (searchText.length === 0) {
+    if (searchText.value.length === 0) {
         return;
     }
 
     loading.value = true;
-    items.value = await props.doSearch(text.value);
+    items.value = await props.doSearch(searchText.value);
     loading.value = false;
 
     empty.value = items.value.length === 0;
 }
 
 function onItemSelected(item: LightningListItem) {
-    text.value = '';
+    searchText.value = '';
     items.value = [];
     selectedItem.value = item;
 
@@ -106,7 +105,7 @@ function onItemUnselected() {
                                    role="combobox"
                                   @keyup.enter="onEnterKey"
                                    v-debounce:500ms="onSearch"
-                                   v-model.trim="text"
+                                   v-model.trim="searchText"
                                   :placeholder="placeholder" />
                             <span class="slds-icon_container slds-icon-utility-search slds-input__icon slds-input__icon_right">
                                 <svg class="slds-icon slds-icon slds-icon_x-small slds-icon-text-default">
@@ -131,9 +130,8 @@ function onItemUnselected() {
                             <!-- Error list item -->
                             <li role="presentation" class="slds-listbox__item unselectable-item" v-else-if="errorLabel">
                                 <div class="slds-media slds-listbox__option slds-listbox__option_plain slds-media_small" role="option">
-                                    <!-- <span class="slds-media__figure slds-listbox__option-icon"></span> -->
                                     <span class="slds-media__body">
-                                        <span class="slds-truncate">{{ props.errorLabel }}</span>
+                                        <span class="slds-truncate slds-text-color_error">{{ props.errorLabel }}</span>
                                     </span>
                                 </div>
                             </li>
@@ -141,7 +139,6 @@ function onItemUnselected() {
                             <!-- Empty list item -->
                             <li role="presentation" class="slds-listbox__item unselectable-item" v-else-if="empty">
                                 <div class="slds-media slds-listbox__option slds-listbox__option_plain slds-media_small" role="option">
-                                    <!-- <span class="slds-media__figure slds-listbox__option-icon"></span> -->
                                     <span class="slds-media__body">
                                         <span class="slds-truncate">{{ props.emptyListLabel }}</span>
                                     </span>

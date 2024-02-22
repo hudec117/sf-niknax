@@ -17,25 +17,19 @@ const props = defineProps<{
 let restService: SalesforceRESTService;
 
 const loading = ref(true);
-const working = ref(false);
+const loadError = ref('');
 
 const availablePermissionSets = ref<Array<PermissionSet>>([]);
 const availablePermissionSetListItems = computed(() => {
-    let listItems = new Array<LightningListItem>();
-
-    listItems = listItems.concat(
-        availablePermissionSets.value.map(
-            permissionSet => {
-                return new LightningListItem(
-                    permissionSet.Id,
-                    permissionSet.Label,
-                    permissionSet.Name
-                );
-            }
-        )
+    return availablePermissionSets.value.map(
+        permissionSet => {
+            return new LightningListItem(
+                permissionSet.Id,
+                permissionSet.Label,
+                permissionSet.Name
+            );
+        }
     );
-
-    return listItems;
 });
 
 onMounted(() => {
@@ -44,28 +38,21 @@ onMounted(() => {
     // Initialise Salesforce services
     restService = new SalesforceRESTService(props.context.serverHost, props.context.sessionId);
 
-    loadData();
+    loadPermissionSets();
 });
 
-async function loadData() {
+async function loadPermissionSets() {
     try {
-        await loadPermissionSets();
-    } catch (error) {
-        // TODO: handle
-        // saveButtonError.value = `Something went wrong in the loadData function: ${(error as Error).message}`;
+        const result = await restService.query<PermissionSet>('SELECT Id, Label, Name FROM PermissionSet WHERE IsOwnedByProfile = false AND NamespacePrefix = \'\' AND Type != \'Group\'');
+        if (!result.success) {
+            loadError.value = `Something went wrong: ${result.error}`;
+            return;
+        }
+
+        availablePermissionSets.value = result.guardedData;
     } finally {
         loading.value = false;
     }
-}
-
-async function loadPermissionSets() {
-    const result = await restService.query<PermissionSet>('SELECT Id, Label, Name FROM PermissionSet WHERE IsOwnedByProfile = false AND NamespacePrefix = \'\' AND Type != \'Group\'');
-    if (!result.success) {
-        // TODO: handle
-        return;
-    }
-
-    availablePermissionSets.value = result.guardedData;
 }
 
 async function onPermissionSetItemSelected(item: LightningListItem) {
@@ -80,7 +67,7 @@ async function onPermissionSetItemSelected(item: LightningListItem) {
 
 <template>
     <article class="slds-card slds-size_full">
-        <LightningSpinner v-if="loading || working" />
+        <LightningSpinner v-if="loading" />
 
         <div class="slds-card__header slds-grid">
             <header class="slds-media slds-media_center slds-has-flexi-truncate">
@@ -99,9 +86,10 @@ async function onPermissionSetItemSelected(item: LightningListItem) {
         <div class="slds-card__body slds-card__body_inner">
             <LightningCombobox placeholder="Search and select a Permission Set"
                                empty-list-label="No records found"
+                              :error-label="loadError"
                               :items="availablePermissionSetListItems"
                               @selected="onPermissionSetItemSelected"
-                               class="slds-m-bottom_medium"
+                               class="slds-m-bottom_small"
                                autofocus />
         </div>
 
