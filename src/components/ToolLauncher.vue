@@ -31,6 +31,8 @@ onMounted(() => {
 
     const loadedRecordId = params.get('record') ?? undefined;
 
+    const loadedObject = params.get('object') ?? undefined;
+
     const loadedOriginalTabId = params.get('tab');
     if (!loadedOriginalTabId) {
         error.value = 'Missing "tab" from the URL, please re-open the window.';
@@ -49,7 +51,7 @@ onMounted(() => {
             return;
         }
 
-        context.value = new Context(loadedServerHost, parseInt(loadedOriginalTabId), session.id, loadedRecordId);
+        context.value = new Context(loadedServerHost, parseInt(loadedOriginalTabId), session.id, loadedRecordId, loadedObject);
 
         if (loadedPage === 'edit-public-group-memberships') {
             groupType.value = 'Regular';

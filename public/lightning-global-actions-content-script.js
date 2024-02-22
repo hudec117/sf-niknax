@@ -1,4 +1,6 @@
 window.addEventListener('load', function() {
+    const safeChromeRuntime = chrome.runtime;
+
     const QUICK_CREATE_USER_GLOBAL_ACTION_HTML = `
         <button id="sf-niknax-quick-create-user-button" type="button" class="slds-button slds-button slds-button_icon slds-button_icon slds-button_icon-container slds-button_icon-small slds-global-actions__item-action forceHeaderButton" title="Salesforce Niknax: Quick Create User">
             <lightning-icon icon-name="utility:adduser" class="slds-icon-utility-adduser slds-global-header__icon slds-button__icon slds-icon_container forceIcon">
@@ -83,7 +85,7 @@ window.addEventListener('load', function() {
 
         const quickCreateUserButton = document.getElementById('sf-niknax-quick-create-user-button');
         quickCreateUserButton.addEventListener('click', function() {
-            chrome.runtime.sendMessage({ operation: 'open-sf-niknax', page: 'quick-create-user' });
+            safeChromeRuntime.sendMessage({ operation: 'open-sf-niknax', page: 'quick-create-user' });
         });
     }
 
@@ -97,7 +99,7 @@ window.addEventListener('load', function() {
 
         const setupPlusButton = document.getElementById('sf-niknax-setup-plus-button');
         setupPlusButton.addEventListener('click', function() {
-            chrome.runtime.sendMessage({ operation: 'open-sf-niknax', page: 'setup-plus' });
+            safeChromeRuntime.sendMessage({ operation: 'open-sf-niknax', page: 'setup-plus' });
         });
     }
 });

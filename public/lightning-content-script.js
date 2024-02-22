@@ -1,4 +1,6 @@
 window.addEventListener('load', function() {
+    const safeChromeRuntime = chrome.runtime;
+
     function setupPageChangeDetector() {
         let previousPageUrl = window.location.href;
 
@@ -22,21 +24,21 @@ window.addEventListener('load', function() {
     function onPageChanged(newUrl) {
         // If on the Fields & Relationships page
         if (newUrl.endsWith('FieldsAndRelationships/view')) {
-            injectViewObjectPermissionSetSettings();
+            injectEditPermissionSetObjectSettings();
         }
     }
 
-    function injectViewObjectPermissionSetSettings() {
+    function injectEditPermissionSetObjectSettings() {
         // Note: To insert this button, the MutationObserver was not detecting the existing buttons
         // re-appearing after subsequent visits to the Field & Relationships page, so setInterval had to be used.
 
         const objectSettingsInPermissionSetButton = document.createElement('button');
         objectSettingsInPermissionSetButton.className = 'slds-button slds-button--neutral uiButton';
-        objectSettingsInPermissionSetButton.textContent = 'Open Object Settings in Permission Set';
-        objectSettingsInPermissionSetButton.title = 'Open the Object Settings in a chosen Permission Set';
+        objectSettingsInPermissionSetButton.textContent = 'Edit Object Settings in Permission Set';
+        objectSettingsInPermissionSetButton.title = 'Edit Object Settings in a selected Permission Set';
         objectSettingsInPermissionSetButton.style = 'border: 1px solid #2574a9;';
         objectSettingsInPermissionSetButton.addEventListener('click', function() {
-            chrome.runtime.sendMessage({ operation: 'open-sf-niknax', page: 'permission-set-object-settings-redirect' });
+            safeChromeRuntime.sendMessage({ operation: 'open-sf-niknax', page: 'permission-set-object-settings-redirect' });
         });
 
         // Insert after the "Set History Tracking" button

@@ -13,15 +13,21 @@ const PAGE_DIMENSIONS = {
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.operation === 'open-sf-niknax') {
-        const serverUrl = new URL(sender.url);
+        const classicServerUrl = new URL(sender.url);
+        const lightningUrl = new URL(sender.tab.url);
 
         // Get server host
         // Only the session ID against the ".my.salesforce.com" domain is valid for API requests.
-        const serverHost = serverUrl.hostname.replace('.lightning.force.com', '.my.salesforce.com');
+        const serverHost = classicServerUrl.hostname.replace('.lightning.force.com', '.my.salesforce.com');
 
         // Try to get the record ID from the URL
-        const path = serverUrl.pathname.substring(1);
-        const recordId = /[a-zA-Z0-9]{18}|[a-zA-Z0-9]{15}/.exec(path) ?? undefined;
+        const classicPath = classicServerUrl.pathname.substring(1);
+        const recordId = /[a-zA-Z0-9]{18}|[a-zA-Z0-9]{15}/.exec(classicPath) ?? undefined;
+
+        // Try to get the object (name or ID) in a Object Manager page
+        const lightningPath = lightningUrl.pathname.substring(1);
+        const objectMatchResults = /lightning\/setup\/ObjectManager\/(?<object>\w+)\//.exec(lightningPath);
+        const object = objectMatchResults?.groups?.object ?? undefined;
 
         let queryOptions = { active: true, lastFocusedWindow: true };
         chrome.tabs.query(queryOptions, ([currentTab]) => {
@@ -31,6 +37,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
             if (recordId) {
                 niknaxUrl += `&record=${recordId}`;
+            }
+
+            if (object) {
+                niknaxUrl += `&object=${object}`;
             }
 
             // Note: width/height here must always be larger than the resizeTo dimensions

@@ -20,6 +20,7 @@ import ErrorPopover from './slds/ErrorPopover.vue';
 import type LightningTableColumn from './slds/LightningTableColumn';
 import type UserActionResult from '@/models/UserActionResult';
 import type { ItemCloneResult } from '@/services/Results';
+import { closeWindow } from '@/helper';
 
 const SETTINGS_KEY = 'quick-create-user-settings';
 
@@ -460,11 +461,6 @@ async function onOpenUser() {
     });
 
     await closeWindow();
-}
-
-async function closeWindow() {
-    const currentPopup = await chrome.windows.getCurrent();
-    await chrome.windows.remove(currentPopup.id!);
 }
 </script>
 

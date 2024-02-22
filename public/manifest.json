@@ -33,7 +33,7 @@
         {
             "matches": [ "https://*.lightning.force.com/*" ],
             "all_frames": true,
-            "js": [ "lightning-global-actions-content-script.js", "lightning-content-script.js" ]
+            "js": [ "lightning-content-script.js", "lightning-global-actions-content-script.js" ]
         }
     ]
 }

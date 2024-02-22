@@ -119,11 +119,6 @@ async function onSaveClick() {
     //     working.value = false;
     // }
 }
-
-// async function closeWindow() {
-//     const currentPopup = await chrome.windows.getCurrent();
-//     await chrome.windows.remove(currentPopup.id!);
-// }
 </script>
 
 <template>

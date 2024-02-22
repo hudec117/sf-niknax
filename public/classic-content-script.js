@@ -1,4 +1,6 @@
 window.addEventListener('load', function() {
+    const safeChromeRuntime = chrome.runtime;
+
     const isInPopupIFrame = document.location.pathname.includes('emptyHtmlDoc.html');
     if (isInPopupIFrame) {
         return;
@@ -40,7 +42,7 @@ window.addEventListener('load', function() {
 
         function onClick(event) {
             if (event.target.id === editMembershipButton.id) {
-                chrome.runtime.sendMessage({ operation: 'open-sf-niknax', page: 'edit-public-group-memberships' });
+                safeChromeRuntime.sendMessage({ operation: 'open-sf-niknax', page: 'edit-public-group-memberships' });
             }
         }
 
@@ -70,7 +72,7 @@ window.addEventListener('load', function() {
 
         function onClick(event) {
             if (event.target.id === editMembershipButton.id) {
-                chrome.runtime.sendMessage({ operation: 'open-sf-niknax', page: 'edit-queue-memberships' });
+                safeChromeRuntime.sendMessage({ operation: 'open-sf-niknax', page: 'edit-queue-memberships' });
             }
         }
 
@@ -93,7 +95,7 @@ window.addEventListener('load', function() {
         cloneUserButton.type = 'button';
         cloneUserButton.style = 'margin-left: 5px; border: 1px solid #2574a9;';
         cloneUserButton.addEventListener('click', () => {
-            chrome.runtime.sendMessage({ operation: 'open-sf-niknax', page: 'quick-create-user' });
+            safeChromeRuntime.sendMessage({ operation: 'open-sf-niknax', page: 'quick-create-user' });
         });
 
         const topButtonRow = document.getElementById('topButtonRow');
@@ -108,7 +110,7 @@ window.addEventListener('load', function() {
         permissionSetEditFieldButton.type = 'button';
         permissionSetEditFieldButton.style = 'margin-left: 5px; border: 1px solid #2574a9;';
         permissionSetEditFieldButton.addEventListener('click', () => {
-            chrome.runtime.sendMessage({ operation: 'open-sf-niknax', page: 'permission-set-edit-field' });
+            safeChromeRuntime.sendMessage({ operation: 'open-sf-niknax', page: 'permission-set-edit-field' });
         });
 
         const setFLSButtons = document.getElementsByName('fieldAccessEdit');

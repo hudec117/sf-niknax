@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 
+import { closeWindow } from '@/helper';
 import PopoutCardFooter from './PopoutCardFooter.vue';
 import SalesforceRESTService from '@/services/SalesforceRESTService';
 import Context from '@/models/Context';
@@ -68,16 +69,13 @@ async function loadPermissionSets() {
 }
 
 async function onPermissionSetItemSelected(item: LightningListItem) {
-    const permissionSetForEntry = availablePermissionSets.value.filter(permissionSet => item.value == permissionSet.Id)[0];
+    // Build redirect URL to open the permission set edit page for this object.
+    const redirectUrl = `https://${props.context.serverHost}/lightning/setup/PermSets/page?address=%2F${item.value}%2Fe%3Fs%3DEntityPermissions%26o%3D${props.context.object}`;
 
-    
-    // closeWindow();
+    await chrome.tabs.update(props.context.originalTabId, { url: redirectUrl });
+
+    await closeWindow();
 }
-
-// async function closeWindow() {
-//     const currentPopup = await chrome.windows.getCurrent();
-//     await chrome.windows.remove(currentPopup.id!);
-// }
 </script>
 
 <template>
