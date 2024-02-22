@@ -15,15 +15,15 @@ window.addEventListener('load', function() {
 
     const isOnUserDetailPage = pageTypeText === 'User';
     const isOnUserListPage = pageTypeText === 'All Users';
-    const isOnCustomFieldPage = pageTypeText.includes('Custom Field');
+    const isOnFieldPage = pageTypeText.endsWith(' Field');
     if (isOnUserDetailPage) {
         injectEditPublicGroupMembershipsButton();
         injectEditQueueMembershipsButton();
         injectCloneUserButton();
     } else if (isOnUserListPage) {
         // injectFreezeUsersButton();
-    } else if (isOnCustomFieldPage) {
-        injectPermissionSetEditFieldButton();
+    } else if (isOnFieldPage) {
+        injectsetFLSPermissionSetButton();
     }
 
     function injectEditPublicGroupMembershipsButton() {
@@ -47,7 +47,7 @@ window.addEventListener('load', function() {
         }
 
         // Find and inject
-        const publicGroupMembershipSection = getElementByStaticID('_RelatedPublicGroupMemberList');
+        const publicGroupMembershipSection = getElementByStaticID('div', '_RelatedPublicGroupMemberList');
         if (!publicGroupMembershipSection) {
             console.error('sf-niknax: failed to find *_RelatedPublicGroupMemberList element.');
             return;
@@ -77,7 +77,7 @@ window.addEventListener('load', function() {
         }
 
         // Find and inject
-        const queueMembershipSection = getElementByStaticID('_RelatedQueueMemberList');
+        const queueMembershipSection = getElementByStaticID('div', '_RelatedQueueMemberList');
         if (!queueMembershipSection) {
             console.error('sf-niknax: failed to find *_RelatedQueueMemberList element.');
             return;
@@ -102,20 +102,20 @@ window.addEventListener('load', function() {
         topButtonRow.appendChild(cloneUserButton);
     }
 
-    function injectPermissionSetEditFieldButton() {
-        const permissionSetEditFieldButton = document.createElement('input');
-        permissionSetEditFieldButton.value = 'Set Field-Level Security (Permission Sets)';
-        permissionSetEditFieldButton.title = `Salesforce Niknax: ${permissionSetEditFieldButton.value}`;
-        permissionSetEditFieldButton.className = 'btn';
-        permissionSetEditFieldButton.type = 'button';
-        permissionSetEditFieldButton.style = 'margin-left: 5px; border: 1px solid #2574a9;';
-        permissionSetEditFieldButton.addEventListener('click', () => {
+    function injectsetFLSPermissionSetButton() {
+        const setFLSPermissionSetButton = document.createElement('input');
+        setFLSPermissionSetButton.value = 'Set Field-Level Security (Permission Sets)';
+        setFLSPermissionSetButton.title = `Salesforce Niknax: ${setFLSPermissionSetButton.value}`;
+        setFLSPermissionSetButton.className = 'btn';
+        setFLSPermissionSetButton.type = 'button';
+        setFLSPermissionSetButton.style = 'margin-left: 5px; border: 1px solid #2574a9;';
+        setFLSPermissionSetButton.addEventListener('click', () => {
             safeChromeRuntime.sendMessage({ operation: 'open-sf-niknax', page: 'permission-set-edit-field' });
         });
 
         const setFLSButtons = document.getElementsByName('fieldAccessEdit');
         if (setFLSButtons.length > 1) {
-            console.error('sf-niknax: failed to inject the Permission Set Edit Field button, more than one "fieldAccessEdit" named button found.');
+            console.error('sf-niknax: failed to inject the Set Field-Level Security (Permission Sets) button, more than one "fieldAccessEdit" named button found.');
             return;
         }
 
@@ -123,7 +123,7 @@ window.addEventListener('load', function() {
         profileSetFLSButton.value += ' (Profiles)';
         profileSetFLSButton.title += ' (Profiles)';
 
-        profileSetFLSButton.parentNode.insertBefore(permissionSetEditFieldButton, profileSetFLSButton.nextSibling);
+        profileSetFLSButton.parentNode.insertBefore(setFLSPermissionSetButton, profileSetFLSButton.nextSibling);
     }
 
     // function injectFreezeUsersButton() {
@@ -141,10 +141,10 @@ window.addEventListener('load', function() {
     //     topButtonRow.appendChild(freezeUsersButton);
     // }
 
-    function getElementByStaticID(staticString) {
-        const divElements = document.querySelectorAll('div');
+    function getElementByStaticID(elementType, staticString) {
+        const elements = document.querySelectorAll(elementType);
 
-        for (const element of divElements) {
+        for (const element of elements) {
             if (element.id && element.id.includes(staticString)) {
                 return element;
             }

@@ -289,9 +289,7 @@ async function unassignGroups(groups: Array<Group>): Promise<boolean> {
                     </span>
                 </div>
                 <div class="slds-media__body">
-                    <h2 class="slds-card__header-title">
-                        <span>{{ title }}</span>
-                    </h2>
+                    <h2 class="slds-card__header-title">{{ title }}</h2>
                 </div>
                 <div class="slds-no-flex">
                     <!-- Toggle API names button -->

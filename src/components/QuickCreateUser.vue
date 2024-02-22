@@ -289,7 +289,7 @@ async function switchToCloneMode(cloneTargetUserId: string) {
 
     // Resize window to accomodate visible checkboxes, change the title and mode.
     resizeTo(690, 724);
-    document.title = `Salesforce Niknax: Clone ${cloneTargetUser.value.Username}`;
+    document.title = `Salesforce Niknax: Clone User (${cloneTargetUser.value.Username})`;
     mode.value = 'clone';
     primaryButtonText.value = 'Clone & Close';
 
@@ -478,10 +478,14 @@ async function onOpenUser() {
                     </span>
                 </div>
                 <div class="slds-media__body">
-                    <h2 class="slds-card__header-title">
-                        <template v-if="mode === 'create'">Quick Create User</template>
-                        <span v-else-if="mode === 'clone'" class="slds-truncate slds-m-right_x-small">Clone {{ cloneTargetUser?.Username }}</span>
-                    </h2>
+                    <template v-if="mode === 'create'">
+                        <h2 class="slds-card__header-title">Quick Create User</h2>
+                    </template>
+
+                    <template v-if="mode === 'clone'">
+                        <h3 class="slds-card__header-title">Clone User</h3>
+                        {{ cloneTargetUser?.Username }}
+                    </template>
                 </div>
                 <div class="slds-no-flex">
                     <!-- Setting button -->

@@ -2,6 +2,7 @@ import type Record from '@/models/Record';
 import { Result } from './Results';
 import type Organisation from '@/models/Organisation';
 import type Field from '@/models/Field';
+import type FieldDefinition from '@/models/FieldDefinition';
 
 export default class SalesforceRESTService {
     QUERY_ENDPOINT = '/services/data/v60.0/query';
@@ -140,6 +141,24 @@ export default class SalesforceRESTService {
                     responseBody.map((error: Error) => error.message).join('\n')
                 );
             }
+        } catch (error) {
+            return Result.fail((error as Error).message);
+        }
+    }
+
+    async resolveObjectAndFieldDurableIDs(object: string, field: string): Promise<Result<string>> {
+        try {
+            const queryResult = await this.query<FieldDefinition>(`SELECT Entitydefinition.QualifiedApiName, QualifiedApiName FROM FieldDefinition WHERE DurableId = '${object}.${field}'`);
+            if (!queryResult.success) {
+                return Result.fail(queryResult.error);
+            }
+            if (!queryResult.data || queryResult.data.length === 0) {
+                return Result.fail(`Could not resolve ${object}.${field} using FieldDefinition and EntityDefinition.`);
+            }
+
+            const record = queryResult.data[0];
+
+            return Result.success(`${record.EntityDefinition.QualifiedApiName}.${record.QualifiedApiName}`);
         } catch (error) {
             return Result.fail((error as Error).message);
         }

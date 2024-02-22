@@ -25,6 +25,8 @@ const saveButtonError = ref<string | undefined>();
 const loading = ref(true);
 const working = ref(false);
 
+const fieldFullAPIName = ref('');
+
 const availablePermissionSets = ref<Array<PermissionSet>>([]);
 const availablePermissionSetListItems = computed(() => {
     let listItems = new Array<LightningListItem>();
@@ -57,7 +59,7 @@ const masterReadEditCheckboxesVisible = computed(() => {
 });
 
 onMounted(() => {
-    document.title = 'Salesforce Niknax: Set Field-Level Security for ...';
+    document.title = 'Salesforce Niknax: Set Field-Level Security';
 
     // Initialise Salesforce services
     restService = new SalesforceRESTService(props.context.serverHost, props.context.sessionId);
@@ -68,12 +70,38 @@ onMounted(() => {
 
 async function loadData() {
     try {
-        await loadPermissionSets();
+        await Promise.all([loadFieldFullAPIName(), loadPermissionSets()])
     } catch (error) {
         saveButtonError.value = `Something went wrong in the loadData function: ${(error as Error).message}`;
     } finally {
         loading.value = false;
     }
+}
+
+async function loadFieldFullAPIName() {
+    if (!props.context.object) {
+        // TODO: handle properly
+        console.error('Missing props.context.object');
+        return;
+    }
+
+    if (!props.context.field) {
+        // TODO: handle properly
+        console.error('Missing props.context.field');
+        return;
+    }
+
+    // Resolve object and field into API names if they're custom
+    const resolveResult = await restService.resolveObjectAndFieldDurableIDs(props.context.object, props.context.field);
+    if (!resolveResult.success) {
+        // TODO: handle properly
+        console.error(`resolveObjectAndFieldDurableIDs failed with ${resolveResult.error}`);
+        return;
+    }
+
+    fieldFullAPIName.value = resolveResult.guardedData;
+
+    document.title += ` (${fieldFullAPIName.value})`;
 }
 
 async function loadPermissionSets() {
@@ -142,9 +170,8 @@ async function onSaveClick() {
                     </span>
                 </div>
                 <div class="slds-media__body">
-                    <h2 class="slds-card__header-title">
-                        Set Field-Level Security for ...
-                    </h2>
+                    <h3 class="slds-card__header-title">Set Field-Level Security</h3>
+                    {{ fieldFullAPIName }}
                 </div>
                 <div class="slds-no-flex">
                     <!-- Save button -->

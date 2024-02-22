@@ -29,6 +29,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         const objectMatchResults = /lightning\/setup\/ObjectManager\/(?<object>\w+)\//.exec(lightningPath);
         const object = objectMatchResults?.groups?.object ?? undefined;
 
+        // Try to get the field (name or ID) in a Object Manager page
+        const fieldMatchResults = /lightning\/setup\/ObjectManager\/\w+\/FieldsAndRelationships\/(?<field>\w+)\/view/.exec(lightningPath);
+        const field = fieldMatchResults?.groups?.field ?? undefined;
+
         let queryOptions = { active: true, lastFocusedWindow: true };
         chrome.tabs.query(queryOptions, ([currentTab]) => {
             // Construct page URL with server host
@@ -41,6 +45,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
             if (object) {
                 niknaxUrl += `&object=${object}`;
+            }
+
+            if (field) {
+                niknaxUrl += `&field=${field}`;
             }
 
             // Note: width/height here must always be larger than the resizeTo dimensions

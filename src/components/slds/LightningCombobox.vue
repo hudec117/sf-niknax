@@ -120,10 +120,3 @@ function onItemSelected(item: LightningListItem) {
         <div class="slds-form-element__help" v-if="helpLabel">{{ helpLabel }}</div>
     </div>
 </template>
-
-<style scoped>
-/* Without this, the SLDS Spinners would appear on top of the dropdown */
-.slds-combobox {
-    z-index: 10000;
-}
-</style>

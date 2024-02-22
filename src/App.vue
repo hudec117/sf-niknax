@@ -30,6 +30,20 @@ a.external-link[target='_blank']::after {
   margin: 0 3px 0 5px;
 }
 
+/* Modals should be above all else */
+.slds-backdrop {
+  z-index: 10000;
+}
+
+.slds-modal {
+  z-index: 10001;
+}
+
+/* Without this, the SLDS Spinners would appear on top of the dropdown */
+.slds-combobox {
+    z-index: 9500;
+}
+
 /* This sets "selected" background colour when there is only one selectable item in a listbox.
    Used by:
    components\slds\LightningCombobox.vue

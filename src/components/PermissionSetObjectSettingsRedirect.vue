@@ -92,9 +92,7 @@ async function onPermissionSetItemSelected(item: LightningListItem) {
                     </span>
                 </div>
                 <div class="slds-media__body">
-                    <h2 class="slds-card__header-title">
-                        Select a Permission Set
-                    </h2>
+                    <h2 class="slds-card__header-title">Select a Permission Set</h2>
                 </div>
             </header>
         </div>
