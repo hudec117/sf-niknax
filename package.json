@@ -12,12 +12,12 @@
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore"
   },
   "dependencies": {
-    "@salesforce-ux/design-system": "^2.22.2",
-    "@vueuse/core": "^10.6.1",
+    "@salesforce-ux/design-system": "^2.23.2",
+    "@vueuse/core": "^10.8.0",
     "email-validator": "^2.0.4",
     "papaparse": "^5.4.1",
-    "vue": "^3.3.8",
-    "vue-debounce": "^4.0.0"
+    "vue": "^3.4.19",
+    "vue-debounce": "^4.0.1"
   },
   "devDependencies": {
     "@babel/types": "^7.23.0",
