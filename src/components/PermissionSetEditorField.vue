@@ -47,7 +47,14 @@ const availablePermissionSetListItems = computed(() => {
 });
 
 const permissionSetFLSEntries = ref<Array<PermissionSetFLSEntry>>([]);
-const noEntries = computed(() => permissionSetFLSEntries.value.length === 0);
+const masterReadEditCheckboxesVisible = computed(() => {
+    const numOfLoadedEntries = permissionSetFLSEntries.value.filter(entry => !entry.loading).length;
+
+    const hasEntries = permissionSetFLSEntries.value.length > 0;
+    const allEntriesLoaded = numOfLoadedEntries === permissionSetFLSEntries.value.length;
+
+    return hasEntries && allEntriesLoaded;
+});
 
 onMounted(() => {
     document.title = 'Salesforce Niknax: Set Field-Level Security for ...';
@@ -87,12 +94,12 @@ async function onPermissionSetItemSelected(item: LightningListItem) {
 
     const permissionSetForEntry = availablePermissionSets.value.filter(permissionSet => item.value == permissionSet.Id)[0];
 
-    const newFLSEntry = {
+    const newFLSEntry = ref<PermissionSetFLSEntry>({
         permissionSet: permissionSetForEntry,
         loading: true
-    };
+    });
 
-    permissionSetFLSEntries.value.push(newFLSEntry);
+    permissionSetFLSEntries.value.push(newFLSEntry.value);
 
     // Read the metadata for the field
     // TODO: remove line below, only for TESTING
@@ -103,7 +110,7 @@ async function onPermissionSetItemSelected(item: LightningListItem) {
         return;
     }
 
-    newFLSEntry.loading = false;
+    newFLSEntry.value.loading = false;
 
     // Remove permission set from the available permission sets so it can't be readded to the entries.
     availablePermissionSets.value = availablePermissionSets.value.filter(permissionSet => permissionSet.Id !== permissionSetForEntry.Id);
@@ -122,7 +129,7 @@ async function onSaveClick() {
 </script>
 
 <template>
-    <article class="slds-card">
+    <article class="slds-card slds-size_full">
         <LightningSpinner v-if="loading || working" />
 
         <div class="slds-card__header slds-grid">
@@ -165,22 +172,22 @@ async function onSaveClick() {
             <table class="slds-table slds-no-row-hover slds-table_bordered slds-table_col-bordered slds-border_left slds-border_right">
                 <thead>
                     <tr class="slds-line-height_reset">
-                        <th scope="col"></th>
+                        <th scope="col" class="slds-cell-shrink"></th>
                         <th scope="col">
                             <div class="slds-truncate" title="Permission Set">Permission Set</div>
                         </th>
-                        <th scope="col">
+                        <th scope="col" class="slds-cell-shrink">
                             <div class="slds-truncate" title="Read Access">
                                 <input type="checkbox"
-                                       v-if="!noEntries" />
+                                       v-if="masterReadEditCheckboxesVisible" />
                                 
                                 Read Access
                             </div>
                         </th>
-                        <th scope="col">
+                        <th scope="col" class="slds-cell-shrink">
                             <div class="slds-truncate" title="Edit Access">
                                 <input type="checkbox"
-                                       v-if="!noEntries" />
+                                       v-if="masterReadEditCheckboxesVisible" />
                                 
                                 Edit Access
                             </div>
@@ -190,11 +197,11 @@ async function onSaveClick() {
                 <tbody>
                     <tr v-for="permissionSetFLSEntry of permissionSetFLSEntries" :key="permissionSetFLSEntry.permissionSet.Id">
                         <td>
-                            <button class="slds-button slds-button_icon" title="Pin/unpin the Permission Set">
+                            <button class="slds-button slds-button_icon" title="Pinning Permission Sets will automatically load them each time you open this tool.">
                                 <svg class="slds-button__icon slds-button__icon_small" aria-hidden="true">
                                     <use xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#pin"></use>
                                 </svg>
-                                <span class="slds-assistive-text">More options</span>
+                                <span class="slds-assistive-text">Pinning Permission Sets will automatically load them each time you open this tool.</span>
                             </button>
                         </td>
                         <td :title="permissionSetFLSEntry.permissionSet.Name">
