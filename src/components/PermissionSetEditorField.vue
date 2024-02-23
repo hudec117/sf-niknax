@@ -49,6 +49,11 @@ const availablePermissionSetListItems = computed(() => {
 });
 
 const permissionSetFLSEntries = ref<Array<PermissionSetFLSEntry>>([]);
+
+const sortedPemrissionSetFLSEntries = computed(() => {
+    return [...permissionSetFLSEntries.value].sort((a, b) => (b.pinned ? 1 : -1) - (a.pinned ? 1 : -1));
+});
+
 const masterReadEditCheckboxesVisible = computed(() => {
     const numOfLoadedEntries = permissionSetFLSEntries.value.filter(entry => !entry.loading).length;
 
@@ -120,28 +125,31 @@ async function onPermissionSetItemSelected(item: LightningListItem) {
         return;
     }
 
+    // Find the Permission Set and create an entry for it
     const permissionSetForEntry = availablePermissionSets.value.filter(permissionSet => item.value == permissionSet.Id)[0];
 
+    // Remove permission set from the available permission sets so it can't be readded to the entries.
+    availablePermissionSets.value = availablePermissionSets.value.filter(permissionSet => permissionSet.Id !== permissionSetForEntry.Id);
+
+    // Note: read/edit here are defaulted to false in case the permissions are not set in a Permission Set
     const newFLSEntry = ref<PermissionSetFLSEntry>({
         permissionSet: permissionSetForEntry,
+        pinned: false,
         loading: true
     });
 
     permissionSetFLSEntries.value.push(newFLSEntry.value);
 
     // Read the metadata for the field
-    // TODO: remove line below, only for TESTING
-    await metadataService.readPermissionSetFLS('Test_Perm_Set_15', 'Account.Fax');
-    const readMdResult = await metadataService.readMetadata('PermissionSet', [permissionSetForEntry.Name]);
-    if (!readMdResult.success) {
+    const readFLSResult = await metadataService.readPermissionSetFLS(permissionSetForEntry.Name, fieldFullAPIName.value);
+    if (!readFLSResult.success) {
         // TODO: handle
         return;
     }
 
+    newFLSEntry.value.readAccess = readFLSResult.guardedData[0];
+    newFLSEntry.value.editAccess = readFLSResult.guardedData[1];
     newFLSEntry.value.loading = false;
-
-    // Remove permission set from the available permission sets so it can't be readded to the entries.
-    availablePermissionSets.value = availablePermissionSets.value.filter(permissionSet => permissionSet.Id !== permissionSetForEntry.Id);
 }
 
 async function onSaveClick() {
@@ -149,7 +157,7 @@ async function onSaveClick() {
     saveButtonError.value = '';
 
     // try {
-        
+
     // } finally {
     //     working.value = false;
     // }
@@ -207,7 +215,7 @@ async function onSaveClick() {
                             <div class="slds-truncate" title="Read Access">
                                 <input type="checkbox"
                                        v-if="masterReadEditCheckboxesVisible" />
-                                
+
                                 Read Access
                             </div>
                         </th>
@@ -215,19 +223,27 @@ async function onSaveClick() {
                             <div class="slds-truncate" title="Edit Access">
                                 <input type="checkbox"
                                        v-if="masterReadEditCheckboxesVisible" />
-                                
+
                                 Edit Access
                             </div>
                         </th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="permissionSetFLSEntry of permissionSetFLSEntries" :key="permissionSetFLSEntry.permissionSet.Id">
+                    <tr v-for="permissionSetFLSEntry of sortedPemrissionSetFLSEntries" :key="permissionSetFLSEntry.permissionSet.Id">
                         <td>
-                            <button class="slds-button slds-button_icon" title="Pinning Permission Sets will automatically load them each time you open this tool.">
-                                <svg class="slds-button__icon slds-button__icon_small" aria-hidden="true">
+                            <button class="slds-button slds-button_icon"
+                                    title="Pinning Permission Sets will automatically load them each time you open this tool."
+                                   @click="permissionSetFLSEntry.pinned = !permissionSetFLSEntry.pinned">
+
+                                <!-- Pinned/unpinned icons -->
+                                <svg v-if="permissionSetFLSEntry.pinned" class="slds-button__icon slds-button__icon_small" aria-hidden="true">
+                                    <use fill="#2574a9" xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#pinned"></use>
+                                </svg>
+                                <svg v-else class="slds-button__icon slds-button__icon_small" aria-hidden="true">
                                     <use xlink:href="slds/assets/icons/utility-sprite/svg/symbols.svg#pin"></use>
                                 </svg>
+
                                 <span class="slds-assistive-text">Pinning Permission Sets will automatically load them each time you open this tool.</span>
                             </button>
                         </td>
@@ -236,11 +252,11 @@ async function onSaveClick() {
                         </td>
                         <td>
                             <LightningSpinner v-if="permissionSetFLSEntry.loading" size="xx-small" />
-                            <input type="checkbox" v-else :value="permissionSetFLSEntry.readAccess" />
+                            <input type="checkbox" v-else v-model="permissionSetFLSEntry.readAccess" />
                         </td>
                         <td>
                             <LightningSpinner v-if="permissionSetFLSEntry.loading" size="xx-small" />
-                            <input type="checkbox" v-else :value="permissionSetFLSEntry.editAccess" />
+                            <input type="checkbox" v-else v-model="permissionSetFLSEntry.editAccess" />
                         </td>
                     </tr>
                 </tbody>

@@ -5,5 +5,6 @@ export default interface PermissionSetFLSEntry {
     readAccess?: boolean;
     editAccess?: boolean;
 
+    pinned: boolean;
     loading: boolean;
 }

@@ -25,7 +25,7 @@ const { list, containerProps, wrapperProps, scrollTo } = useVirtualList(recordsM
 // need to scroll to the first element otherwise a blank screen is shown.
 watch(() => props.records, () => {
     scrollTo(0);
-})
+});
 
 function getColumnHash(recordIndex: number, column: LightningTableColumn): string {
     return `${recordIndex}-${column.identifier}`;
