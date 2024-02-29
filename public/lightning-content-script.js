@@ -1,6 +1,8 @@
 window.addEventListener('load', function() {
     const safeChromeRuntime = chrome.runtime;
 
+    let userDetailUrl;
+
     function setupProfilePanelDetector() {
         function handleMutation(mutationsList) {
             for (const mutation of mutationsList) {
@@ -50,10 +52,21 @@ window.addEventListener('load', function() {
 
         const linksWrapper = linksWrapperElements[0];
 
+        // Note: the "href" attribute only contains the URL (and therefore the User ID) only on the first open
+        // of the profile panel so we need to get and convert it into the User Detail page URL and store it.
+        if (!userDetailUrl) {
+            const profileAnchor = linksWrapper.parentNode.querySelector('.profile-card-name a');
+
+            // Replaces bits before and after the User ID
+            userDetailUrl = profileAnchor.href
+                .replace('/lightning/r/User/', '/lightning/setup/ManageUsers/page?address=%2F')
+                .replace('/view', '%3Fnoredirect%3D1%26isUserEntityOverride%3D1');
+        }
+
         const userDetailAnchor = document.createElement('a');
         userDetailAnchor.textContent = 'User Detail';
         userDetailAnchor.title = 'Salesforce Niknax: Open your User detail page';
-        userDetailAnchor.href = '#';
+        userDetailAnchor.href = userDetailUrl;
         userDetailAnchor.className = 'profile-link-label';
 
         linksWrapper.insertBefore(userDetailAnchor, linksWrapper.firstChild);

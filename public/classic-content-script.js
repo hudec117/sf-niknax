@@ -119,11 +119,8 @@ window.addEventListener('load', function() {
             return;
         }
 
-        const profileSetFLSButton = setFLSButtons[0];
-        profileSetFLSButton.value += ' (Profiles)';
-        profileSetFLSButton.title += ' (Profiles)';
-
-        profileSetFLSButton.parentNode.insertBefore(setFLSPermissionSetButton, profileSetFLSButton.nextSibling);
+        const existingSetFLSButton = setFLSButtons[0];
+        existingSetFLSButton.parentNode.insertBefore(setFLSPermissionSetButton, existingSetFLSButton.nextSibling);
     }
 
     // function injectFreezeUsersButton() {
