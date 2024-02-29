@@ -288,7 +288,7 @@ async function switchToCloneMode(cloneTargetUserId: string) {
     // TODO: Check if the user has any queue memberships
 
     // Resize window to accomodate visible checkboxes, change the title and mode.
-    resizeTo(690, 724);
+    resizeTo(690, 729);
     document.title = `Salesforce Niknax: Clone User (${cloneTargetUser.value.Username})`;
     mode.value = 'clone';
     primaryButtonText.value = 'Clone & Close';
