@@ -40,7 +40,7 @@ a.external-link[target='_blank']::after {
 }
 
 /* Without this, the SLDS Spinners would appear on top of the dropdown */
-.slds-combobox {
+.slds-dropdown {
     z-index: 9500;
 }
 
