@@ -11,19 +11,43 @@ window.addEventListener('load', function() {
         return;
     }
 
-    const pageTypeText = pageTypeElements[0].innerText;
+    const locationParams = new URLSearchParams(window.location.search);
+    const pageType = pageTypeElements[0].innerText;
 
-    const isOnUserDetailPage = pageTypeText === 'User';
-    const isOnUserListPage = pageTypeText === 'All Users';
-    const isOnFieldPage = pageTypeText.endsWith(' Field');
-    if (isOnUserDetailPage) {
+    function isOnUserDetailPage() {
+        return pageType === 'User';
+    }
+
+    function isOnFieldPage() {
+        const isOnStandardFieldPage = window.location.pathname.includes('_ui/common/config/field/StandardFieldAttributes/d');
+
+        const isOnCustomFieldPage = pageType.includes(' Custom Field');
+
+        return isOnStandardFieldPage || isOnCustomFieldPage;
+    }
+
+    function isOnPermissionSetObjectSettingsPage() {
+        if (!locationParams.has('s')) {
+            return false;
+        }
+
+        if (!locationParams.has('o')) {
+            return false;
+        }
+
+        const permissionSetSubPage = locationParams.get('s');
+
+        return pageType === 'Permission Set' && permissionSetSubPage === 'EntityPermissions';
+    }
+
+    if (isOnUserDetailPage()) {
         injectEditPublicGroupMembershipsButton();
         injectEditQueueMembershipsButton();
         injectCloneUserButton();
-    } else if (isOnUserListPage) {
-        // injectFreezeUsersButton();
-    } else if (isOnFieldPage) {
-        injectsetFLSPermissionSetButton();
+    } else if (isOnFieldPage()) {
+        injectSetFLSPermissionSetButton();
+    } else if (isOnPermissionSetObjectSettingsPage()) {
+        injectViewFieldsAndRelationshipsButton();
     }
 
     function injectEditPublicGroupMembershipsButton() {
@@ -102,7 +126,7 @@ window.addEventListener('load', function() {
         topButtonRow.appendChild(cloneUserButton);
     }
 
-    function injectsetFLSPermissionSetButton() {
+    function injectSetFLSPermissionSetButton() {
         const setFLSPermissionSetButton = document.createElement('input');
         setFLSPermissionSetButton.value = 'Set Field-Level Security (Permission Sets)';
         setFLSPermissionSetButton.title = `Salesforce Niknax: ${setFLSPermissionSetButton.value}`;
@@ -121,6 +145,26 @@ window.addEventListener('load', function() {
 
         const existingSetFLSButton = setFLSButtons[0];
         existingSetFLSButton.parentNode.insertBefore(setFLSPermissionSetButton, existingSetFLSButton.nextSibling);
+    }
+
+    function injectViewFieldsAndRelationshipsButton() {
+        const buttonRow = document.querySelector('.pbHeader .pbButton');
+
+        const isEditButton = buttonRow.firstChild.textContent === 'Edit';
+        if (!isEditButton) {
+            return;
+        }
+
+        const viewFieldsAndRelationshipsButton = document.createElement('a');
+        viewFieldsAndRelationshipsButton.textContent = 'View Object Fields & Relationships';
+        viewFieldsAndRelationshipsButton.title = `Salesforce Niknax: View Object Fields & Relationships`;
+        viewFieldsAndRelationshipsButton.className = 'btn pc_buttonLink';
+        viewFieldsAndRelationshipsButton.style = 'margin-left: 5px; border: 1px solid #2574a9;';
+        // viewFieldsAndRelationshipsButton.addEventListener('click', () => {
+        //     safeChromeRuntime.sendMessage({ operation: 'open-sf-niknax', page: 'permission-set-edit-field' });
+        // });
+
+        buttonRow.appendChild(viewFieldsAndRelationshipsButton);
     }
 
     // function injectFreezeUsersButton() {
