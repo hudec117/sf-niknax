@@ -1,3 +1,4 @@
+import { toBoolean } from '@/helper';
 import { Result } from './Results';
 
 export default class SalesforceToolingService {
@@ -11,14 +12,11 @@ export default class SalesforceToolingService {
         this.sessionId = sessionId;
     }
 
-    async readPermissionSetFLS(permissionSetName: string, fieldName: string): Promise<Result> {
+    async readPermissionSetFLS(permissionSetName: string, fieldName: string): Promise<Result<readonly [read: boolean, edit: boolean]>> {
         const readMetadataResult = await this.readMetadata('PermissionSet', [permissionSetName]);
         if (!readMetadataResult.success) {
-            return readMetadataResult;
+            return Result.fail(readMetadataResult.error);
         }
-
-        // TODO: if not found in the for-of loop, default to read: false and edit: false
-        // TODO: create data structure to return FLS
 
         for (const element of readMetadataResult.guardedData) {
             if (element.nodeName === 'fieldPermissions') {
@@ -31,14 +29,26 @@ export default class SalesforceToolingService {
                 const foundFieldName = fieldElements[0].textContent;
                 if (foundFieldName === fieldName) {
 
-                    console.log(foundFieldName);
+                    const readElements = element.getElementsByTagName('readable');
+                    if (readElements.length !== 1) {
+                        return Result.fail(`Found ${readElements.length} 'read' elements in the 'fieldPermissions' metadata. Expected only one.`);
+                    }
+                    const foundReadValue = toBoolean(readElements[0].textContent);
 
-                    return Result.success();
+                    const editElements = element.getElementsByTagName('editable');
+                    if (editElements.length !== 1) {
+                        return Result.fail(`Found ${editElements.length} 'read' elements in the 'fieldPermissions' metadata. Expected only one.`);
+                    }
+                    const foundEditValue = toBoolean(editElements[0].textContent);
+
+                    return Result.success([foundReadValue, foundEditValue]);
                 }
             }
         }
 
-        return Result.fail('boo');
+        // Default to false for read/edit since in this scenario it hasn't been found in the Permission Set
+        // and therefore it hasn't been set.
+        return Result.success([false, false]);
     }
 
     async readMetadata(type: string, names: Array<string>): Promise<Result<Array<Element>>> {
